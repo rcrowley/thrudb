@@ -1,0 +1,50 @@
+/**
+ * Copyright (c) 2007- T Jake Luciani
+ * Distributed under the New BSD Software License
+ *
+ * See accompanying file LICENSE or visit the Thrudb site at:
+ * http://thrudb.googlecode.com
+ *
+ **/
+
+#ifndef __THRUDOC_HANDLER__
+#define __THRUDOC_HANDLER__
+
+#include "Thrudoc.h"
+#include "ThrudocBackend.h"
+#include "memcache++.h"
+
+#include <boost/smart_ptr.hpp>
+#include <string>
+
+using namespace facebook::thrift;
+using namespace thrudoc;
+
+class ThrudocHandler : virtual public ThrudocIf {
+ public:
+  ThrudocHandler( boost::shared_ptr<ThrudocBackend> b);
+
+
+  void ping() {};
+  void store(std::string &_return, const std::string &obj, const std::string &id);
+  bool remove(const std::string &id);
+  void fetch(std::string &_return, const std::string &id);
+
+
+  bool removeList(const std::vector<std::string> &ids);
+  void fetchList(std::vector<std::string> &_return, const std::vector<std::string> &ids);
+
+ private:
+
+  bool isValidID  (const std::string &id);
+
+  boost::shared_ptr<ThrudocBackend> backend;
+
+  boost::shared_ptr<Memcache>      memd;
+
+  std::string genNewID();
+
+};
+
+
+#endif

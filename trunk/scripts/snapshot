@@ -1,0 +1,152 @@
+#!/usr/bin/perl
+
+#
+# Copyright (c) 2007- T Jake Luciani
+# Distributed under the New BSD Software License
+#
+# See accompanying file LICENSE or visit the Thrudb site at:
+# http://thrudb.googlecode.com
+#
+#
+
+use strict;
+use warnings;
+
+use Getopt::Long;
+
+require 5.6.0;
+
+######################################################
+#
+#A simple wrapper around brackup, specific for thrudb
+#Built with alternate backends in mind
+#
+######################################################
+
+#
+#Print usage and die
+#
+sub usage
+{
+    my $msg = shift;
+
+    warn "\n*****".$msg."*****\n\n" if defined $msg;
+
+    warn(qq{Usage:
+      $0 --config=<config file>
+Options:
+      --config=<config file>
+          Thrudb config file
+
+      --recover
+          Recovers latest snapshot
+
+      --help
+          This message
+});
+    exit(1);
+}
+
+#
+#Parse config (dead simple)
+#
+sub parse_config
+{
+    my $config_file = shift;
+    my $c           = {};
+
+    usage("Missing config file") unless defined $config_file && -e $config_file;
+
+    open(CFILE, "<$config_file") || die $1;
+
+    while(<CFILE>){
+        my($k,$v) = ( $_ =~ m/^\s*([^=^\s]+)\s*=\s*([^\s]+)/ );
+
+        next unless defined $k && defined $v;
+
+        next if $k =~ /\#/;
+        next if $v =~ /\#/;
+
+        $c->{$k} = $v;
+    }
+
+    close(CFILE);
+
+    return $c;
+}
+
+
+sub main{
+    my $args = shift;
+    my $c    = parse_config($args->{config_file});
+
+    die "Bad Thrudb root"
+        unless defined $c->{THRUDB_ROOT} && -d $c->{THRUDB_ROOT};
+
+    die "Missing thrudb backend"
+        unless defined $c->{SNAPSHOT_BACKEND};
+
+    #
+    #If we got here things are looking good. lets init the system
+    #
+
+    #this will hold the snapshot handler
+    my $snap;
+
+    eval qq{
+        use lib '$c->{THRUDB_ROOT}/lib';
+        use Thrudb::Snapshot::Utils;
+        use Thrudb::Snapshot::Backend::$c->{SNAPSHOT_BACKEND};
+        \$snap = new Thrudb::Snapshot::Backend::$c->{SNAPSHOT_BACKEND}(\$c);
+    }; if( $@ ){
+        die "Error loading snapshot backend (Check config): $@";
+    }
+
+    #
+    #create snapshot
+    #
+
+    if( $args->{uptodate} ){
+
+        return $snap->uptodate();
+
+    }elsif( $args->{recover} ){
+
+        return $snap->recover($args->{safe});
+
+    } else {
+
+        return $snap->create();
+
+    }
+}
+
+
+my ($config_file,$opt_help,$opt_recover,$opt_safe,$opt_uptodate);
+
+#
+#Get config file and parse it
+#
+GetOptions(
+    'config=s'  => \$config_file,
+    'help'      => \$opt_help,
+    'uptodate'  => \$opt_uptodate,
+    'recover'   => \$opt_recover,
+    'safe'      => \$opt_safe);
+
+
+usage() if defined $opt_help;
+
+my $args = {
+    config_file => $config_file,
+    recover     => $opt_recover,
+    safe        => $opt_safe,
+    uptodate    => $opt_uptodate
+};
+
+#
+#Go!
+#
+exit(main($args));
+
+
