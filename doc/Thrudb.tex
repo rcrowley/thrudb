@@ -1,6 +1,6 @@
 %-----------------------------------------------------------------------------
 %
-%               Thrudb whitepaper
+%               Thrudb white paper
 %
 % Name:         thrudb.tex
 %
@@ -43,7 +43,7 @@ It’s purpose is to offer web developers flexible, fast and easy-to-use service
 enhance or replace traditional data storage and access layers.
    
 This paper explains the services thrudb provides as well as the underlying libraries and choices 
-made when designing it.  Note, this is not an actual reseach paper, but it looks more impressive 
+made when designing it.  Note, this is not an actual research paper, but it looks more impressive 
 when styled as one.
 \end{abstract}
 
@@ -53,25 +53,25 @@ when styled as one.
 %Database, storage, indexing, service
 
 %\keywords
-%Data storage, information retrival, web development
+%Data storage, information retrieval, web development
 
 \section{Introduction}
-Relational databases are the backbone of modern websites.  Along with webservers, they enable the 
+Relational databases are the backbone of modern websites.  Along with web servers, they enable the 
 world wide web by allowing anyone with a web browser to extract and interact with data and documents.  
 The traditional LAMP stack has provided everything needed to build websites, but with the onset of web 2.0
 there are numerous programming frameworks and web services that can simplify the development effort. 
-As well as countless techniques and enhcancements to improve the speed and scalability of your site once deployed.
+As well as countless techniques and enhancements to improve the speed and scalability of your site once deployed.
 
 There is still one area that is difficult to design and deploy correctly however, the data layer.
  
-Data on the web is often fluid and loosley structured and it is becoming increasingly difficult to fit into a fixed database schema which is ammend over time.
-A simple example of this is tagging. The many to many relationship of tags are difficult to query efficiently using tables and sql requiring ad-hoc solutions.
+Data on the web is often fluid and loosely structured and it is becoming increasingly difficult to fit into a fixed database schema which is amend over time.
+A simple example of this is tagging. The many to many relationship of tags are difficult to query efficiently using tables and SQL requiring ad-hoc solutions.
 
-Also, Web data is often "mashed up" and viewed together (facebook profile) or viewed spasially (google maps + event data). 
+Also, Web data is often "mashed up" and viewed together (facebook profile) or viewed spatially (google maps + event data). 
 
-In order to provide this new kind of data flexibility the web is moving towards a document oriented data model.  Where records aren't grouped by their structure but by their attributes.  
+In order to provide this new kind of data flexibility the web is moving towards a document oriented data model.  Where records arena't grouped by their structure but by their attributes.  
 
-Object relational mapping libraries (Hibernate, Active Record) attempt to hide the underlying relational model but the fact remains sparse and unnormazied data was not intended for these systems. 
+Object relational mapping libraries (Hibernate, Active Record) attempt to hide the underlying relational model but the fact remains sparse and unnormalized data was not intended for these systems. 
 
 There are also standard data oriented issues like indexing, caching, replication and backups, which are left for "later" but are never easy to employ when its time to do it.
 There are a number great of open source components that currently provide solutions to these problems but they require proper integration and configuration.  These components end up being picked over time by learned by trial and error.
@@ -84,11 +84,11 @@ When designing Thrudb the following requirements were identified:
 
 \begin{itemize}
 
-\item\textit{Modular.} Each service should be valuble on its own and impose no requirements on the others.
+\item\textit{Modular.} Each service should be valuable on its own and impose no requirements on the others.
 
 \item\textit{Simple.} The APIs must be obvious and work in most languages.
 
-\item\textit{Fast.} The services must be written in a compiled language, be multithreaded when nessisairy and use asynchronus processing when nessisarry.
+\item\textit{Fast.} The services must be written in a compiled language, be multi-threaded when necessary and use asynchronous processing when necessary.
 
 \item\textit{Flexible.} The services should be capable of handling any type of document you can throw at it. 
 
@@ -98,7 +98,7 @@ When designing Thrudb the following requirements were identified:
 
 \item\textit{Recoverable.} The services should be ACID compliant and provide redo logs and incremental backups
 
-\item\textit{Scalable.} The system should be horizontaly scalable and provide write-through caching  
+\item\textit{Scalable.} The system should be horizontally scalable and provide write-through caching  
 \end{itemize}
 
 What came out the other end were the following services:
@@ -115,9 +115,9 @@ These services are built with the help of the following open source projects:
 \begin{itemize}
 \item\textit{Thrift}    - Facebook's framework for providing cross-language services.  This is the backbone of Thrudb. \footnote{See http://developers.facebook.com/thrift}
 
-\item\textit{Lucene}    - Specifially CLucene, which provides high performance indexing. \footnote{See http://clucene.sf.net}
+\item\textit{Lucene}    - Specifically CLucene, which provides high performance indexing. \footnote{See http://clucene.sf.net}
 
-\item\textit{Spread}    - Garunteed messaging bus with reliable membership updates. \footnote{See http://spread.org}
+\item\textit{Spread}    - Guaranteed messaging bus with reliable membership updates. \footnote{See http://spread.org}
 
 \item\textit{Amazon Services} -Not open source but almost free scalable computing and storage platform. \footnote{See http://www.amazonaws.com}
 
@@ -152,17 +152,17 @@ $client->remove($id);
 
 \end{verbatim}
   
-Since thrudb is built on top of thrift this client api is availible nativly in most languages.
+Since thrudb is built on top of thrift this client API is available naively in most languages.
 The \textit{value} parameter can be a string, json object, xml object, or a serialized thrift object.
 
-We recommend Thrift objects because they support structure versoning.  
+We recommend Thrift objects because they support structure visioning.  
 
-Breifly, this means if your website launches and you forgot to include "address" in the user 
+Briefly, this means if your website launches and you forgot to include "address" in the user 
 structure but already have thousands of users you don't re-create your old objects. Simply add the address field
 to your Thrift object definition it will support both old and new versions of your serialized object. 
 \footnote{See Appendix A for a further discussion on thrift objects.}
 
-Thrudb's identifiers are by default UUIDs. This removes the depenency on centralized or incremental identifiers (not scalable).
+Thrudb's identifiers are by default UUIDs. This removes the dependency on centralized or incremental identifiers (not scalable).
 You can specify a key identifier of your own but a new id will be returned that is the MD5 value of the key. 
 This keeps the storage area balanced. 
 
@@ -177,10 +177,10 @@ will be described later in this document.
 
 Thrucene exposes the Lucene Search API as a Thrift service.  
 
-Its purpose is to provide powerful searching capabilites for your documents.  
+Its purpose is to provide powerful searching capabilities for your documents.  
 This is intended to be used with the Thrudoc service but can be used to provide search for traditional database records as well. 
 
-The idea of your index living separatly from your document isn't new.  
+The idea of your index living separately from your document isn't new.  
 Google is built this way since an index store can scale very differently then your documents document store.  
 For example, you may only be interested in searching a few fields within your documents or
 wish keep multiple indexes on the same set of documents. This is similar to MapReduce
@@ -254,12 +254,12 @@ document storage with no fear of data loss.
 \section{Throxy}
 
 The Throxy service enables other thrudb services to be partitioned off and scaled horizontally.  
-It sits between client and servers partitioning and aggregating writes and reads respectivly.
+It sits between client and servers partitioning and aggregating writes and reads respectively.
 
-This system is completely asyncronus and takes advantage of  
-Thrift's distinct send and recieve methods for each service call. 
+This system is completely asynchronous and takes advantage of  
+Thrift's distinct send and receive methods for each service call. 
 
-Below is a digram of all Thrudb services working together.
+Below is a diagram of all Thrudb services working together.
 
 \includegraphics[width=3.00in]{Throxy.eps}
 
@@ -269,9 +269,9 @@ By no means is this the required setup.
 \section{Replication and Multi-Mastership}
 
 Thrudoc and Thrucene both provide replication, for redundancy, and multi-master writes, for client simplicity, using 
-Spread.  Spread was written to simplify building services that can syncronize with other instances to offer high availibility.  
+Spread.  Spread was written to simplify building services that can synchronize with other instances to offer high availability.  
 
-If Spread usage is enabled, your Thrudb services will communicate with eachother via a Spread group and keep syncronized using two phased commits.
+If Spread usage is enabled, your Thrudb services will communicate with each other via a Spread group and keep synchronized using two phased commits.
 
 You define a Spread group to join and the minimum number of cohorts required for writes to succeed.  As usual, this can be turned off. 
 
@@ -287,16 +287,16 @@ Memcached is well known as the best distributed caching service (period).
 It lets the client distribute documents across instances rather than try to maintain document locations itself. 
 It also offers compression and great stability.
    
-The memcached client used by Thrudb is intended to support multiple hashing algorithums for disributing documents around the cache.
-Consistant hashing\footnote{See \url{http://en.wikipedia.org/wiki/Consistent_hashing}} is the recommended since it provides highest hit rate. 
+The memcached client used by Thrudb is intended to support multiple hashing algorithms for distributing documents around the cache.
+Consistent hashing\footnote{See \url{http://en.wikipedia.org/wiki/Consistent_hashing}} is the recommended since it provides highest hit rate. 
 
 Also, Memcached is currently used as the transport mechanism for replication as large documents would bog down Spread.
 
 \section{Redo logging and Backup}
 
 Redo logs are used for recovery purposes.  
-For example, if you have three instances of Thrudoc recplication in the same group and one instance goes down, when it comes back up, 
-one of the other instances will replay it's redo log from the point the instance died to bring it back upto sync before it is
+For example, if you have three instances of Thrudoc replication in the same group and one instance goes down, when it comes back up, 
+one of the other instances will replay it's redo log from the point the instance died to bring it back up to sync before it is
 officially online.
   
 Thrift has a built in file logging facility that makes it simple to create redo logs.
@@ -321,7 +321,7 @@ This bloom filter can be recreated from the document source if corrupted.
 \section{Thanks}
 
 I'd like to thank the open source community for providing such great software.  
-It has made an ambitious project like this somthing one person can accomplish.
+It has made an ambitious project like this something one person can accomplish.
 
 I'd also like to thank Amazon web services for providing affordable and scalable
 computing resources and storage.
