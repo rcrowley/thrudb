@@ -14,7 +14,7 @@ service Thrudoc
         bool         remove(1:string id)            throws(ThrudocException e),
         string       fetch(1:string id),
 
-#        list<string> fetchAllIds(),
+        list<string> fetchIds(1:i32 offset, 2:i32 limit),
 
         bool         removeList(1:list<string> ids) throws(ThrudocException e),
         list<string> fetchList(1:list<string> ids)

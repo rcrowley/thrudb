@@ -9,8 +9,8 @@ target: all
 # Tools
 THRIFT = /usr/local/bin/thrift
 
-all: ../Service.Thrift
-	$(THRIFT) -perl ../Service.Thrift
+all: ../../Thrudoc.thrift
+	$(THRIFT) -perl ../../Thrudoc.thrift
 
 clean:
 	rm -fr gen-perl

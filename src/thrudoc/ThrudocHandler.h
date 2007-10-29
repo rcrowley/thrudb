@@ -30,6 +30,7 @@ class ThrudocHandler : virtual public ThrudocIf {
   bool remove(const std::string &id);
   void fetch(std::string &_return, const std::string &id);
 
+  void fetchIds(std::vector<std::string> &_return, const int32_t offset, int32_t limit);
 
   bool removeList(const std::vector<std::string> &ids);
   void fetchList(std::vector<std::string> &_return, const std::vector<std::string> &ids);

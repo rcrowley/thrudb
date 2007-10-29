@@ -111,6 +111,50 @@ void ThrudocHandler::fetch(std::string &_return, const std::string &id)
 
     //yay
     _return = data;
+}
+
+void ThrudocHandler::fetchIds(std::vector<std::string> &_return, const int32_t offset, const int32_t limit)
+{
+
+    string doc_root = ConfigManager->read<string>("DOC_ROOT");
+
+
+    string     idx_file = doc_root + "/bloom.idx";
+    struct stat idx_stat;
+    bool     idx_exists = file_exists( idx_file, idx_stat );
+
+
+    std::ifstream infile;
+    infile.open(idx_file.c_str());
+    if (!infile.is_open())
+    {
+        cerr<<"Error: can't open bloom filter index";
+        return;
+    }
+
+    int count = 0;
+
+    if( idx_stat.st_size > 0)
+        count = (int)(idx_stat.st_size / (UUID_LENGTH+1));
+
+
+    if(offset > count)
+        return;
+
+    //Get to offset
+    infile.seekg(offset*(UUID_LENGTH+1),ios::beg);
+
+    int start = (offset+limit) < count ? 0 : offset;
+    int end   = (offset+limit) < count ? limit : count;
+
+
+    for(int i=start; i<end; i++){
+        string line;
+
+        getline(infile, line);
+
+        _return.push_back(line);
+    }
 
 }
 
