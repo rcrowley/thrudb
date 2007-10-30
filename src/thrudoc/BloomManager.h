@@ -17,7 +17,7 @@
 #include <thrift/concurrency/Mutex.h>
 #include <thrift/concurrency/Monitor.h>
 
-#include "bloom_filter.h"
+class bloom_filter;
 
 #define UUID_LENGTH 36
 //Singleton class for bloom filter

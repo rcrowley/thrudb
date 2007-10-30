@@ -15,6 +15,10 @@
 #include <uuid/uuid.h>
 
 using namespace std;
+using namespace log4cxx;
+
+LoggerPtr ThrudocHandler::logger(Logger::getLogger("ThrudocHandler"));
+
 
 ThrudocHandler::ThrudocHandler( boost::shared_ptr<ThrudocBackend> b )
 {
@@ -84,6 +88,8 @@ bool ThrudocHandler::remove(const std::string &id)
 void ThrudocHandler::fetch(std::string &_return, const std::string &id)
 {
 
+    LOG4CXX_DEBUG(logger,"Entering fetch");
+
     //Check for valid
     if( !this->isValidID(id) )
         return;
@@ -93,6 +99,7 @@ void ThrudocHandler::fetch(std::string &_return, const std::string &id)
     if( !BloomManager->exists(id) )
         return;
 
+    LOG4CXX_DEBUG(logger,"Checked Bloom");
 
     //check cache
     string data = memd->get(id);
@@ -103,6 +110,8 @@ void ThrudocHandler::fetch(std::string &_return, const std::string &id)
         return;
     }
 
+
+    LOG4CXX_DEBUG(logger,"Reading from disk");
     //read
     data = backend->read(id);
 

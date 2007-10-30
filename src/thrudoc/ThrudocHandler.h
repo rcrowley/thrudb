@@ -16,6 +16,8 @@
 
 #include <boost/smart_ptr.hpp>
 #include <string>
+#include <log4cxx/logger.h>
+
 
 using namespace facebook::thrift;
 using namespace thrudoc;
@@ -45,6 +47,8 @@ class ThrudocHandler : virtual public ThrudocIf {
 
   std::string genNewID();
 
+
+  static log4cxx::LoggerPtr logger;
 };
 
 

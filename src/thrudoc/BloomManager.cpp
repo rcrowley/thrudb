@@ -16,6 +16,7 @@
 #include <transport/TFileTransport.h>
 #include <protocol/TBinaryProtocol.h>
 
+#include "bloom_filter.hpp"
 
 #include "ConfigFile.h"
 #include "utils.h"
