@@ -9,7 +9,6 @@ thrudoc_SOURCES=  gen-cpp/Thrudoc.cpp \
 		  gen-cpp/Redo_types.cpp \
 		  gen-cpp/Redo_constants.cpp \
 		  src/common/memcache++.cpp \
-		  src/thrudoc/bloom_filter.cpp \
                   src/thrudoc/s3_glue.cpp \
 		  src/thrudoc/base64.cpp \
 		  src/thrudoc/main.cpp \

@@ -15,6 +15,7 @@
 #include <vector>
 #include <iostream>
 #include <uuid/uuid.h>
+#include <openssl/md5.h>
 
 inline bool file_exists( std::string filename )
 {
@@ -72,6 +73,56 @@ inline std::string generateUUID()
     uuid_unparse_lower(uuid, uuid_str);
 
     return uuid_str;
+}
+
+
+//MD5 right padded to be same size as UUID
+inline bool isMD5( const char *id ){
+
+    if(strlen(id) != 36)
+        return false;
+
+    //lame check
+    const char *end = id+32;
+
+    if(strcmp(end,"1977") != 0)
+        return false;
+
+
+    for(int i=0; i<32; i++){
+        char c = id[i];
+
+        if( !(isdigit(c)||c=='a'||c=='b'||c=='c'||c=='d'||c=='e'||c=='f'))
+            return false;
+    }
+
+
+    return true;
+}
+
+
+inline std::string generateMD5( const std::string &id ){
+
+    std::string md5hex;
+
+    char hex[3];
+    memset(hex,0,sizeof(hex));
+
+    unsigned char md5[16];
+    memset(md5,0,sizeof(md5));
+
+    MD5((const unsigned char *)id.c_str(),id.length(),md5);
+
+    for(int i=0; i<16; i++){
+        sprintf(hex,"%02x", md5[i]);
+
+        md5hex += std::string(hex);
+    }
+
+    //rpad to 36
+    md5hex += std::string("1977");
+
+    return md5hex;
 }
 
 #endif

@@ -48,7 +48,10 @@ void ThrudocHandler::store(std::string &_return, const string &obj, const string
     if( this->isValidID( oldid ) ){
         id = oldid;
     } else {
-        id = generateUUID();
+        if(oldid.empty())
+            id = generateUUID();
+        else
+            id = generateMD5(oldid);
     }
 
     //Write it
@@ -66,11 +69,18 @@ void ThrudocHandler::store(std::string &_return, const string &obj, const string
     _return = id;
 }
 
-bool ThrudocHandler::remove(const std::string &id)
+bool ThrudocHandler::remove(const std::string &_id)
 {
-    //Check for valid
-    if( !this->isValidID(id) )
+    if( _id.empty() )
         return false;
+
+    string id;
+
+    //Check for valid
+    if( this->isValidID(_id) )
+        id = _id;
+    else
+        id = generateMD5(_id);
 
     //Check bloom filter
     if( !BloomManager->exists(id) )
@@ -85,10 +95,19 @@ bool ThrudocHandler::remove(const std::string &id)
     return true;
 }
 
-void ThrudocHandler::fetch(std::string &_return, const std::string &id)
+void ThrudocHandler::fetch(std::string &_return, const std::string &_id)
 {
+    if( _id.empty() )
+        return;
 
-    LOG4CXX_DEBUG(logger,"Entering fetch");
+    string id;
+
+    //Check for valid
+    if( this->isValidID(_id) )
+        id = _id;
+    else
+        id = generateMD5(_id);
+
 
     //Check for valid
     if( !this->isValidID(id) )
@@ -99,8 +118,6 @@ void ThrudocHandler::fetch(std::string &_return, const std::string &id)
     if( !BloomManager->exists(id) )
         return;
 
-    LOG4CXX_DEBUG(logger,"Checked Bloom");
-
     //check cache
     string data = memd->get(id);
 
@@ -110,8 +127,6 @@ void ThrudocHandler::fetch(std::string &_return, const std::string &id)
         return;
     }
 
-
-    LOG4CXX_DEBUG(logger,"Reading from disk");
     //read
     data = backend->read(id);
 
@@ -194,8 +209,9 @@ bool ThrudocHandler::isValidID(const std::string &id)
 
     uuid_t uuid;
 
-    if( uuid_parse(id.c_str(), uuid) != 0 )
+    if( uuid_parse(id.c_str(), uuid) != 0 && !isMD5( id.c_str() ) )
         return false;
+
 
     return true;
 }

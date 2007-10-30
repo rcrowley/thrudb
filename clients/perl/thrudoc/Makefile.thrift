@@ -2,7 +2,7 @@
 target: all
 
 # Tools
-THRIFT = /usr/local/bin/thrift
+THRIFT=/usr/local/bin/thrift
 
 all: ../../../Thrudoc.thrift
 	$(THRIFT) -perl ../../../Thrudoc.thrift
