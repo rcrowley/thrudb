@@ -145,7 +145,7 @@ void _RecoveryManager::startup( )
 
     //Open redo log
     redo_log = shared_ptr<TFileTransport>( new TFileTransport(redo_log_file) );
-    redo_log->setChunkSize(2 * 1024 * 1024);
+    //redo_log->setChunkSize(2 * 1024 * 1024);
 
     redo_log->seekToEnd();
 

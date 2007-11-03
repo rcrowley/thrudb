@@ -1,0 +1,108 @@
+Thrudb (Document Oriented Database Services)
+============================================
+
+T Jake Luciani (jake@3.rdrail.net)
+
+Thrudb is released under the New BSD Software License
+See accompanying LICENSE file
+
+Last Updated: Nov 2 2007
+
+Introduction
+============
+
+Thrudb is a set of simple services built on top of Facebook's
+Thrift framework that provides indexing and document storage
+services for building and scaling websites.
+
+Its purpose is to offer web developers flexible, fast and
+easy-to-use services which can enhance or replace
+traditional data storage and access layers.
+
+Please read the technical document for more information.
+
+
+Directory Structure
+===================
+
+thrudb/
+
+       src/
+         The code lives here
+
+         common/
+         thrudoc/
+         thrucene/
+         throxy/
+
+       test/
+         Contains tests and benchmarks for each of the services
+
+       clients/
+         Contains client libraries for target languages
+
+       scripts/
+         Contains helper scripts (see readme in that dir)
+
+       lib/
+         Contains perl modules needed for supporting scripts
+
+       tutorial/
+         Contains simple starter application
+
+       config-samples/
+         Contains config files for each service
+
+       doc/
+
+
+Requirements
+============
+
+Thrudb requires the following projects:
+
+Thrift    - http://developers.facebook.com/thrift
+            (use current svn for perl functionality, otherwise latest download is fine)
+
+Memcached - http://danga.com/memcached
+
+Spread    - http://spread.org (version >= 4.0)
+
+CLucene   - http://clucene.sf.net (see README.clucene)
+
+libcurl   - http://curl.haxx.se
+libexpat  - http://expat.sourceforge.net
+
+Brackup   - http://search.cpan.org/~bradfitz/Brackup/brackup (or use cpan)
+
+Server Installation
+===================
+
+./autogen.sh  #builds config scripts (needed only once)
+
+./configure   #checks for libraries, creates makefile
+              #see ./configure --help for more options
+
+make          #compiles code
+
+sudo make install  #installs code as root
+
+
+Client installation
+===================
+
+Client packages must be installed manually using build tools
+better suited to those languages
+
+Look for the README file in the client/service/<language>/ folder for more details on the
+installation of each client language
+
+
+Resources
+=========
+
+More information about Thrudb can found at:
+
+       http://thrudb.googlecode.com
+
+

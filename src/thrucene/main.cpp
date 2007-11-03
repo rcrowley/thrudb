@@ -103,81 +103,92 @@ int main(int argc, char **argv) {
         usage();
     }
 
-    //Read da config
-    ConfigManager->readFile( conf_file );
+    try{
+        //Read da config
+        ConfigManager->readFile( conf_file );
 
-    string                       index_root;
-    map<string,vector<string> >  indexes;
-    int                          thread_count;
-    int                          server_port;
+        string                       index_root;
+        map<string,vector<string> >  indexes;
+        int                          thread_count;
+        int                          server_port;
 
-    read_config(server_port,thread_count,index_root,indexes);
+        read_config(server_port,thread_count,index_root,indexes);
 
-    if(indexes.empty())
-    {
-        cerr<<"Bad or missing config file"<<endl;
-        exit(-1);
-    }
+        if(indexes.empty())
+        {
+            cerr<<"Bad or missing config file"<<endl;
+            exit(-1);
+        }
 
-    LOG4CXX::configure(conf_file);
+        LOG4CXX::configure(conf_file);
 
-    setlocale(LC_CTYPE, "en_US.utf8");  //unicode support
+        setlocale(LC_CTYPE, "en_US.utf8");  //unicode support
 
-    //This initializes the Indexes
-    LuceneManager->startup(index_root, indexes);
-
-
-    LOG4CXX_INFO(logger, "Starting up");
+        //This initializes the Indexes
+        LuceneManager->startup(index_root, indexes);
 
 
-    //Take backups
-    RecoveryManager->startup();
-
-    //Spread baby
-    SpreadManager->startup();
+        LOG4CXX_INFO(logger, "Starting up");
 
 
-    shared_ptr<TProtocolFactory>  protocolFactory  (new TBinaryProtocolFactory());
-    shared_ptr<ThruceneHandler>   handler          (new ThruceneHandler());
-    shared_ptr<TProcessor>        processor        (new ThruceneProcessor(handler));
+        //Take backups
+        RecoveryManager->startup();
+
+        //Spread baby
+        SpreadManager->startup();
 
 
-    SpreadManager->setTaskFactory( boost::shared_ptr<SpreadTaskFactory>(new ThruceneSpreadTaskFactory()) );
-
-    shared_ptr<ThreadManager> threadManager =
-        ThreadManager::newSimpleThreadManager(thread_count);
-
-    shared_ptr<PosixThreadFactory> threadFactory =
-        shared_ptr<PosixThreadFactory>(new PosixThreadFactory());
-
-    threadManager->threadFactory(threadFactory);
-    threadManager->start();
+        shared_ptr<TProtocolFactory>  protocolFactory  (new TBinaryProtocolFactory());
+        shared_ptr<ThruceneHandler>   handler          (new ThruceneHandler());
+        shared_ptr<TProcessor>        processor        (new ThruceneProcessor(handler));
 
 
-    if(nonblocking){
+        SpreadManager->setTaskFactory( boost::shared_ptr<SpreadTaskFactory>(new ThruceneSpreadTaskFactory()) );
 
-        TNonblockingServer server(processor,
-                                  protocolFactory,
-                                  server_port,threadManager);
+        shared_ptr<ThreadManager> threadManager =
+            ThreadManager::newSimpleThreadManager(thread_count);
 
-        cerr<<"Starting the server...\n";
-        server.serve();
-        cerr<<"Server stopped."<<endl;
+        shared_ptr<PosixThreadFactory> threadFactory =
+            shared_ptr<PosixThreadFactory>(new PosixThreadFactory());
 
-    } else {
+        threadManager->threadFactory(threadFactory);
+        threadManager->start();
 
-        shared_ptr<TServerTransport>  serverTransport (new TServerSocket(server_port));
-        shared_ptr<TTransportFactory> transportFactory(new TBufferedTransportFactory());
 
-        TThreadPoolServer server(processor,
-                                 serverTransport,
-                                 transportFactory,
-                                 protocolFactory,
-                                 threadManager);
+        if(nonblocking){
 
-        cerr<<"Starting the server...\n";
-        server.serve();
-        cerr<<"Server stopped."<<endl;
+            TNonblockingServer server(processor,
+                                      protocolFactory,
+                                      server_port,threadManager);
+
+            cerr<<"Starting the server...\n";
+            server.serve();
+            cerr<<"Server stopped."<<endl;
+
+        } else {
+
+            shared_ptr<TServerTransport>  serverTransport (new TServerSocket(server_port));
+            shared_ptr<TTransportFactory> transportFactory(new TBufferedTransportFactory());
+
+            TThreadPoolServer server(processor,
+                                     serverTransport,
+                                     transportFactory,
+                                     protocolFactory,
+                                     threadManager);
+
+            cerr<<"Starting the server...\n";
+            server.serve();
+            cerr<<"Server stopped."<<endl;
+        }
+
+    }catch(std::exception e){
+        cerr<<"Caught Fatal Exception: "<<e.what()<<endl;
+    }catch(ConfigFile::file_not_found e){
+        cerr<<"ConfigFile Fatal Exception: "<<e.filename<<endl;
+    }catch(ConfigFile::key_not_found e){
+        cerr<<"ConfigFile Missing Required Key: "<<e.key<<endl;
+    }catch(...){
+        cerr<<"Caught unknown exception"<<endl;
     }
 
     LuceneManager->destroy();

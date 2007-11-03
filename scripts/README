@@ -1,0 +1,8 @@
+Thrudb Scripts
+==============
+
+snapshot - a script used to backup and restore thrudb services.
+           Currently a wrapper around brackup
+
+rebuild_bloom.pl - a script used to recreate a lost or corrupted thrudoc bloom filter
+
