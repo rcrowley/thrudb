@@ -1,6 +1,6 @@
-bin_PROGRAMS = thrudoc thrucene thrudoc_bench 
+bin_PROGRAMS = thrudoc thrucene thrudoc_bench
 
-OBJDIR = obj
+thrudoc_OBJDIR = obj
 
 thrudoc_SOURCES=  gen-cpp/Thrudoc.cpp \
                   gen-cpp/Thrudoc_types.cpp \
@@ -33,7 +33,7 @@ thrudoc_bench_SOURCES=  gen-cpp/Thrudoc.cpp \
 			src/thrudoc/bench.cpp
 
 thrudoc_bench_CXXFLAGS = -Wall -I/usr/local/include/thrift -I/usr/include/thrift -Isrc -Igen-cpp -Isrc/common -Isrc/thrudoc
-thrudoc_bench_LDFLAGS = -Wall -L/usr/local/lib -luuid -lthrift -lthrift -levent -ltspread-core -llog4cxx
+thrudoc_bench_LDFLAGS = -Wall -L/usr/local/lib -luuid -lthrift -levent -ltspread-core -llog4cxx
 
 
 ###########################################################################
@@ -81,3 +81,8 @@ gen-cpp/Thrucene.cpp:
 
 clean-local:
 	rm -fr gen-cpp
+
+install-exec-hook:
+	cp -r $(top_srcdir)/lib ${libdir}
+	cp -r $(top_srcdir)/scripts ${prefix}
+

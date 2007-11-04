@@ -1,8 +1,11 @@
 AC_PREREQ(2.59)
 
-AC_INIT(thrucene, 1.0)
+AC_INIT(thrudb, 0.1)
 
 AM_INIT_AUTOMAKE
+
+AC_PREFIX_DEFAULT(/usr/local/thrudb)
+
 
 # Checks for programs.
 AC_PROG_CXX
