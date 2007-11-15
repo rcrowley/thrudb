@@ -187,6 +187,8 @@ int main(int argc, char **argv) {
         cerr<<"ConfigFile Fatal Exception: "<<e.filename<<endl;
     }catch(ConfigFile::key_not_found e){
         cerr<<"ConfigFile Missing Required Key: "<<e.key<<endl;
+    }catch(MemcacheException e){
+        cerr<<"Memcached Exception: is it running?"<<endl;
     }catch(...){
         cerr<<"Caught unknown exception"<<endl;
     }
