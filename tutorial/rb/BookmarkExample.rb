@@ -230,7 +230,7 @@ class BookmarkManager
         bookmarks.each { |b|
               print i.to_s+" \ttitle :\t"+b.title+"\n"
               print "\turl   :\t("+b.url+")\n"
-              #print "\ttags  :\t("+b.tags+")\n"
+              print "\ttags  :\t("+b.tags+")\n"
               i += 1
         }
     end
