@@ -1,0 +1,117 @@
+#!/usr/bin/perl
+
+#
+# Startup/shutdown script
+#
+
+
+#
+# Locations of thrudb services
+#
+use constant THRUDOC  => {
+    name     => "Thrudoc",
+    bin      => "../thrudoc",
+    conf     => "thrudoc.conf",
+    pidfile  => "thrudoc.pid"
+};
+
+use constant THRUCENE => {
+    name     => "Thrucene",
+    bin      => "../thrucene",
+    conf     => "thrucene.conf",
+    pidfile  => "thrucene.pid"
+};
+
+
+# command
+#
+my $cmd = shift;
+
+
+die usage() unless defined $cmd;
+
+
+if ($cmd eq "start") {
+
+        start(THRUCENE());
+        start(THRUDOC());
+
+} elsif ($cmd eq "stop") {
+
+        stop(THRUCENE());
+        stop(THRUDOC());
+
+} else {
+
+    die usage();
+
+}
+
+sub stop
+{
+    my $conf = shift;
+
+    if( ! -f $conf->{pidfile} ){
+        print $conf->{name}." not running\n";
+        return;
+    }
+
+    open(F,$conf->{pidfile}) or die "$!";
+    chomp(my $pid = <F>);
+    close(F);
+    unlink($conf->{pidfile});
+
+    print "$conf->{name} stopped [$pid]\n";
+
+    kill 1, $pid;
+
+}
+
+
+sub start {
+
+    my $conf = shift;
+
+    die $conf->{bin}." missing" unless -x $conf->{bin};
+
+    #check if running
+    if( -f $conf->{pidfile} ){
+        open(F,THRUCENE->{pidfile}) or die "crap: $!";
+        my $file = <F>;
+        close(F);
+
+        print "$conf->{name} already started on: ", $file,"\n";
+        return;
+    }
+
+
+    #startup
+    my $pid = fork();
+
+    die "fork failed!\n" unless defined $pid;
+
+    if ($pid == 0) {
+
+        my $cmd = $conf->{bin}." -f ".$conf->{conf};
+
+        exec($cmd);
+
+        exit 0;
+    }
+
+
+    #Save pid
+    open(F,">$conf->{pidfile}") or die "can't write to $conf->{pidfile}: $!";
+    print F $pid, "\n";
+    close(F);
+
+    print "$conf->{name} started [$pid]\n";
+}
+
+
+
+sub usage {
+    print "must provide: 'stop' or 'start' arguments\n";
+
+    exit(-1);
+}

@@ -1,0 +1,37 @@
+This is a simple, but useless, tutorial showing the basic functionality of
+thrudb.  The tutorial loads a set of del.icio.us bookmarks(tab separated)
+searches/sorts them, displays them, and deletes them
+
+Heres how to run it:
+########################################
+
+#first make thrudb in parent directory
+
+#then in this directory run
+
+make
+
+#start up thrudb test server
+./thrudbctl start
+
+cd rb; ruby BookmarkExample.rb
+
+#or
+
+cd perl; perl BookmarkExample.rb
+
+#finally
+
+./thrudbctl stop
+
+############################################
+
+This should be enough to get you started with thrudb
+
+I'll be adding code in other languages too (java,php).
+
+Keep in mind that this tutorial uses thrift to handle bookmarks.
+you could use just plain xml or another serializable format to
+implement this in thrudb too.
+
+-Jake

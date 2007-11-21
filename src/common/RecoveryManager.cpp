@@ -137,7 +137,7 @@ void _RecoveryManager::startup( )
 
 
     //Make sure we are uptodate
-    if( !this->isLatestSnapshot() ){
+    if( ConfigManager->read<bool>("SNAPSHOT_ENABLED") && !this->isLatestSnapshot() ){
         throw std::runtime_error("This instance is out of date, please manually update it");
     }
 
