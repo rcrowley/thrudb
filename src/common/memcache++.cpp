@@ -252,7 +252,7 @@ map< string, map<string,string> > Memcache::getStats()
         _sock_puts(sock, "stats\r\n");
 
         string line;
-        unsigned int pos;
+        std::string::size_type pos;
 
         line = _sock_gets(sock);
         pos = line.find(" ", 5);
@@ -293,7 +293,7 @@ int Memcache::_set(string cmd_type, string &key, const string &value, const int 
 {
 
     //Make sure the key has no spaces
-    unsigned int pos=0;
+    std::string::size_type pos=0;
     while( (pos = key.find(" ",pos) ) != string::npos ){
         key[pos] = '_';
     }
@@ -338,7 +338,7 @@ int Memcache::_set(string cmd_type, string &key, const string &value, const int 
 int Memcache::remove( string key, unsigned int time )
 {
     //Make sure the key has no spaces
-    unsigned int pos;
+    std::string::size_type pos;
     while( (pos = key.find(" ") ) != string::npos ){
         key[pos] = '_';
     }
@@ -396,7 +396,7 @@ int Memcache::decr( string key, const unsigned int value )
 int Memcache::_incr( const std::string cmd_type, std::string &key, const unsigned int value )
 {
     //Make sure the key has no spaces
-    unsigned int pos;
+    std::string::size_type pos;
     while( (pos = key.find(" ") ) != string::npos ){
         key[pos] = '_';
     }
@@ -424,10 +424,10 @@ string Memcache::get(string key)
 {
 
   string res, r_key, r_flags;
-  unsigned int r_bytes, pos, pos2,pos3;
+  std::string::size_type r_bytes, pos, pos2,pos3;
 
   //Make sure the key has no spaces
-  unsigned int spos = 0;
+  std::string::size_type spos = 0;
   while( (spos = key.find(" ",spos) ) != string::npos ){
       key[spos] = '_';
   }

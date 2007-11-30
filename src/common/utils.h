@@ -46,8 +46,8 @@ inline std::vector<std::string> split(std::string str, std::string delim)
 {
     std::vector<std::string> vec;
 
-    unsigned int pos  = 0;
-    unsigned int next = 0;
+    std::string::size_type pos  = 0;
+    std::string::size_type next = 0;
 
     while( (next = str.substr(pos).find(delim) ) != std::string::npos ){
 
