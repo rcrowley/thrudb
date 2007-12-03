@@ -175,6 +175,8 @@ int Memcache::_get_sock( const string &key )
 
 int Memcache::_connect(const string &server)
 {
+  facebook::thrift::concurrency::Guard g(m);
+
   string host;
   int port;
   int pos;
@@ -219,6 +221,7 @@ int Memcache::_connect(const string &server)
 
 int Memcache::disconnect(const string &server)
 {
+    facebook::thrift::concurrency::Guard g(m);
 
     if( servers.count(server) == 0 ){
         return -1;
@@ -507,12 +510,12 @@ string Memcache::get(string key)
 
 string Memcache::_sock_gets(int sockfd, unsigned int limit)
 {
+  facebook::thrift::concurrency::Guard g(m);
+
   string str("");
   char buf[BUFSIZ+1];
   int this_read;
   int total_read = 0;
-
-  facebook::thrift::concurrency::Guard g(m);
 
   memset(buf,0,BUFSIZ+1);
 
@@ -540,7 +543,6 @@ string Memcache::_sock_gets(int sockfd, unsigned int limit)
           return str;
   }
 
-  exit(-1);
   return str;
 }
 
@@ -557,10 +559,10 @@ int Memcache::_sock_puts(int sockfd, string str)
 
 int Memcache::_sock_write(int sockfd, const char* buf, size_t count)
 {
+  facebook::thrift::concurrency::Guard g(m);
+
   size_t bytes_sent = 0;
   int this_write;
-
-  facebook::thrift::concurrency::Guard g(m);
 
   while (bytes_sent < count) {
     do {
