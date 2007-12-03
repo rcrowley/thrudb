@@ -28,11 +28,29 @@ LoggerPtr ThrudocDiskBackend::logger(Logger::getLogger("ThrudocDiskBackend"));
 
 static Mutex global_mutex = Mutex();
 
-int safe_mkdir(const char* path, long mode)
+static int safe_mkdir(const char* path, long mode)
 {
     Guard g(global_mutex);
 
     return mkdir(path,mode);
+}
+
+static map<string, bool> global_directories = map<string,bool>();
+
+static bool safe_directory_exists( string path )
+{
+    Guard g(global_mutex);
+
+    if( global_directories.count(path) > 0 ) {
+        return true;
+    }
+
+    if( directory_exists( path ) ){
+        global_directories[path] = true;
+        return true;
+    }
+
+    return false;
 }
 
 ThrudocDiskBackend::ThrudocDiskBackend()
@@ -210,9 +228,9 @@ void ThrudocDiskBackend::_write( const string &doc, const string &id )
     string dir_p2 = id.substr(2,2);
     string dir_p3 = id.substr(4,2);
 
-    if( !directory_exists(string(doc_root+"/"+dir_p1+"/"+dir_p2+"/"+dir_p3)) ){
+    if( !safe_directory_exists(string(doc_root+"/"+dir_p1+"/"+dir_p2+"/"+dir_p3)) ){
 
-        if( !directory_exists(doc_root+"/"+dir_p1) )
+        if( !safe_directory_exists(doc_root+"/"+dir_p1) )
         {
             if( 0 != safe_mkdir( string(doc_root+"/"+dir_p1).c_str(), 0777L ) ){
                 ThrudocException e;
@@ -221,7 +239,7 @@ void ThrudocDiskBackend::_write( const string &doc, const string &id )
             }
         }
 
-        if( !directory_exists(doc_root+"/"+dir_p1+"/"+dir_p2) )
+        if( !safe_directory_exists(doc_root+"/"+dir_p1+"/"+dir_p2) )
         {
             if( 0 != safe_mkdir( string(doc_root+"/"+dir_p1+"/"+dir_p2).c_str(), 0777L ) )
                 throw ThrudocException();
