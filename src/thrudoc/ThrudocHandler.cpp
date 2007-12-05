@@ -11,6 +11,7 @@
 #include "BloomManager.h"
 #include "ConfigFile.h"
 #include "utils.h"
+#include "MemcacheHandle.h"
 
 #include <uuid/uuid.h>
 
@@ -19,22 +20,12 @@ using namespace log4cxx;
 
 LoggerPtr ThrudocHandler::logger(Logger::getLogger("ThrudocHandler"));
 
+#define memd MemcacheHandle::instance()
 
 ThrudocHandler::ThrudocHandler( boost::shared_ptr<ThrudocBackend> b )
 {
     this->backend = b;
-
-    memd                   = boost::shared_ptr<Memcache>( new Memcache() );
-    string memd_servers    = ConfigManager->read<string>( "MEMCACHED_SERVERS" );
-    vector<string> servers = split( memd_servers, "," );
-
-    for(unsigned int i=0; i<servers.size(); i++){
-        memd->addServer( servers[i] );
-    }
-
-    this->backend->setCacheHandle( memd );
 }
-
 
 void ThrudocHandler::store(std::string &_return, const string &obj, const string &oldid)
 {

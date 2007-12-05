@@ -12,7 +12,7 @@
 #include "utils.h"
 #include "SpreadManager.h"
 #include "TransactionManager.h"
-
+#include "MemcacheHandle.h"
 #include "s3_glue.h"
 
 #include <fstream>
@@ -25,6 +25,8 @@ using namespace log4cxx;
 using namespace facebook::thrift::transport;
 using namespace facebook::thrift::protocol;
 using namespace facebook::thrift::concurrency;
+
+#define memd MemcacheHandle::instance()
 
 LoggerPtr ThrudocS3Backend::logger(Logger::getLogger("ThrudocS3Backend"));
 

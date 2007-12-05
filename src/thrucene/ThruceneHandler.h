@@ -20,8 +20,6 @@
 #include <thrift/transport/TTransportUtils.h>
 #include <thrift/protocol/TBinaryProtocol.h>
 
-#include "memcache++.h"
-
 using namespace thrucene;
 using namespace lucene::index;
 using namespace lucene::store;
@@ -77,7 +75,6 @@ class ThruceneHandler : virtual public thrucene::ThruceneIf
     standard::StandardAnalyzer        analyzer;
 
 
-    boost::shared_ptr<Memcache>      memd;
     boost::shared_ptr<facebook::thrift::transport::TMemoryBuffer>  transport;
     boost::shared_ptr<thrucene::ThruceneClient>                    faux_client;
 

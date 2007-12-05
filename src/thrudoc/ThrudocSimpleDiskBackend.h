@@ -23,6 +23,7 @@ class ThrudocSimpleDiskBackend : public ThrudocDiskBackend
     void remove(const std::string &id ){
         this->_remove(id);
     };
+
 };
 
 #endif

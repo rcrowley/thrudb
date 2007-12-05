@@ -30,6 +30,7 @@
 #include "ConfigFile.h"
 #include "utils.h"
 #include "LOG4CXX.h"
+#include "memcache++.h"
 
 #include "log4cxx/logger.h"
 

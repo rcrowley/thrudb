@@ -11,7 +11,6 @@
 #define _THRUDOC_BACKEND_H_
 
 #include <string>
-#include <memcache++.h>
 #include <boost/shared_ptr.hpp>
 
 /**
@@ -29,12 +28,6 @@ class ThrudocBackend
     virtual std::string read  (const std::string &id ) = 0;
     virtual void write (const std::string &id, const std::string &data) = 0;
     virtual void remove(const std::string &id ) = 0;
-
-    void setCacheHandle( boost::shared_ptr<Memcache> memd ){ this->memd = memd; };
-
- protected:
-    boost::shared_ptr<Memcache> memd;
-
 };
 
 

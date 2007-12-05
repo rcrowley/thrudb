@@ -12,7 +12,6 @@
 
 #include "Thrudoc.h"
 #include "ThrudocBackend.h"
-#include "memcache++.h"
 
 #include <boost/smart_ptr.hpp>
 #include <string>
@@ -38,12 +37,12 @@ class ThrudocHandler : virtual public ThrudocIf {
   void fetchList(std::vector<std::string> &_return, const std::vector<std::string> &ids);
 
  private:
+  ThrudocHandler(){};
 
   bool isValidID  (const std::string &id);
 
   boost::shared_ptr<ThrudocBackend> backend;
 
-  boost::shared_ptr<Memcache>      memd;
 
   std::string genNewID();
 

@@ -47,8 +47,8 @@ class MemcacheInternalException   : public MemcacheException{};
 class Memcache
 {
  public:
-  Memcache(void);
-  ~Memcache(void);
+  Memcache();
+  ~Memcache();
 
   void addServers (std::map<std::string, unsigned int> &server_and_weights);
   void addServers (const std::vector<std::string> &servers);

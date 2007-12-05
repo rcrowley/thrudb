@@ -22,7 +22,7 @@
 #include <log4cxx/logger.h>
 
 #include "TransactionManager.h"
-
+#include "MemcacheHandle.h"
 
 using namespace std;
 using namespace boost;
@@ -36,6 +36,7 @@ using namespace log4cxx;
 _SpreadManager* _SpreadManager::pInstance = 0;
 Mutex           _SpreadManager::_mutex    = Mutex();
 
+#define memd    MemcacheHandle::instance()
 #define OFFLINE -1
 #define ONLINE   1
 
@@ -82,17 +83,6 @@ void _SpreadManager::startup()
     spread_enabled = ConfigManager->read<bool>("SPREAD_ENABLED",false);
 
     if(spread_enabled){
-
-        memd = boost::shared_ptr<Memcache>(new Memcache());
-
-        string memd_servers    = ConfigManager->read<string>( "MEMCACHED_SERVERS" );
-        vector<string> servers = split( memd_servers, "," );
-
-        for(unsigned int i=0; i<servers.size(); i++){
-            memd->addServer( servers[i] );
-        }
-
-
         thread_factory = boost::shared_ptr<PosixThreadFactory>(new PosixThreadFactory());
     }
 

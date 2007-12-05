@@ -13,14 +13,15 @@
 #include "TransactionManager.h"
 #include "utils.h"
 #include "LOG4CXX.h"
+#include "MemcacheHandle.h"
 #include <string>
 
-
 using namespace std;
-
 using namespace facebook::thrift::transport;
 using namespace facebook::thrift::protocol;
 using namespace facebook::thrift::concurrency;
+
+#define memd MemcacheHandle::instance()
 
 inline wstring build_wstring( const string &str )
 {
@@ -99,15 +100,6 @@ ThruceneHandler::ThruceneHandler()
 
     faux_client = boost::shared_ptr<ThruceneClient>(new ThruceneClient(protocol));
 
-
-    //Connect to memcached
-    memd                   = boost::shared_ptr<Memcache>( new Memcache() );
-    string memd_servers    = ConfigManager->read<string>( "MEMCACHED_SERVERS" );
-    vector<string> servers = split( memd_servers, "," );
-
-    for(unsigned int i=0; i<servers.size(); i++){
-        memd->addServer( servers[i] );
-    }
 }
 
 

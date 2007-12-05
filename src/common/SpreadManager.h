@@ -22,7 +22,6 @@
 #include <log4cxx/logger.h>
 
 #include "utils.h"
-#include "memcache++.h"
 #include "ConfigFile.h"
 #include "RecoveryManager.h"
 #include "Transaction.h"
@@ -133,8 +132,6 @@ private:
     boost::shared_ptr<facebook::thrift::concurrency::PosixThreadFactory>
         thread_factory;
 
-
-    boost::shared_ptr<Memcache> memd;
 
     // libevent Handler wrapper
     static void eventHandler(int _fd, short which, void* v) {

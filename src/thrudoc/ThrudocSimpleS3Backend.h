@@ -17,11 +17,12 @@ class ThrudocSimpleS3Backend : public ThrudocS3Backend
 {
  public:
     void write (const std::string &id, const std::string &data){
-        //this->_write(id,data);
+        //Since S3 is avail from all instances we only need the id to update
+        //the local bloom
     };
 
     void remove(const std::string &id ){
-        //this->_remove(id);
+
     };
 };
 

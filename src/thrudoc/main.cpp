@@ -30,7 +30,10 @@
 #include "RecoveryManager.h"
 #include "ConfigFile.h"
 #include "utils.h"
+#include "memcache++.h"
 
+#include "boost/shared_ptr.hpp"
+#include "boost/utility.hpp"
 
 #include "s3_glue.h"
 #include "ThrudocS3Backend.h"
