@@ -55,11 +55,18 @@ if test -f "${CURL_CONFIG}"; then
 else
       AC_MSG_WARN([curl-config not found, guessing at libcurl build settings])
 fi
-  
-AC_CHECK_HEADER([curl/curl.h])
-AC_CHECK_LIB([curl],[curl_global_init])
-AC_CHECK_HEADER([expat.h])
-AC_CHECK_LIB([expat],[XML_ParserCreate]) 
+
+  AC_CHECK_HEADER([curl/curl.h],,
+    AC_MSG_WARN([curl/curl.h not found])
+    exit -1)
+  AC_CHECK_LIB([curl],[curl_global_init],,
+    AC_MSG_WARN([Curl library corrupt])
+    exit -1)
+  AC_CHECK_HEADER([expat.h])
+  AC_CHECK_LIB([expat],[XML_ParserCreate],, 
+    AC_MSG_WARN([expat.h not found])
+    exit -1)
+
 
 #AC_SUBST(S3_BIN)
 
