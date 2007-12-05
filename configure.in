@@ -14,13 +14,19 @@ AC_PROG_CC
 AC_PROG_INSTALL
 
 AC_PATH_PROG(THRIFT, thrift, thrift, $PATH:/usr/local/bin:/usr/bin)
+AC_LANG(C++)
 
+#AC_CHECK_LIB(thriftnb, [], [], 
+#	AC_MSG_ERROR([You must install thrift; please install libraries and development files])
+#)
 
-AC_CHECK_LIB(clucene, [open], [], [
-        echo "Error! You need to install clucene."
-        exit -1
-        ])
-AC_CHECK_HEADERS([CLucene.h])
+AC_CHECK_LIB(clucene, [open], [], 
+	AC_MSG_ERROR([You must install clucene; please install libraries and development files])
+)
+
+AC_CHECK_HEADERS([CLucene.h],,
+	AC_MSG_ERROR([CLucene.h missing; please add clucene development files])
+)
 
 ################################################################
 ## Crypto
@@ -53,7 +59,8 @@ if test -f "${CURL_CONFIG}"; then
       LDFLAGS="`${CURL_CONFIG} --libs` $LDFLAGS"
       CPPFLAGS="`${CURL_CONFIG} --cflags` $CPPFLAGS"
 else
-      AC_MSG_WARN([curl-config not found, guessing at libcurl build settings])
+      AC_MSG_WARN([curl-config not found])
+      exit -1
 fi
 
   AC_CHECK_HEADER([curl/curl.h],,
