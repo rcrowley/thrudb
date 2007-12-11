@@ -1,5 +1,7 @@
 cpp_namespace thrucene
+php_namespace Thrucene
 perl_package  Thrucene
+java_package  Thrucene
 
 enum ExceptionClass
 {

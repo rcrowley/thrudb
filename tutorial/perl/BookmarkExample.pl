@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/bin/env perl
 
 use strict;
 use warnings;
@@ -247,23 +247,25 @@ sub remove_all
 
         $ids = $thrudoc->fetchIds($offset,$limit);
 
-        my @docs;
-        foreach my $id (@$ids){
-            my $rm = new Thrucene::RemoveMsg();
-            $rm->domain( THRUCENE_DOMAIN() );
-            $rm->index ( THRUCENE_INDEX()  );
-            $rm->docid($id);
+        if(@$ids > 0 ){
 
-            push(@docs, $rm);
+            my @docs;
+            foreach my $id (@$ids){
+                my $rm = new Thrucene::RemoveMsg();
+                $rm->domain( THRUCENE_DOMAIN() );
+                $rm->index ( THRUCENE_INDEX()  );
+                $rm->docid($id);
+
+                push(@docs, $rm);
+            }
+
+            $thrucene->removeList(\@docs);
+            $thrudoc->removeList($ids);
+
+            $offset += $limit;
+
+            $thrucene->commitAll();
         }
-
-        $thrucene->removeList(\@docs);
-        $thrudoc->removeList($ids);
-
-        $offset += $limit;
-
-        $thrucene->commitAll();
-
     }while(@$ids == $limit);
 
 

@@ -14,6 +14,7 @@
 #include "utils.h"
 #include "LOG4CXX.h"
 #include "MemcacheHandle.h"
+#include <cstdlib>
 #include <string>
 
 using namespace std;
@@ -38,12 +39,14 @@ inline wstring build_wstring( const string &str )
 
     while (c_str && size) {
         nchar = mbrtowc(&tmp_wchar, c_str, size, &ps);
+
         if (nchar == -1) {
             c_str++;
             size--;
             continue;
         }
 
+        //signals end of str
         if (nchar == 0)
             break;
 
@@ -254,22 +257,26 @@ void ThruceneHandler::_addList( const vector<DocMsg> &dv )
 
         lucene::document::Field *f;
 
+
         f = lucene::document::Field::Keyword( L"id", docid.c_str() );
 
         d->add(*f);
 
         for( unsigned int j=0; j<dv[i].fields.size(); j++){
-
+            LOG4CXX::DEBUG(dv[i].fields[j].name+":"+dv[i].fields[j].value);
             wstring key   = build_wstring( dv[i].fields[j].name   );
             wstring value = build_wstring( dv[i].fields[j].value );
 
 
             switch(dv[i].fields[j].stype){
                 case KEYWORD:
+                    LOG4CXX::DEBUG("Keyword");
                     f = lucene::document::Field::Keyword(key.c_str(),value.c_str());  break;
                 case TEXT:
+                    LOG4CXX::DEBUG("Text");
                     f = lucene::document::Field::Text(key.c_str(),value.c_str());     break;
                 default:
+                    LOG4CXX::DEBUG("UnStored");
                     f = lucene::document::Field::UnStored(key.c_str(),value.c_str()); break;
             };
 
@@ -515,7 +522,6 @@ void ThruceneHandler::queryList(vector<QueryResponse> &_return, const vector<Que
 
             assert( !q[i].query.empty() );
 
-            cerr<<q[i].query<<endl;
             LOG4CXX::DEBUG(q[i].query);
 
             wstring wquery = build_wstring(q[i].query);
@@ -564,13 +570,10 @@ void ThruceneHandler::queryList(vector<QueryResponse> &_return, const vector<Que
         }
 
 
-
         char buf[1024];
 
         QueryResponse r;
         r.total = h->length();
-
-
 
         int mlen = h->length();
 
@@ -592,8 +595,11 @@ void ThruceneHandler::queryList(vector<QueryResponse> &_return, const vector<Que
                     const wchar_t *id   = doc->get(_T("id"));
 
                     if(id == NULL){
+                        assert(id != NULL);
                         continue;
                     } else {
+
+
                         STRCPY_TtoA(buf,id,1024);
 
                         LOG4CXX::DEBUG("ID: "+string(buf));
@@ -605,8 +611,6 @@ void ThruceneHandler::queryList(vector<QueryResponse> &_return, const vector<Que
 
 
             } else {
-
-
 
                 for ( int j=q[i].offset;j<mlen && j<(q[i].offset+q[i].limit); j++ ) {
 
@@ -911,6 +915,8 @@ void ThruceneHandler::_commit(const string &domain, const string &index)
 {
     domain_index_locks idx_locks = LuceneManager->getIndexLocks();
     boost::shared_ptr<Mutex> mutex = idx_locks[ domain ][ index ];
+
+    LOG4CXX::DEBUG("Entering commit"+domain+"("+index+")");
 
     Guard guard(*mutex.get());
 

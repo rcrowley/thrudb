@@ -1,11 +1,12 @@
 cpp_namespace thrudoc
+php_namespace Thrudoc
 perl_package  Thrudoc
+java_package  Thrudoc
 
 exception ThrudocException
 {
         2: string what
 }
-
 
 service Thrudoc
 {

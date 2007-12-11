@@ -1,4 +1,6 @@
-perl_package Tutorial
+perl_package  Tutorial
+php_namespace Tutorial
+java_package  Tutorial
 
 #
 #Define bookmarks in thrift
