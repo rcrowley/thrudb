@@ -9,7 +9,7 @@
  * http://thrudb.googlecode.com
  *
  *
- * Memcache++ - A Simple C++ wrapper for libmemcached
+ * Memcache++ - A Simple c++ wrapper for libmemcached
  *
  *
  **/
@@ -44,6 +44,12 @@ class Memcache
     Memcache(){
         memc         = memcached_create(NULL);
         memc_servers = NULL;
+
+        //flags
+        memcached_behavior_set (memc,MEMCACHED_BEHAVIOR_NO_BLOCK,0);
+        memcached_behavior_set (memc,MEMCACHED_BEHAVIOR_TCP_NODELAY,0);
+        //  memcached_behavior_set (memc,MEMCACHED_BEHAVIOR_HASH,(void*)MEMCACHED_HASH_KETAMA);
+
     }
 
     ~Memcache(){
