@@ -28,6 +28,8 @@ AC_CHECK_HEADERS([CLucene.h],,
 	AC_MSG_ERROR([CLucene.h missing; please add clucene development files])
 )
 
+PKG_CHECK_MODULES(DEPS, libmemcached >= 0.8.0) AC_SUBST(DEPS_CFLAGS) AC_SUBST(DEPS_LIBS)
+
 ################################################################
 ## Crypto
 ###

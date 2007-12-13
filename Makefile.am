@@ -8,7 +8,6 @@ thrudoc_SOURCES=  gen-cpp/Thrudoc.cpp \
 		  gen-cpp/Redo.cpp \
 		  gen-cpp/Redo_types.cpp \
 		  gen-cpp/Redo_constants.cpp \
-		  src/common/memcache++.cpp \
                   src/thrudoc/s3_glue.cpp \
 		  src/thrudoc/base64.cpp \
 		  src/thrudoc/main.cpp \
@@ -25,7 +24,7 @@ thrudoc_SOURCES=  gen-cpp/Thrudoc.cpp \
 		  src/common/Transaction.cpp 
 
 thrudoc_CXXFLAGS = -Wall -I/usr/local/include/thrift -I/usr/include/thrift -Isrc/common -Igen-cpp -Isrc/thrudoc
-thrudoc_LDFLAGS = -Wall -L/usr/local/lib -luuid -lthrift -lthriftnb -levent -ltspread-core -llog4cxx
+thrudoc_LDFLAGS = -Wall -L/usr/local/lib -luuid -lthrift -lthriftnb -levent -ltspread-core -llog4cxx -lmemcached
 
 thrudoc_bench_SOURCES=  gen-cpp/Thrudoc.cpp \
 			gen-cpp/Thrudoc_types.cpp \
@@ -45,7 +44,6 @@ thrucene_SOURCES= gen-cpp/Thrucene.cpp \
 		  gen-cpp/Redo.cpp \
 		  gen-cpp/Redo_types.cpp \
 		  gen-cpp/Redo_constants.cpp \
-		  src/common/memcache++.cpp \
 		  src/thrucene/main.cpp \
                   src/common/ConfigFile.cpp \
                   src/thrucene/ThruceneHandler.cpp \
@@ -58,7 +56,7 @@ thrucene_SOURCES= gen-cpp/Thrucene.cpp \
 		  src/common/Transaction.cpp 
 
 thrucene_CXXFLAGS = -Wall -I/usr/local/include/thrift -I/usr/include/thrift -Isrc/common -Igen-cpp -Isrc/thrucene
-thrucene_LDFLAGS = -Wall -L/usr/local/lib -luuid -lthrift -lthriftnb -levent -ltspread-core -llog4cxx
+thrucene_LDFLAGS = -Wall -L/usr/local/lib -luuid -lthrift -lthriftnb -levent -ltspread-core -llog4cxx -lmemcached
 
 #thrucene_bench_SOURCES=  gen-cpp/Thrudoc.cpp \
 #			gen-cpp/Thrudoc_types.cpp \

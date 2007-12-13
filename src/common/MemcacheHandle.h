@@ -21,11 +21,9 @@ public:
            Memcache *m = new Memcache();
 
            std::string memd_servers    = ConfigManager->read<string>( "MEMCACHED_SERVERS" );
-           std::vector<std::string> servers = split( memd_servers, "," );
 
-           for(unsigned int i=0; i<servers.size(); i++){
-               m->addServer( servers[i] );
-           }
+           m->addServers( memd_servers );
+
            ptr = m;
            pthread_setspecific(memcache_key, m);
       }

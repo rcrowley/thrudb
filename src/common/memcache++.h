@@ -9,100 +9,110 @@
  * http://thrudb.googlecode.com
  *
  *
- * Memcache++ - A C++ client for memcached
+ * Memcache++ - A Simple C++ wrapper for libmemcached
  *
- * Derived from memcachedpp by Sergey Prikhodko
  *
  **/
+#include <iostream>
 #include <string>
 #include <vector>
-#include <iostream>
-#include <map>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netdb.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <unistd.h>
-
-#include <thrift/concurrency/Mutex.h>
-
-//Return codes
-#define MEMCACHE_STORED          0
-#define MEMCACHE_DELETED         0
-#define MEMCACHE_SUCCESS         0
-#define MEMCACHE_NOT_STORED     -1
-#define MEMCACHE_NOT_FOUND      -2
-#define MEMCACHE_ERROR          -3
+#include <libmemcached/memcached.h>
 
 //Exception classes
-class MemcacheException{};
-class MemcacheConnectionException : public MemcacheException{};
-class MemcacheSocketException     : public MemcacheException{};
-class MemcacheProtocolException   : public MemcacheException{};
-class MemcacheRehashException     : public MemcacheException{};
-class MemcacheInternalException   : public MemcacheException{};
+class MemcacheException{
+ public:
+ MemcacheException(const char *what) : w(what){};
+    std::string w;
+};
+
+class MemcacheConnectionException : public MemcacheException{
+ public:
+ MemcacheConnectionException(const char *what) :
+    MemcacheException(what){};
+};
+
+class MemcacheSocketException     : public MemcacheException{
+ public:
+ MemcacheSocketException(const char *what) :
+    MemcacheException(what){};
+};
 
 
 class Memcache
 {
  public:
-  Memcache();
-  ~Memcache();
+    Memcache(){
+        memc         = memcached_create(NULL);
+        memc_servers = NULL;
+    }
 
-  void addServers (std::map<std::string, unsigned int> &server_and_weights);
-  void addServers (const std::vector<std::string> &servers);
-  void addServer  (const std::string server, const unsigned int weight = 1);
+    ~Memcache(){
+        memcached_server_list_free(memc_servers);
+        memcached_free(memc);
+    }
 
-  int set(std::string key, const std::string value, const int expires = 0);
-  int add(std::string key, const std::string value, const int expires = 0);
-  int replace(std::string key, const std::string value, const int expires = 0);
-  std::string get(std::string key);
-  int remove(std::string key, unsigned int time = 0);
 
-  void flushAll(unsigned int time = 0);
+    void addServers( std::string servers ){
+        memc_servers = memcached_servers_parse ((char *)servers.c_str());
 
-  int incr(std::string key, const unsigned int value = 1);
-  int decr(std::string key, const unsigned int value = 1);
+        rc= memcached_server_push(memc, memc_servers);
 
-  std::map< std::string, std::map<std::string,std::string> >  getStats();
+        if(rc != MEMCACHED_SUCCESS){
+            std::cerr<< memcached_strerror(memc,rc) <<std::endl;
+            throw MemcacheConnectionException( memcached_strerror(memc,rc) );
+        }
+    }
 
-  void setCompressionOption(int minsize,int use_compression);
-  void setRehashingOption( bool on_off );
+
+
+    void set(std::string key, const std::string value, const time_t expires = 0) {
+
+        rc = memcached_set(memc, (char *)key.c_str(), key.size(), (char *)value.c_str(), value.size(),expires, (uint16_t)0);
+
+        if(rc != MEMCACHED_SUCCESS){
+            std::cerr<< memcached_strerror(memc,rc) <<std::endl;
+            throw MemcacheSocketException( memcached_strerror(memc,rc) );
+        }
+    }
+
+
+    /*   void add(std::string key, const std::string value, const int expires = 0){
+
+    }
+
+    void replace(std::string key, const std::string value, const int expires = 0);
+    */
+
+
+    std::string get(std::string key){
+
+        size_t sz;
+        char *value = memcached_get(memc, (char *)key.c_str(), key.size(), &sz,(uint16_t)0, &rc);
+
+        return std::string(value);
+    }
+
+    void remove(std::string key, time_t time = 0) {
+
+        rc = memcached_delete(memc, (char *)key.c_str(), key.size(), time);
+
+        if(rc != MEMCACHED_SUCCESS)
+            throw MemcacheSocketException( memcached_strerror(memc,rc) );
+    }
+
+        /*
+void flushAll(unsigned int time = 0);
+
+    int incr(std::string key, const unsigned int value = 1);
+
+    int decr(std::string key, const unsigned int value = 1);
+    */
 
  private:
+  memcached_server_st *memc_servers;
+  memcached_st        *memc;
+  memcached_return    rc;
 
-  //Shared code
-  int _set(std::string cmd_type,  std::string &key, const std::string &value, const int expires);
-  int _incr(const std::string cmd_type, std::string &key, const unsigned int value = 1);
-
-  //hostname, sockfd
-  std::map<std::string, int> servers;
-  std::vector< std::string > server_alloc_buckets;
-
-  int _connect(const std::string &server);
-  int disconnect(const std::string &server);
-
-  /*C style socket calls */
-  std::string      _sock_gets(int sockfd, unsigned int limit = ~0);
-  int              _sock_puts(int sockfd, std::string str);
-  int              _sock_write(int sockfd,const char* buf, size_t count);
-  std::string      _sock_read(int sockfd, size_t count);
-  int              _comp(const char* s_buf,int s_len,char** d_buf,int& d_len);
-  int              _decomp(const char* s_buf,int s_len,char** d_buf,int& d_len);
-  struct in_addr*  _atoaddr(std::string& address);
-
-  int              _crc32(const std::string &key);
-  std::string      _inttostring(int val);
-  int              _get_sock(const std::string &key );
-
-
-  //Settings and flags
-  unsigned int  opt_minsize;
-  bool opt_use_compression;
-  bool opt_rehash;
-
-  facebook::thrift::concurrency::Mutex m;
 };
 
 #endif
