@@ -95,6 +95,9 @@ class Memcache
         size_t sz;
         char *value = memcached_get(memc, (char *)key.c_str(), key.size(), &sz,(uint16_t)0, &rc);
 
+        if( value == NULL )
+            return std::string();
+
         return std::string(value);
     }
 
