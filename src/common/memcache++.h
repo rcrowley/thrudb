@@ -98,7 +98,7 @@ class Memcache
         if( value == NULL )
             return std::string();
 
-        return std::string(value);
+        return std::string(value,sz);
     }
 
     void remove(std::string key, time_t time = 0) {
