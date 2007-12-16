@@ -1,0 +1,36 @@
+AC_PREREQ(2.59)
+
+AC_INIT(mytable, 0.1)
+
+AM_INIT_AUTOMAKE
+
+AC_PREFIX_DEFAULT(/usr/local/mytable)
+
+# Checks for programs.
+AC_PROG_CXX
+AC_PROG_CC
+
+AC_PROG_INSTALL
+
+AC_PATH_PROG(THRIFT, thrift, thrift, $PATH:/usr/local/bin:/usr/bin)
+AC_LANG(C++)
+
+################################################################
+## Crypto
+###
+AC_CHECK_LIB([ssl],[ssl3_new],,
+	AC_MSG_ERROR([OpenSSL developer library 'libssl' not installed; cannot continue.]))
+AC_CHECK_LIB([crypto],[MD5_Update],,
+	AC_MSG_ERROR([OpenSSL developer library 'libcrypto' not installed; cannot continue.]))	
+
+AC_CHECK_HEADERS([openssl/rand.h])
+AC_CHECK_HEADERS([openssl/md5.h])
+AC_CHECK_HEADERS([openssl/sha.h])
+AC_CHECK_HEADERS([openssl/hmac.h])
+AC_CHECK_HEADERS([openssl/fips_sha.h])
+AC_CHECK_HEADERS([openssl/aes.h])
+AC_CHECK_FUNCS([SHA256_Init])
+AC_CHECK_FUNCS([AES_encrypt])
+AC_CHECK_FUNCS([RAND_pseudo_bytes])
+
+AC_OUTPUT(Makefile)
