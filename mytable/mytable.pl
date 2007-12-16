@@ -6,9 +6,10 @@ use Data::Dumper;
 
 use MyTable::Master;
 
-my $master = MyTable::Master->new;
+my $master = new MyTable::Master;
+#print Dumper ($master);
 
-if (0)
+if (@ARGV)
 {
     for (0..135)
     {
@@ -18,9 +19,6 @@ if (0)
     $master->{_db}->do ('update partitions set retired_at = null');
     exit;
 }
-
-$master = MyTable::Master->new;
-#print Dumper ($master);
 
 # a put
 $master->put (10, 44);
@@ -54,6 +52,11 @@ foreach (0..($size * 50))
 {
     $master->put (int (rand ($size * 1000)), rand);
     $master->put (int (-rand ($size * 1000)), rand);
+}
+
+foreach (values %{$master->{datas}})
+{
+    $_->_update_size;
 }
 
 # balance the tabl

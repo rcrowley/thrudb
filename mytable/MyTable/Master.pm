@@ -14,9 +14,9 @@ use MyTable::DataServer;
 sub new
 {
     my $class = shift @_;
-    #print STDERR "** MyTable::Master->new ($class, @_)\n";
+    #print STDERR "** new MyTable::Master ($class, @_)\n";
     my $self = bless {
-        _db => MyTable::DB->new,
+        _db => new MyTable::DB,
         split_size => 1000,
         @_,
     }, $class;
@@ -25,8 +25,8 @@ sub new
     $self->_load;
     
     # prepare our finder statment
-    $self->{_db}->prepare ('find', 'select id, end from partitions where ? <= end and retired_at is null order by end asc limit 1');
-    $self->{_db}->prepare ('create', 'insert into partitions (start, end, host, db, tbl) values (?, ?, ?, ?, ?)');
+    $self->{_db}->prepare ('partitions', 'find', 'select id, end from partitions where ? <= end and retired_at is null order by end asc limit 1');
+    $self->{_db}->prepare ('partitions', 'create', 'insert into partitions (start, end, host, db, tbl) values (?, ?, ?, ?, ?)');
 
     {
         # find out what our next table number will be
@@ -45,7 +45,7 @@ sub _load
     foreach (@{$self->{_db}->selectall_arrayref ("select * from partitions where retired_at is null order by end asc")})
     {
         my ($id, $start, $end, $host, $db, $tbl) = @$_;
-        $self->{datas}{$end} = MyTable::DataServer->new (
+        $self->{datas}{$end} = new MyTable::DataServer (
             id => $id,
             start => $start,
             end => $end,
@@ -111,7 +111,7 @@ sub _get_new_table
     my ($self, $host, $db, $start, $end) = @_;
     my $tbl = sprintf ('data_%08d', $self->{next_tbl}++);
     # TODO: host and db should be got at some other way
-    $self->{_db}->execute ('create', $start, $end, $host, $db, $tbl);
+    $self->{_db}->execute ('partitions', 'create', $start, $end, $host, $db, $tbl);
     return ($tbl, $self->{_db}->last_insert_id);
 }
 
@@ -151,8 +151,8 @@ sub _find
 {
     my ($self, $key) = @_;
     #print STDERR "** MyTable::Master->_find ($self, $key)\n";
-    $self->{_db}->execute ("find", $key);
-    my $part = $self->{_db}->fetchrow_hashref ("find");
+    $self->{_db}->execute ('partitions', 'find', $key);
+    my $part = $self->{_db}->fetchrow_hashref ('partitions', "find");
     my $data = $self->{datas}{$part->{end}};
     die "a horrible death" if ($data->{id} ne $part->{id});
     return $data;
