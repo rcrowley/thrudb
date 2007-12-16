@@ -1,11 +1,32 @@
-#include "MySQLBackend.h"
 #include <openssl/md5.h>
+#include "MySQLBackend.h"
+#include "ConfigFile.h"
 
 LoggerPtr MySQLBackend::logger (Logger::getLogger ("MySQLBackend"));
 
+string MySQLBackend::master_hostname;
+int MySQLBackend::master_port;
+string MySQLBackend::master_db;
+string MySQLBackend::master_username;
+string MySQLBackend::master_password;
+
 MySQLBackend::MySQLBackend ()
 {
-    LOG4CXX_ERROR(logger, "MySQLBackend ()");
+    LOG4CXX_ERROR (logger, "MySQLBackend ()");
+    master_hostname = ConfigManager->read<string> ("MYSQL_MASTER_HOSTNAME", 
+                                                   "localhost");
+    LOG4CXX_ERROR (logger, string ("master_hostname=") + master_hostname);
+    master_port = ConfigManager->read<int> ("MYSQL_MASTER_PORT", 3306);
+    char buf[64];
+    sprintf (buf, "master_port=%d\n", master_port);
+    LOG4CXX_ERROR (logger, buf);
+    master_db = ConfigManager->read<string> ("MYSQL_MASTER_DB", "mytable");
+    LOG4CXX_ERROR (logger, string ("master_db=") + master_db);
+    master_username = ConfigManager->read<string> ("MYSQL_MASTER_USERNAME",
+                                                   "mytable");
+    LOG4CXX_ERROR (logger, string ("master_username=") + master_username);
+    master_password = ConfigManager->read<string> ("MYSQL_MASTER_PASSWORD",
+                                                   "mytable");
 }
 
 MySQLBackend::~MySQLBackend ()
@@ -188,7 +209,7 @@ FindReturn MySQLBackend::find_and_checkout (const string & tablename,
 
     return find_return;
 }
-    
+
 void MySQLBackend::checkin (Connection * connection)
 {
     Connection::checkin (connection);

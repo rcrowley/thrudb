@@ -44,6 +44,12 @@ class MySQLBackend : public MyTableBackend
                                   const string & key );
     void checkin (Connection * connection);
 
+    static string master_hostname;
+    static int master_port;
+    static string master_db;
+    static string master_username;
+    static string master_password;
+
     static log4cxx::LoggerPtr logger;
 };
 
