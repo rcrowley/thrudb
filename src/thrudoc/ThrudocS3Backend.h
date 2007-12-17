@@ -20,9 +20,13 @@
 #include "Thrudoc.h"
 #include "ThrudocBackend.h"
 
+class ThrudocWriteThroughBackend;
+
 class ThrudocS3Backend : public ThrudocBackend
 {
  public:
+    friend class ThrudocWriteThroughBackend;
+
     ThrudocS3Backend();
 
     std::string  read  (const std::string &id );

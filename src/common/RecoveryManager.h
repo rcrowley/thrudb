@@ -53,7 +53,12 @@ class _RecoveryManager : public facebook::thrift::concurrency::Runnable
     void    compareDbState(const char *sender, DbState &remote_state);
 
     void    addRedo(const string &msg, string transaction_id );
+    void    addS3( string transaction_id );
 
+
+    std::string getRedoLogfileName() {
+        return redo_log_file;
+    }
 
 private:
     _RecoveryManager();

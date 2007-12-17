@@ -160,7 +160,7 @@ namespace s3 {
         aws_access_key_id     = ConfigManager->read<string>("AWS_ACCESS_KEY").c_str();
         aws_secret_access_key = ConfigManager->read<string>("AWS_SECRET_ACCESS_KEY").c_str();
 
-        //ensure out bucket exists
+        //ensure our bucket exists
         bucket_mkdir(ConfigManager->read<string>("S3_BUCKET_NAME"));
     }
 

@@ -40,7 +40,7 @@
 #endif
 
 int s3_debug = 0;
-int s3_retry_max   = 5;                 // read by the code
+int s3_retry_max   = 2;                 // read by the code
 
 /* debug levels:
  *  1 - print retries
@@ -540,7 +540,7 @@ response_buffer *get_url(const char *url)
         curl_easy_setopt(c,CURLOPT_WRITEFUNCTION,buffer_write);
         curl_easy_setopt(c,CURLOPT_WRITEDATA,b);
         curl_easy_setopt(c,CURLOPT_URL,url);
-        int success = curl_easy_perform(c);
+        curl_easy_perform(c);
         curl_easy_getinfo(c,CURLINFO_RESPONSE_CODE,&b->result);
         curl_easy_cleanup(c);
     } while(b->result!=200 && ++retry_count<s3_retry_max);
@@ -663,6 +663,10 @@ int object_put(string bucket,string path,
 int bucket_mkdir(string bucket)
 {
     class response_buffer *b =  request("PUT",bucket,"",0,0,0,0);
+
+    if( b == NULL )
+        return -1;
+
     int result = b->result;
     delete b;
     switch(result){

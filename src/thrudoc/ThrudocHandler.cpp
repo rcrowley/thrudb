@@ -104,7 +104,6 @@ void ThrudocHandler::fetch(std::string &_return, const std::string &_id)
     if( !this->isValidID(id) )
         return;
 
-
     //Check bloom filter
     if( !BloomManager->exists(id) )
         return;
@@ -185,11 +184,14 @@ bool ThrudocHandler::removeList(const std::vector<std::string> &ids)
 
 void ThrudocHandler::fetchList(std::vector<std::string> &_return, const std::vector<std::string> &ids)
 {
+
+
     for(unsigned int i=0; i<ids.size(); i++){
         string obj;
         this->fetch( obj, ids[i] );
         _return.push_back( obj );
     }
+
 }
 
 bool ThrudocHandler::isValidID(const std::string &id)

@@ -6,22 +6,22 @@
  * http://thrudb.googlecode.com
  *
  **/
-#ifndef __THRUDOC_SIMPLE_S3_BACKEND__
-#define __THRUDOC_SIMPLE_S3_BACKEND__
+#ifndef __THRUDOC_SIMPLE_WRITE_THROUGH_S3_BACKEND__
+#define __THRUDOC_SIMPLE_WRITE_THROUGH_S3_BACKEND__
 
 #include "ThrudocS3Backend.h"
 
 //Backend used to realise remote S3 transactions
 
-class ThrudocSimpleS3Backend : public ThrudocS3Backend
+class ThrudocSimpleWriteThroughBackend : public ThrudocS3Backend
 {
  public:
     void write (const std::string &id, const std::string &data){
-        //Since S3 is avail from all instances we only need the id to update
-        //the local bloom, this is done in the
+        this->_write(id,data);
     };
 
     void remove(const std::string &id ){
+        this->_remove(id);
 
     };
 };

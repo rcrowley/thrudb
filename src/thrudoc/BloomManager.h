@@ -43,7 +43,7 @@ private:
 
     facebook::thrift::concurrency::Mutex mutex;          ///< for singleton synch
 
-
+    bool         enabled;
     bloom_filter *filter;
     unsigned int filter_size;
     unsigned int filter_space;

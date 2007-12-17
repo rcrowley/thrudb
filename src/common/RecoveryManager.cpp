@@ -42,6 +42,10 @@ public:
         last_m = m;
     }
 
+    void        s3log(const S3Message &m){
+        //na
+    }
+
     RedoMessage getLastMessage(){
         return last_m;
     }
@@ -189,6 +193,30 @@ void _RecoveryManager::addRedo(const string &msg, string transaction_id )
     //write it to log
     redo_log->write( (uint8_t *)s.c_str(), (uint32_t) s.length() );
 }
+
+void _RecoveryManager::addS3(string transaction_id )
+{
+    S3Message m;
+
+    m.transaction_id = transaction_id;
+    m.timestamp      = time(NULL);
+
+
+    //Init faux client
+    boost::shared_ptr<TMemoryBuffer> b(new TMemoryBuffer());
+    boost::shared_ptr<TProtocol>     p(new TBinaryProtocol(b));
+    boost::shared_ptr<RedoClient>    c(new RedoClient(p));
+
+    //get raw message
+    c->send_s3log(m);
+    string s = b->getBufferAsString();
+
+
+    //write it to log
+    redo_log->write( (uint8_t *)s.c_str(), (uint32_t) s.length() );
+
+}
+
 
 DbState _RecoveryManager::getDbState()
 {

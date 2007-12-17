@@ -16,7 +16,6 @@ use Data::Dumper;
 use Thrudoc;
 
 my $socket    = new Thrift::Socket('localhost',9091);
-#my $transport = new Thrift::BufferedTransport($socket,1024,1024);
 my $transport = new Thrift::FramedTransport($socket);
 my $protocol  = new Thrift::BinaryProtocol($transport);
 my $client    = new ThrudocClient($protocol);
@@ -28,19 +27,19 @@ eval{
     #warn(Dumper($client->fetchIds(0,100)));
     #return;
 
-    my $id = $client->store("Start");
-    warn("saved $id");
+    #my $id = $client->store("Start","S3Test");
+    #warn("saved $id");
 
 
-    warn("Get: ".$client->fetch($id));
+    warn("Get: ".$client->fetch("S3Test"));
 
-    $client->store("Update",$id);
+    #$client->store("Update",$id);
 
-    warn("Get: ".$client->fetch($id));
+    #warn("Get: ".$client->fetch($id));
 
-    $client->remove($id);
+    #$client->remove($id);
 
-    warn("Removed $id");
+    #warn("Removed $id");
 
 
 }; if($@){

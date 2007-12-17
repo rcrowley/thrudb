@@ -34,7 +34,6 @@ ThrudocS3Backend::ThrudocS3Backend()
 {
     s3bucket  = ConfigManager->read<string>("S3_BUCKET_NAME");
 
-
     transport = boost::shared_ptr<TMemoryBuffer>(new TMemoryBuffer());
 
     boost::shared_ptr<TProtocol>  protocol(new TBinaryProtocol(transport));
@@ -138,6 +137,8 @@ void ThrudocS3Backend::_remove(const string &id)
 
 void ThrudocS3Backend::write( const string &doc, const string &id )
 {
+    LOG4CXX_DEBUG(logger,"Entering S3Backend write()"+id);
+
 
     boost::shared_ptr<Transaction> t = TransactionManager->beginTransaction();
 
@@ -193,7 +194,7 @@ void ThrudocS3Backend::write( const string &doc, const string &id )
     TransactionManager->endTransaction(t);
 }
 
-void ThrudocS3Backend::_write( const string &doc, const string &id )
+void ThrudocS3Backend::_write( const string &doc, const string &id)
 {
     ThrudocException e;
 

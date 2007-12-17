@@ -19,9 +19,13 @@
 #include "Thrudoc.h"
 #include "ThrudocBackend.h"
 
+class ThrudocWriteThroughBackend;
+
 class ThrudocDiskBackend : public ThrudocBackend
 {
  public:
+    friend class ThrudocWriteThroughBackend;
+
     ThrudocDiskBackend();
 
     std::string read  (const std::string &id );

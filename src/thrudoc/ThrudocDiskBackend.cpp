@@ -56,6 +56,8 @@ static bool safe_directory_exists( string path )
     return false;
 }
 
+
+
 ThrudocDiskBackend::ThrudocDiskBackend()
 {
     doc_root     = ConfigManager->read<string>("DOC_ROOT");
@@ -150,7 +152,7 @@ void ThrudocDiskBackend::remove(const string &id)
     TransactionManager->endTransaction(t);
 
 
-    //    RecoveryManager->addRedo( raw_msg );
+    RecoveryManager->addRedo( raw_msg, t->getId() );
 
 }
 

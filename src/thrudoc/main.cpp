@@ -23,6 +23,9 @@
 
 #include "ThrudocDiskSpreadTask.h"
 #include "ThrudocS3SpreadTask.h"
+#include "ThrudocWriteThroughBackend.h"
+#include "ThrudocWriteThroughSpreadTask.h"
+#include "WriteThroughS3Manager.h"
 #include "ThrudocHandler.h"
 #include "ThrudocDiskBackend.h"
 #include "BloomManager.h"
@@ -112,11 +115,20 @@ int main(int argc, char **argv) {
         //Startup Services
         shared_ptr<TProtocolFactory>  protocolFactory  (new TBinaryProtocolFactory());
 
-        shared_ptr<ThrudocBackend>     backend;
+        shared_ptr<ThrudocBackend>    backend;
 
 
         //Which backend should we use?
-        if(ConfigManager->read<string>("BACKEND_TYPE") == "S3"){
+        //This should be a factory...
+        if(ConfigManager->read<string>("BACKEND_TYPE") == "DISK+S3"){
+            s3::init();
+
+            WriteThroughS3Manager->startup();
+
+            backend = boost::shared_ptr<ThrudocBackend>(new ThrudocWriteThroughBackend());
+            SpreadManager->setTaskFactory( boost::shared_ptr<SpreadTaskFactory>(new ThrudocWriteThroughSpreadTaskFactory()) );
+
+        }else if(ConfigManager->read<string>("BACKEND_TYPE") == "S3"){
             s3::init();
 
             backend = boost::shared_ptr<ThrudocBackend>(new ThrudocS3Backend());

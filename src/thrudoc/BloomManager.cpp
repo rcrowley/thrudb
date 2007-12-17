@@ -50,6 +50,17 @@ _BloomManager* _BloomManager::instance()
 void _BloomManager::startup()
 {
 
+    //Is Bloom Filter enabled?
+    if( ConfigManager->keyExists("BLOOM_ENABLED") ){
+
+        this->enabled = ConfigManager->read<bool>("BLOOM_ENABLED");
+
+    } else {
+        //default
+        this->enabled = true;
+    }
+
+
     string doc_root = ConfigManager->read<string>("DOC_ROOT");
 
     if( !directory_exists( doc_root ) )
@@ -68,60 +79,63 @@ void _BloomManager::startup()
     filter_space = 10000000;
     filter_size  = 0;
 
-    //Recreate the bloom filter by replaying the log
-    if( idx_exists ){
-        //always a uuid
-        //W4QZtu5rTsWnfyiixxIuFQ\n
+    if(enabled) {
 
-        double count = 0;
+        //Recreate the bloom filter by replaying the log
+        if( idx_exists ){
+            //always a uuid
+            //W4QZtu5rTsWnfyiixxIuFQ\n
 
-        if( idx_stat.st_size > 0)
-            count = (idx_stat.st_size / (UUID_LENGTH+1));
+            double count = 0;
 
-        //Verify count
-        if( count != floor(count) ) {
-            cerr<<"Error: bloom filter index looks corrupted"<<endl;
-            throw runtime_error("Error: bloom filter index looks corrupted");
-        }
+            if( idx_stat.st_size > 0)
+                count = (idx_stat.st_size / (UUID_LENGTH+1));
 
-
-        std::ifstream infile;
-        infile.open(idx_file.c_str());
-        if (!infile.is_open())
-        {
-            cerr<<"Error: can't open bloom filter index"<<endl;
-            throw runtime_error("Error: can't open bloom filter index");
-        }
-
-        filter_space += (unsigned int)count;
-        filter_size   = (unsigned int)count;
-
-        //Init the filter
-        filter = new bloom_filter(filter_space,1.0/(1.0 * filter_space), ((int) 100000*rand()));
-        string line;
-
-        unsigned int i = 0;
-
-        while ( !infile.eof() )
-        {
-            getline (infile,line);
-
-            if(!line.empty()){
-                filter->insert(line);
-                i++;
+            //Verify count
+            if( count != floor(count) ) {
+                cerr<<"Error: bloom filter index looks corrupted"<<endl;
+                throw runtime_error("Error: bloom filter index looks corrupted");
             }
+
+
+            std::ifstream infile;
+            infile.open(idx_file.c_str());
+            if (!infile.is_open())
+            {
+                cerr<<"Error: can't open bloom filter index"<<endl;
+                throw runtime_error("Error: can't open bloom filter index");
+            }
+
+            filter_space += (unsigned int)count;
+            filter_size   = (unsigned int)count;
+
+            //Init the filter
+            filter = new bloom_filter(filter_space,1.0/(1.0 * filter_space), ((int) 100000*rand()));
+            string line;
+
+            unsigned int i = 0;
+
+            while ( !infile.eof() )
+            {
+                getline (infile,line);
+
+                if(!line.empty()){
+                    filter->insert(line);
+                    i++;
+                }
+            }
+            infile.close();
+
+            if( i != filter_size ){
+                cerr<<"Warning: didn't catch all the issues:"<<i<<" "<<filter_size<<endl;
+            }
+
+
+        } else {
+
+            //Init the filter
+            filter = new bloom_filter(filter_space,1.0/(1.0 * filter_space), ((int) 100000*rand()));
         }
-        infile.close();
-
-        if( i != filter_size ){
-            cerr<<"Warning: didn't catch all the issues:"<<i<<" "<<filter_size<<endl;
-        }
-
-
-    } else {
-
-        //Init the filter
-        filter = new bloom_filter(filter_space,1.0/(1.0 * filter_space), ((int) 100000*rand()));
     }
 
     //Append to the file
@@ -136,20 +150,22 @@ void _BloomManager::destroy()
 
 void _BloomManager::add( const string &id )
 {
-
     if( id.size() != UUID_LENGTH )
         throw runtime_error("BloomManager::add() id: "+id+" is not a valid id");
 
     Guard g(mutex);
-    filter->insert(id);
+
+    if(enabled)
+        filter->insert(id);
 
     write_file << id << endl;
 }
 
-
-
 bool _BloomManager::exists( const string &id )
 {
+    if(!enabled)
+        return true;
+
     if( id.size() != UUID_LENGTH )
         throw runtime_error("BloomManager::exists() id: "+id+" is not a valid id");
 

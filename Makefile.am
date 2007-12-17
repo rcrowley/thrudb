@@ -18,6 +18,9 @@ thrudoc_SOURCES=  gen-cpp/Thrudoc.cpp \
 	          src/thrudoc/ThrudocDiskSpreadTask.cpp \
 		  src/thrudoc/ThrudocS3Backend.cpp \
 	          src/thrudoc/ThrudocS3SpreadTask.cpp \
+		  src/thrudoc/WriteThroughS3Manager.cpp \
+		  src/thrudoc/ThrudocWriteThroughBackend.cpp \
+		  src/thrudoc/ThrudocWriteThroughSpreadTask.cpp \
                   src/common/SpreadManager.cpp \
 		  src/common/RecoveryManager.cpp \
                   src/common/TransactionManager.cpp \
