@@ -71,10 +71,40 @@ namespace mysql {
             //MYSQL_TYPE key_type = MYSQL_TYPE_STRING;
             unsigned long key_length;
             my_bool key_is_null;
-            my_bool key_error;
 
         private:
             void init (const char * key);
+    };
+
+    class KeyCountParams : public KeyParams
+    {
+        public:
+            KeyCountParams()
+            {
+                init(NULL, 0);
+            }
+
+            KeyCountParams(const char * key, unsigned int count)
+            {
+                init (key, count);
+            }
+
+            void set_count (unsigned int count)
+            {
+                this->count = count;
+            }
+
+            unsigned int get_count ()
+            {
+                return this->count;
+            }
+
+        protected:
+            unsigned int count;
+            //MYSQL_TYPE count_type = MYSQL_TYPE_STRING;
+
+        private:
+            void init (const char * key, unsigned int count);
     };
 
     class KeyValueParams : public KeyParams
@@ -114,7 +144,6 @@ namespace mysql {
             //MYSQL_TYPE value_type = MYSQL_TYPE_STRING;
             unsigned long value_length;
             my_bool value_is_null;
-            my_bool value_error;
 
         private:
             void init (const char * key, const char * value);
@@ -351,6 +380,7 @@ namespace mysql {
             PreparedStatement * find_get_statement (const char * tablename);
             PreparedStatement * find_put_statement (const char * tablename);
             PreparedStatement * find_delete_statement (const char * tablename);
+            PreparedStatement * find_scan_statement (const char * tablename);
 
         protected:
             static map<string, stack<Connection *>*> connections;
@@ -363,6 +393,7 @@ namespace mysql {
             map<string, PreparedStatement *> get_statements;
             map<string, PreparedStatement *> put_statements;
             map<string, PreparedStatement *> delete_statements;
+            map<string, PreparedStatement *> scan_statements;
 
             Connection(const char * host, const char * db);
     };

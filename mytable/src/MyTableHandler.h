@@ -22,7 +22,7 @@ class MyTableHandler : virtual public MyTableIf {
         void put(const string & tablename, const string & key, const string & value);
         void get(string & _return, const string & tablename, const string & key);
         void remove(const string & tablename, const string & key);
-        void scan (vector<string> & _return, const string & tablename, const string & seed, int32_t count);
+        void scan (ScanResponse & _return, const string & tablename, const string & seed, int32_t count);
 
     private:
         MyTableHandler(){};

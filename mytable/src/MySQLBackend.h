@@ -28,29 +28,34 @@ struct FindReturn
 
 class MySQLBackend : public MyTableBackend
 {
- public:
-    MySQLBackend();
-    ~MySQLBackend();
+    public:
+        MySQLBackend();
+        ~MySQLBackend();
 
-    string get (const string & tablename, const string & key );
-    void put (const string & tablename, const string & key, const string & value);
-    void remove (const string & tablename, const string & key );
-    vector<string> scan (const string & tablename, const string & seed, 
-                         int32_t count);
+        string get (const string & tablename, const string & key );
+        void put (const string & tablename, const string & key, const string & value);
+        void remove (const string & tablename, const string & key );
+        ScanResponse scan (const string & tablename, const string & seed, 
+                           int32_t count);
 
- protected:
+    protected:
 
-    FindReturn find_and_checkout (const string & tablename, 
-                                  const string & key );
-    void checkin (Connection * connection);
+        FindReturn find_and_checkout (const string & tablename, 
+                                      const string & key );
+        void checkin (Connection * connection);
 
-    static string master_hostname;
-    static int master_port;
-    static string master_db;
-    static string master_username;
-    static string master_password;
+        static string master_hostname;
+        static int master_port;
+        static string master_db;
+        static string master_username;
+        static string master_password;
 
-    static log4cxx::LoggerPtr logger;
+    private:
+        static log4cxx::LoggerPtr logger;
+
+        string scan_helper (ScanResponse & scan_response, 
+                            FindReturn & find_return, string & offset, 
+                            int32_t count);
 };
 
 #endif

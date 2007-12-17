@@ -33,20 +33,30 @@ eval{
 
 eval {
 
-    my $id = $thrudoc->put ("partitions", "key3", "val-key4");
-    my $key = "key.".rand;
-    $thrudoc->put ("partitions", $key, "val.$key");
+#    my $id = $thrudoc->put ("partitions", "key3", "val-key4");
+#    my $key = "key.".rand;
+#    $thrudoc->put ("partitions", $key, "val.$key");
 
-    print Dumper ($thrudoc->get ("partitions", "key3"));
-    print Dumper ($thrudoc->get ("partitions", $key));
+#    print Dumper ($thrudoc->get ("partitions", "key3"));
+#    print Dumper ($thrudoc->get ("partitions", $key));
 
 #    if (rand (100) > 50)
 #    {
 #        $thrudoc->remove ("partitions", $key);
 #    }
 
-    print Dumper ($thrudoc->get ("partitions", "key3"));
-    print Dumper ($thrudoc->get ("partitions", $key));
+#    print Dumper ($thrudoc->get ("partitions", "key3"));
+#    print Dumper ($thrudoc->get ("partitions", $key));
+
+    my $ret = $thrudoc->scan ("partitions", undef, 5);
+    my $count = 0;
+    while (scalar (@{$ret->{elements}}) > 0)
+    {
+        print Dumper ($ret);
+        $count += scalar (@{$ret->{elements}});
+        $ret = $thrudoc->scan ("partitions", $ret->{seed}, 5);
+    }
+    print Dumper ($count);
 };
 if($@) {
     die Dumper ($@) if UNIVERSAL::isa($@,"Thrift::TException");

@@ -20,6 +20,23 @@ void KeyParams::init (const char * key)
     this->params[0].length = &this->key_length;
 }
 
+void KeyCountParams::init (const char * key, unsigned int count)
+{
+    this->set_key (key);
+    this->set_count (count);
+
+    this->params = new MYSQL_BIND[2];
+    memset (this->params, 0, sizeof(MYSQL_BIND) * 2);
+    this->params[0].buffer_type = MYSQL_TYPE_STRING;
+    this->params[0].buffer = this->key;
+    this->params[0].is_null = &this->key_is_null;
+    this->params[0].length = &this->key_length;
+    this->params[1].buffer_type = MYSQL_TYPE_LONG;
+    this->params[1].buffer = &this->count;
+    this->params[1].is_null = 0;
+    this->params[1].length = 0;
+}
+
 void KeyValueParams::init (const char * key, const char * value)
 {
     this->set_key (key);
@@ -343,10 +360,28 @@ PreparedStatement * Connection::find_delete_statement(const char * tablename)
     if (!stmt)
     {
         BindParams * bind_params = new KeyParams();
-        char query[512];
+        char query[128];
         sprintf (query, "delete from %s where k = ?", tablename);
         stmt = new PreparedStatement(&this->mysql, query, bind_params);
         this->delete_statements[key] = stmt;
+    }
+    return stmt;
+}
+
+PreparedStatement * Connection::find_scan_statement(const char * tablename)
+{
+    string key = string(tablename);
+    PreparedStatement * stmt = this->scan_statements[key];
+    if (!stmt)
+    {
+        BindParams * bind_params = new KeyCountParams();
+        BindResults * bind_results = new KeyValueResults();
+        char query[256];
+        sprintf (query, "select k, v, created_at, modified_at from %s where k > ? order by k asc limit ?",
+                 tablename);
+        stmt = new PreparedStatement(&this->mysql, query, bind_params, 
+                                     bind_results);
+        this->scan_statements[key] = stmt;
     }
     return stmt;
 }

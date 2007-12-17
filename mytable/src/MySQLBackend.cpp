@@ -47,7 +47,6 @@ string MySQLBackend::get (const string & tablename, const string & key )
 
     get_statement->execute ();
 
-    char buf[1024];
 
     string value;
     int ret = get_statement->fetch ();
@@ -55,6 +54,7 @@ string MySQLBackend::get (const string & tablename, const string & key )
     {
         KeyValueResults * kvr = 
             (KeyValueResults*)get_statement->get_bind_results ();
+        char buf[1024];
         sprintf(buf, "result:\n\tkey:        %s\n\tvalue:      %s\n\tcreated_at: %s\n\tmodifed_at: %s", 
                 kvr->get_key (),
                 kvr->get_value (), "U", "U");
@@ -112,12 +112,85 @@ void MySQLBackend::remove (const string & tablename, const string & key )
     this->checkin (find_return.connection);
 }
 
-vector<string> MySQLBackend::scan (const string & tablename, 
-                                   const string & seed, int32_t count)
+string MySQLBackend::scan_helper (ScanResponse & scan_response, 
+                                  FindReturn & find_return, string & offset, 
+                                  int32_t count)
 {
-    // TODO: ...
-    vector<string> list;
-    return list;
+    Connection * connection = find_return.connection;
+
+    PreparedStatement * scan_statement = 
+        connection->find_scan_statement (find_return.data_tablename.c_str ());
+
+    KeyCountParams * kcp = (KeyCountParams*)scan_statement->get_bind_params ();
+    kcp->set_key (offset.c_str ());
+    kcp->set_count (count);
+
+    scan_statement->execute();
+
+    int ret;
+    KeyValueResults * kvr = 
+        (KeyValueResults*)scan_statement->get_bind_results ();
+    while ((ret = scan_statement->fetch ()) == 0)
+    {
+        // we gots results
+        Element * e = new Element();
+        e->key = kvr->get_key ();
+        e->value = kvr->get_value ();
+        scan_response.elements.push_back (*e);
+    }
+
+    if (ret != MYSQL_NO_DATA)
+    {
+        char buf[1024];
+        sprintf (buf, "ret=%d", ret);
+        LOG4CXX_ERROR(logger, buf);
+    }
+
+    return string (kvr->get_key ());
+}
+
+ScanResponse MySQLBackend::scan (const string & tablename, const string & seed,
+                                 int32_t count)
+{
+    // if seed is null, then start with the first partition
+    //   this means we'll have to query for the first partition
+    // else start with seed's parition
+    // ask for count elements
+    // if we don't get back count elements, go to the next partition and ask for count - have
+    // return elements
+
+    string offset;
+    if (seed == "")
+    {
+        // TODO: this should be a key in the lowest partition...
+        offset = "0";
+    }
+    else
+    {
+        offset = seed;
+        LOG4CXX_ERROR (logger, string ("offset=") + offset);
+    }
+
+    ScanResponse scan_response;
+
+    string last;
+
+more:
+    FindReturn find_return = this->find_and_checkout (tablename, offset);
+    last = scan_helper (scan_response, find_return, offset, count);
+    this->checkin (find_return.connection);
+    // shift to the next offset, partition
+    offset = offset;
+
+    if (scan_response.elements.size () < (unsigned int)count)
+    {
+    }
+
+    scan_response.seed = last;
+
+    // TODO: error handling
+
+    return scan_response;
 }
 
 FindReturn MySQLBackend::find_and_checkout (const string & tablename, 

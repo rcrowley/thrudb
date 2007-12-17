@@ -29,10 +29,14 @@ void MyTableHandler::remove(const string & tablename, const string & key)
     this->backend->remove (tablename, key);
 }
 
-void MyTableHandler::scan (vector<string> & _return, const string & tablename, const string & seed, int32_t count)
+void MyTableHandler::scan (ScanResponse & _return, const string & tablename, const string & seed, int32_t count)
 {
-    LOG4CXX_ERROR (logger, "scan: tablename=" + tablename + ", seed=" + seed +
-                   ", count=TODO");
+    {
+        char buf[128];
+        sprintf (buf, "scan: tablename=%s, seed=%s, count=%d",
+                 tablename.c_str (), seed.c_str (), count);
+        LOG4CXX_ERROR (logger, buf);
+    }
     _return = this->backend->scan (tablename, seed, count);
 }
 
