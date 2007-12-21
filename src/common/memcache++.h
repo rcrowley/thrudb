@@ -48,7 +48,12 @@ class Memcache
         //flags
         memcached_behavior_set (memc,MEMCACHED_BEHAVIOR_NO_BLOCK,0);
         memcached_behavior_set (memc,MEMCACHED_BEHAVIOR_TCP_NODELAY,0);
-        //  memcached_behavior_set (memc,MEMCACHED_BEHAVIOR_HASH,(void*)MEMCACHED_HASH_KETAMA);
+
+        memcached_hash hash_value= MEMCACHED_HASH_KETAMA;
+        memcached_behavior_set (memc,MEMCACHED_BEHAVIOR_HASH,&hash_value);
+
+        memcached_server_distribution dist_value= MEMCACHED_DISTRIBUTION_CONSISTENT;
+        memcached_behavior_set (memc,MEMCACHED_BEHAVIOR_DISTRIBUTION,&dist_value);
 
     }
 
@@ -67,6 +72,25 @@ class Memcache
             std::cerr<< memcached_strerror(memc,rc) <<std::endl;
             throw MemcacheConnectionException( memcached_strerror(memc,rc) );
         }
+
+
+        /*bool min_connections = false;
+
+        for(unsigned int i=0; i<memcached_server_list_count(memc_servers); i++){
+            rc = memcached_connect(memc,i);
+
+            if(rc == MEMCACHED_SUCCESS)
+                min_connections = true;
+
+        }
+
+        if(!min_connections){
+
+            std::cerr<<"No memcached connections available"<<std::endl;
+            assert(min_connections == true);
+
+            }*/
+
     }
 
 
@@ -76,7 +100,7 @@ class Memcache
         rc = memcached_set(memc, (char *)key.c_str(), key.size(), (char *)value.c_str(), value.size(),expires, (uint16_t)0);
 
         if(rc != MEMCACHED_SUCCESS){
-            std::cerr<< memcached_strerror(memc,rc) <<std::endl;
+            std::cerr<<memcached_strerror(memc,rc) <<std::endl;
             throw MemcacheSocketException( memcached_strerror(memc,rc) );
         }
     }

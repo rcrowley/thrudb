@@ -44,7 +44,7 @@ die "Missing Doc root" unless defined $c->{DOC_ROOT} && -d $c->{DOC_ROOT};
 #
 #Validate params for Amazon backup
 #
-if( $c->{BACKEND_TYPE} eq "S3" ){
+if( $c->{BACKEND_TYPE} eq "S3" || $c->{BACKEND_TYPE} eq "DISK+S3" ){
 
     die "Missing or Invalid AWS_ACCESS_KEY"
         unless defined $c->{AWS_ACCESS_KEY};
