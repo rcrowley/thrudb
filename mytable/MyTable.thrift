@@ -26,8 +26,8 @@ service MyTable
     string       get(1:string tablename, 2:string key)                 throws(MyTableException e),
     void         remove(1:string tablename, 2:string key)              throws(MyTableException e),
 
-    # scan can be used to walk over all of the elements in a parition in an
-    # undefined order. it is also only garunteed to pick up the elements that
+    # scan can be used to walk over all of the elements in a partition in an
+    # undefined order. it is also only guaranteed to pick up the elements that
     # exist at the time of the first call to scan. new elements _may_ be picked
     # up.
     ScanResponse scan(1:string tablename, 2:string seed, 3:i32 count)
