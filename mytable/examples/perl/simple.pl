@@ -34,8 +34,8 @@ eval{
 eval {
 
 #    my $id = $thrudoc->put ("partitions", "key3", "val-key4");
-#    my $key = "key.".rand;
-#    $thrudoc->put ("partitions", $key, "val.$key");
+    my $key = "key.".rand;
+    $thrudoc->put ("partitions", $key, "val.$key");
 
 #    print Dumper ($thrudoc->get ("partitions", "key3"));
 #    print Dumper ($thrudoc->get ("partitions", $key));
@@ -52,11 +52,15 @@ eval {
     my $count = 0;
     while (scalar (@{$ret->{elements}}) > 0)
     {
-        print Dumper ($ret);
+        printf "seed: %s\n", $ret->{seed};
+        foreach (@{$ret->{elements}})
+        {
+            printf "\t%s\n", $_->{key};
+        }
         $count += scalar (@{$ret->{elements}});
         $ret = $thrudoc->scan ("partitions", $ret->{seed}, 5);
     }
-    print Dumper ($count);
+    printf "count: %d\n", $count;
 };
 if($@) {
     die Dumper ($@) if UNIVERSAL::isa($@,"Thrift::TException");

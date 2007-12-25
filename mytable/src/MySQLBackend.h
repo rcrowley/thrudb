@@ -42,6 +42,8 @@ class MySQLBackend : public MyTableBackend
 
         FindReturn find_and_checkout (const string & tablename, 
                                       const string & key );
+        FindReturn find_next_and_checkout (const string & tablename,
+                                           const string & current_datatablename);
         void checkin (Connection * connection);
 
         static string master_hostname;
@@ -53,8 +55,10 @@ class MySQLBackend : public MyTableBackend
     private:
         static log4cxx::LoggerPtr logger;
 
+        FindReturn and_checkout (Connection * connection, 
+                                 PreparedStatement * statement);
         string scan_helper (ScanResponse & scan_response, 
-                            FindReturn & find_return, string & offset, 
+                            FindReturn & find_return, const string & offset, 
                             int32_t count);
 };
 

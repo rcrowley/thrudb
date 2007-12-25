@@ -371,11 +371,14 @@ namespace mysql {
     {
         public:
             static Connection * checkout (const char * hostname, 
-                                          const char * db);
+                                          const char * db, 
+                                          const char * username,
+                                          const char * password);
             static void checkin (Connection * connection);
 
             bool is_same (const char * hostname, const char * db);
 
+            PreparedStatement * find_next_statement (const char * tablename);
             PreparedStatement * find_find_statement (const char * tablename);
             PreparedStatement * find_get_statement (const char * tablename);
             PreparedStatement * find_put_statement (const char * tablename);
@@ -389,13 +392,15 @@ namespace mysql {
             string hostname;
             string db;
             MYSQL mysql;
+            map<string, PreparedStatement *> next_statements;
             map<string, PreparedStatement *> find_statements;
             map<string, PreparedStatement *> get_statements;
             map<string, PreparedStatement *> put_statements;
             map<string, PreparedStatement *> delete_statements;
             map<string, PreparedStatement *> scan_statements;
 
-            Connection(const char * host, const char * db);
+            Connection(const char * host, const char * db, 
+                       const char * username, const char * password);
     };
 };
 

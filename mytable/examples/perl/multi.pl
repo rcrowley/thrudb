@@ -20,7 +20,7 @@ use constant MYTABLE_PORT    => 9091;
 use threads;
 
 my @threads = ();
-foreach (0..4)
+foreach (0..10)
 {
     push @threads, threads->new (\&make_calls);
 }
