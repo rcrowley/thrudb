@@ -30,7 +30,6 @@ class MySQLBackend : public MyTableBackend
 {
     public:
         MySQLBackend();
-        ~MySQLBackend();
 
         string get (const string & tablename, const string & key );
         void put (const string & tablename, const string & key, const string & value);
@@ -40,17 +39,17 @@ class MySQLBackend : public MyTableBackend
 
     protected:
 
-        FindReturn find_and_checkout (const string & tablename, 
-                                      const string & key );
-        FindReturn find_next_and_checkout (const string & tablename,
-                                           const string & current_datatablename);
-        void checkin (Connection * connection);
-
         static string master_hostname;
         static int master_port;
         static string master_db;
         static string master_username;
         static string master_password;
+
+        FindReturn find_and_checkout (const string & tablename, 
+                                      const string & key );
+        FindReturn find_next_and_checkout (const string & tablename,
+                                           const string & current_datatablename);
+        void checkin (Connection * connection);
 
     private:
         static log4cxx::LoggerPtr logger;

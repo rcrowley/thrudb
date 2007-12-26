@@ -7,11 +7,18 @@
 #include <mysql/mysql.h>
 #include <map>
 #include <stack>
+#include "MyTable.h"
 
 using namespace std;
+using namespace mytable;
 
 namespace mysql {
     
+    /* TODO: any reason not to make this huge?, i guess it will eat up
+     * memory, but the number of these objects is limited by the number
+     * of connections and tables (pstmts) */
+    #define MAX_VALUE_SIZE 4096
+
     class BindParams
     {
         public:
@@ -34,15 +41,15 @@ namespace mysql {
             MYSQL_BIND * results;
     };
 
-    class KeyParams : public BindParams
+    class StringParams : public BindParams
     {
         public:
-            KeyParams()
+            StringParams()
             {
                 init(NULL);
             }
 
-            KeyParams(const char * key)
+            StringParams(const char * key)
             {
                 init (key);
             }
@@ -76,15 +83,15 @@ namespace mysql {
             void init (const char * key);
     };
 
-    class KeyCountParams : public KeyParams
+    class StringIntParams : public StringParams
     {
         public:
-            KeyCountParams()
+            StringIntParams()
             {
                 init(NULL, 0);
             }
 
-            KeyCountParams(const char * key, unsigned int count)
+            StringIntParams(const char * key, unsigned int count)
             {
                 init (key, count);
             }
@@ -107,15 +114,15 @@ namespace mysql {
             void init (const char * key, unsigned int count);
     };
 
-    class KeyValueParams : public KeyParams
+    class StringStringParams : public StringParams
     {
         public:
-            KeyValueParams()
+            StringStringParams()
             {
                 init(NULL, NULL);
             }
 
-            KeyValueParams(const char * key, const char * value)
+            StringStringParams(const char * key, const char * value)
             {
                 init (key, value);
             }
@@ -180,9 +187,9 @@ namespace mysql {
                 return this->db;
             }
 
-            const char * get_tbl ()
+            const char * get_table ()
             {
-                return this->tbl;
+                return this->table;
             }
 
             unsigned int get_est_size ()
@@ -209,14 +216,14 @@ namespace mysql {
             my_bool id_error;
 
             /* 1 */
-            char start[128];
+            char start[33];
             //MYSQL_TYPE start_type = MYSQL_TYPE_STRING;
             unsigned long start_length;
             my_bool start_is_null;
             my_bool start_error;
 
             /* 2 */
-            char end[128];
+            char end[33];
             //MYSQL_TYPE end_type = MYSQL_TYPE_STRING;
             unsigned long end_length;
             my_bool end_is_null;
@@ -230,18 +237,18 @@ namespace mysql {
             my_bool host_error;
 
             /* 4 */
-            char db[128];
+            char db[14];
             //MYSQL_TYPE db_type = MYSQL_TYPE_STRING;
             unsigned long db_length;
             my_bool db_is_null;
             my_bool db_error;
 
             /* 5 */
-            char tbl[128];
-            //MYSQL_TYPE tbl_type = MYSQL_TYPE_STRING;
-            unsigned long tbl_length;
-            my_bool tbl_is_null;
-            my_bool tbl_error;
+            char table[14];
+            //MYSQL_TYPE table_type = MYSQL_TYPE_STRING;
+            unsigned long table_length;
+            my_bool table_is_null;
+            my_bool table_error;
 
             /* 6 */
             unsigned int est_size;
@@ -299,7 +306,7 @@ namespace mysql {
             my_bool key_error;
 
             /* 1 */
-            char value[1024];
+            char value[MAX_VALUE_SIZE];
             //MYSQL_TYPE value_type = MYSQL_TYPE_STRING;
             unsigned long value_length;
             my_bool value_is_null;
@@ -348,7 +355,7 @@ namespace mysql {
                 return this->bind_results;
             }
 
-            int execute ();
+            void execute ();
 
             unsigned long num_rows ();
 
@@ -361,10 +368,10 @@ namespace mysql {
             BindResults * bind_results;
 
         private:
+            static log4cxx::LoggerPtr logger;
+
             void init(MYSQL * mysql, const char * query,
                       BindParams * bind_params, BindResults * bind_results);
-
-            static log4cxx::LoggerPtr logger;
     };
 
     class Connection

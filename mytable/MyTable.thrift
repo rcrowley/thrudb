@@ -11,7 +11,10 @@ exception MyTableException
 struct Element
 {
     1: string key,
-    2: string value
+    2: string value,
+#   TODO: add these in, return them in scan and maybe add getFull or something
+#    3: i64    created_at,
+#    4: i64    modified_at
 }
 
 struct ScanResponse
@@ -29,6 +32,7 @@ service MyTable
     # scan can be used to walk over all of the elements in a partition in an
     # undefined order. it is also only guaranteed to pick up the elements that
     # exist at the time of the first call to scan. new elements _may_ be picked
-    # up.
+    # up. a return of elements less than count means you've hit the end, this
+    # includes 0 elements
     ScanResponse scan(1:string tablename, 2:string seed, 3:i32 count)
 }

@@ -33,32 +33,36 @@ eval{
 
 eval {
 
-#    my $id = $thrudoc->put ("partitions", "key3", "val-key4");
+    my $id = $thrudoc->put ("partitions", "key3", "val-key4");
     my $key = "key.".rand;
     $thrudoc->put ("partitions", $key, "val.$key");
 
-#    print Dumper ($thrudoc->get ("partitions", "key3"));
-#    print Dumper ($thrudoc->get ("partitions", $key));
+    print Dumper ($thrudoc->get ("partitions", "key3"));
+    print Dumper ($thrudoc->get ("partitions", $key));
 
-#    if (rand (100) > 50)
-#    {
-#        $thrudoc->remove ("partitions", $key);
-#    }
+    if (rand (100) > 50)
+    {
+        $thrudoc->remove ("partitions", $key);
+    }
+    else
+    {
+        print Dumper ($thrudoc->get ("partitions", $key));
+    }
 
-#    print Dumper ($thrudoc->get ("partitions", "key3"));
-#    print Dumper ($thrudoc->get ("partitions", $key));
+    print Dumper ($thrudoc->get ("partitions", "key3"));
 
-    my $ret = $thrudoc->scan ("partitions", undef, 5);
+    my $batch_size = 13;
+    my $ret = $thrudoc->scan ("partitions", undef, $batch_size);
     my $count = 0;
     while (scalar (@{$ret->{elements}}) > 0)
     {
         printf "seed: %s\n", $ret->{seed};
         foreach (@{$ret->{elements}})
         {
-            printf "\t%s\n", $_->{key};
+            printf "\t%s => %s\n", $_->{key}, $_->{value};
         }
         $count += scalar (@{$ret->{elements}});
-        $ret = $thrudoc->scan ("partitions", $ret->{seed}, 5);
+        $ret = $thrudoc->scan ("partitions", $ret->{seed}, $batch_size);
     }
     printf "count: %d\n", $count;
 };

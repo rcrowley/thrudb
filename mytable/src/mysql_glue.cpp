@@ -5,10 +5,11 @@ using namespace std;
 using namespace log4cxx;
 using namespace mysql;
 
+// private
 LoggerPtr PreparedStatement::logger(Logger::getLogger("PreparedStatement"));
 LoggerPtr Connection::logger(Logger::getLogger("Connection"));
 
-void KeyParams::init (const char * key)
+void StringParams::init (const char * key)
 {
     this->set_key (key);
 
@@ -20,7 +21,7 @@ void KeyParams::init (const char * key)
     this->params[0].length = &this->key_length;
 }
 
-void KeyCountParams::init (const char * key, unsigned int count)
+void StringIntParams::init (const char * key, unsigned int count)
 {
     this->set_key (key);
     this->set_count (count);
@@ -37,7 +38,7 @@ void KeyCountParams::init (const char * key, unsigned int count)
     this->params[1].length = 0;
 }
 
-void KeyValueParams::init (const char * key, const char * value)
+void StringStringParams::init (const char * key, const char * value)
 {
     this->set_key (key);
     this->set_value (value);
@@ -88,11 +89,11 @@ PartitionsResults::PartitionsResults()
     this->results[4].length = &this->db_length;
     this->results[4].error = &this->db_error;
     this->results[5].buffer_type = MYSQL_TYPE_STRING;
-    this->results[5].buffer = &this->tbl;
-    this->results[5].buffer_length = sizeof (this->tbl);
-    this->results[5].is_null = &this->tbl_is_null;
-    this->results[5].length = &this->tbl_length;
-    this->results[5].error = &this->tbl_error;
+    this->results[5].buffer = &this->table;
+    this->results[5].buffer_length = sizeof (this->table);
+    this->results[5].is_null = &this->table_is_null;
+    this->results[5].length = &this->table_length;
+    this->results[5].error = &this->table_error;
     this->results[6].buffer_type = MYSQL_TYPE_LONG;
     this->results[6].buffer = &this->est_size;
     this->results[6].is_null = &this->est_size_is_null;
@@ -160,9 +161,8 @@ void PreparedStatement::init(MYSQL * mysql, const char * query,
     this->query = query;
     this->bind_params = bind_params;
     this->bind_results = bind_results;
-    LOG4CXX_INFO(logger, string("init: query=") + this->query);
+    LOG4CXX_DEBUG(logger, string("init: query=") + this->query);
 
-    // TODO: error handling
     this->stmt = mysql_stmt_init (mysql);
     if (this->stmt == NULL)
     {
@@ -172,6 +172,7 @@ void PreparedStatement::init(MYSQL * mysql, const char * query,
                 mysql_error (mysql));
         LOG4CXX_ERROR(logger,buf);
     }
+
     if (mysql_stmt_prepare (this->stmt, this->query, strlen (this->query)))
     {
         LOG4CXX_ERROR(logger, string("mysql_stmt_prepare failed: ")+string(query));
@@ -180,49 +181,62 @@ void PreparedStatement::init(MYSQL * mysql, const char * query,
                 mysql_error (mysql));
         LOG4CXX_ERROR(logger,buf);
     }
+
     if (this->bind_params != NULL)
     {
         if (mysql_stmt_bind_param (this->stmt, 
                                    this->bind_params->get_params ()))
             LOG4CXX_ERROR(logger, "mysql_stmt_bind_param failed");
     }
-}
 
-int PreparedStatement::execute ()
-{
-    LOG4CXX_INFO(logger, "execute");
-
-    // TODO: error handling
-    int ret = mysql_stmt_execute (this->stmt);
-    if (ret != 0)
-    {
-        LOG4CXX_ERROR(logger, string("mysql_stmt_execute failed: "));
-        char buf[1024];
-        sprintf(buf, "*** %p - %d - %s", this->stmt, 
-                mysql_stmt_errno (this->stmt), mysql_stmt_error (this->stmt));
-        LOG4CXX_ERROR(logger,buf);
-    }
     if (this->bind_results)
     {
         if (mysql_stmt_bind_result (this->stmt, 
                                     this->bind_results->get_results ()))
         {
-            LOG4CXX_ERROR(logger, string("mysql_stmt_bind_result failed: "));
             char buf[1024];
-            sprintf(buf, "*** %p - %d - %s", this->stmt, 
-                    mysql_stmt_errno (this->stmt), 
+            sprintf(buf, "mysql_stmt_bind_result failed: %p - %d - %s",
+                    this->stmt, mysql_stmt_errno (this->stmt), 
                     mysql_stmt_error (this->stmt));
             LOG4CXX_ERROR(logger,buf);
+            MyTableException e;
+            e.what = "MySQLBackend error";
+            throw e;
         }
-        // optional, buffer results to client
-        mysql_stmt_store_result (this->stmt);
     }
-    return ret;
+}
+
+void PreparedStatement::execute ()
+{
+    LOG4CXX_DEBUG(logger, "execute");
+
+    if (mysql_stmt_execute (this->stmt) != 0)
+    {
+        char buf[1024];
+        sprintf(buf, "mysql_stmt_execute failed: %p - %d - %s", this->stmt, 
+                mysql_stmt_errno (this->stmt), mysql_stmt_error (this->stmt));
+        LOG4CXX_ERROR (logger, buf);
+        MyTableException e;
+        e.what = "MySQLBackend error";
+        throw e;
+    }
+
+    // optional, buffer results to client
+    if (mysql_stmt_store_result (this->stmt) != 0)
+    {
+        char buf[1024];
+        sprintf(buf, "mysql_stmt_execute failed: %p - %d - %s", this->stmt, 
+                mysql_stmt_errno (this->stmt), mysql_stmt_error (this->stmt));
+        LOG4CXX_ERROR (logger, buf);
+        MyTableException e;
+        e.what = "MySQLBackend error";
+        throw e;
+    }
 }
 
 unsigned long PreparedStatement::num_rows ()
 {
-    LOG4CXX_INFO(logger, "execute");
+    LOG4CXX_DEBUG(logger, "execute");
 
     mysql_stmt_store_result (this->stmt);
     return mysql_stmt_num_rows (this->stmt);
@@ -230,8 +244,20 @@ unsigned long PreparedStatement::num_rows ()
 
 int PreparedStatement::fetch ()
 {
-    LOG4CXX_INFO(logger, "fetch");
-    return mysql_stmt_fetch (this->stmt);
+    LOG4CXX_DEBUG(logger, "fetch");
+    int ret = mysql_stmt_fetch (this->stmt);
+    if (ret != 0 && ret != MYSQL_NO_DATA)
+    {
+        char buf[1024];
+        sprintf(buf, "mysql_stmt_fetch failed: %p - %d - %s",
+                this->stmt, mysql_stmt_errno (this->stmt), 
+                mysql_stmt_error (this->stmt));
+        LOG4CXX_ERROR(logger,buf);
+        MyTableException e;
+        e.what = "MySQLBackend error";
+        throw e;
+    }
+    return ret;
 }
 
 map<string, stack<Connection *>*> Connection::connections;
@@ -256,21 +282,11 @@ Connection * Connection::checkout(const char * hostname, const char * db,
     {
         conn = new Connection(hostname, db, username, password);
     }
-    {
-        char buf[1024];
-        sprintf (buf, "checkout=0x%p", conn);
-        LOG4CXX_INFO(logger, buf);
-    }
     return conn;
 }
 
 void Connection::checkin (Connection * connection)
 {
-    {
-        char buf[1024];
-        sprintf (buf, "checkin=0x%p", connection);
-        LOG4CXX_INFO(logger, buf);
-    }
     string key = string(connection->hostname) + ":" + string (connection->db);
     stack<Connection *> * conns = connections[key];
     if (!conns)
@@ -310,7 +326,7 @@ PreparedStatement * Connection::find_next_statement(const char * tablename)
     PreparedStatement * stmt = this->next_statements[key];
     if (!stmt)
     {
-        BindParams * bind_params = new KeyParams();
+        BindParams * bind_params = new StringParams();
         BindResults * bind_results = new PartitionsResults();
         char query[256];
         sprintf (query, "select id, start, end, host, db, tbl, est_size, created_at, retired_at from %s where tbl > ? and retired_at is null order by end asc limit 1",
@@ -328,7 +344,7 @@ PreparedStatement * Connection::find_find_statement(const char * tablename)
     PreparedStatement * stmt = this->find_statements[key];
     if (!stmt)
     {
-        BindParams * bind_params = new KeyParams();
+        BindParams * bind_params = new StringParams();
         BindResults * bind_results = new PartitionsResults();
         char query[256];
         sprintf (query, "select id, start, end, host, db, tbl, est_size, created_at, retired_at from %s where ? <= end and retired_at is null order by end asc limit 1",
@@ -346,7 +362,7 @@ PreparedStatement * Connection::find_get_statement(const char * tablename)
     PreparedStatement * stmt = this->get_statements[key];
     if (!stmt)
     {
-        BindParams * bind_params = new KeyParams();
+        BindParams * bind_params = new StringParams();
         BindResults * bind_results = new KeyValueResults();
         char query[256];
         sprintf (query, "select k, v, created_at, modified_at from %s where k = ?",
@@ -364,7 +380,7 @@ PreparedStatement * Connection::find_put_statement(const char * tablename)
     PreparedStatement * stmt = this->put_statements[key];
     if (!stmt)
     {
-        BindParams * bind_params = new KeyValueParams();
+        BindParams * bind_params = new StringStringParams();
         char query[256];
         sprintf (query, "insert into %s (k, v, created_at) values (?, ?, now()) on duplicate key update v = values(v)",
                  tablename);
@@ -380,7 +396,7 @@ PreparedStatement * Connection::find_delete_statement(const char * tablename)
     PreparedStatement * stmt = this->delete_statements[key];
     if (!stmt)
     {
-        BindParams * bind_params = new KeyParams();
+        BindParams * bind_params = new StringParams();
         char query[128];
         sprintf (query, "delete from %s where k = ?", tablename);
         stmt = new PreparedStatement(&this->mysql, query, bind_params);
@@ -395,7 +411,7 @@ PreparedStatement * Connection::find_scan_statement(const char * tablename)
     PreparedStatement * stmt = this->scan_statements[key];
     if (!stmt)
     {
-        BindParams * bind_params = new KeyCountParams();
+        BindParams * bind_params = new StringIntParams();
         BindResults * bind_results = new KeyValueResults();
         char query[256];
         sprintf (query, "select k, v, created_at, modified_at from %s where k > ? order by k asc limit ?",
@@ -406,4 +422,3 @@ PreparedStatement * Connection::find_scan_statement(const char * tablename)
     }
     return stmt;
 }
-
