@@ -4,6 +4,7 @@
 using namespace std;
 using namespace log4cxx;
 using namespace mysql;
+using namespace facebook::thrift::concurrency;
 
 // private
 LoggerPtr PreparedStatement::logger (Logger::getLogger ("PreparedStatement"));
@@ -264,22 +265,32 @@ int PreparedStatement::fetch ()
 }
 
 map<string, stack<Connection *>*> Connection::connections;
+Mutex Connection::connections_mutex = Mutex();
 
 Connection * Connection::checkout (const char * hostname, const char * db,
                                    const char * username, const char * password)
 {
     string key = string (hostname) + ":" + string (db);
     stack<Connection *> * conns = connections[key];
-    if (!conns)
-    {
-        conns = new stack<Connection*>();
-        connections[key] = conns;
-    }
     Connection * conn = NULL;
-    if (!conns->empty ())
-    {
-        conn = conns->top ();
-        conns->pop ();
+    // a block to wrap up connection pool mod operations, should be looked at
+    // TODO: someone who knows what they're doing should look at this :)
+    // TODO: this could probably be pushed down another level to lock per
+    // stack, but that would introduce some complexity and perf penalty, best
+    // to keep it simple until someone has the time to look at the decision
+    // closely.
+    { 
+        Guard guard(connections_mutex);
+        if (!conns)
+        {
+            conns = new stack<Connection*>();
+            connections[key] = conns;
+        }
+        if (!conns->empty ())
+        {
+            conn = conns->top ();
+            conns->pop ();
+        }
     }
     if (!conn)
     {
@@ -292,13 +303,22 @@ void Connection::checkin (Connection * connection)
 {
     string key = string (connection->hostname) + ":" + string (connection->db);
     stack<Connection *> * conns = connections[key];
-    if (!conns)
+    // a block to wrap up connection pool mod operations, should be looked at
+    // TODO: someone who knows what they're doing should look at this :)
+    // TODO: this could probably be pushed down another level to lock per
+    // stack, but that would introduce some complexity and perf penalty, best
+    // to keep it simple until someone has the time to look at the decision
+    // closely.
     {
-        // this should never happen
-        conns = new stack<Connection*>;
-        connections[key] = conns;
+        Guard guard(connections_mutex);
+        if (!conns)
+        {
+            // this should never happen
+            conns = new stack<Connection*>;
+            connections[key] = conns;
+        }
+        conns->push (connection);
     }
-    conns->push (connection);
 }
 
 Connection::Connection (const char * hostname, const char * db,

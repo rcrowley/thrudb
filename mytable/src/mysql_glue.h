@@ -7,6 +7,7 @@
 #include <mysql/mysql.h>
 #include <map>
 #include <stack>
+#include <thrift/concurrency/Mutex.h>
 #include "MyTable.h"
 
 using namespace std;
@@ -450,6 +451,7 @@ namespace mysql {
 
         protected:
             static map<string, stack<Connection *>*> connections;
+            static facebook::thrift::concurrency::Mutex connections_mutex;
             static log4cxx::LoggerPtr logger;
 
             string hostname;
