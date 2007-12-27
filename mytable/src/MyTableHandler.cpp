@@ -4,7 +4,7 @@
 /*
  * TODO:
  * - shared caching (memcached) hooked in to put, get, remove
- *
+ * - input validation, tablenames, etc.
  */
 
 using namespace log4cxx;
@@ -48,5 +48,12 @@ void MyTableHandler::scan (ScanResponse & _return, const string & tablename, con
 void MyTableHandler::admin (string & _return, const string & op, const string & data)
 {
     LOG4CXX_DEBUG (logger, "admin: op=" + op + ", data=" + data);
-    _return = this->backend->admin (op, data);
+    if (op == "echo")
+    {
+        _return = data;
+    }
+    else
+    {
+        _return = this->backend->admin (op, data);
+    }
 }

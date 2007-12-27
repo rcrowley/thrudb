@@ -11,19 +11,18 @@ use Thrift::BinaryProtocol;
 use Thrift::Socket;
 use Thrift::FramedTransport;
 
-#Thrudb
 use MyTable;
 
 #Config
 use constant MYTABLE_PORT    => 9091;
 
-my $thrudoc;
+my $mytable;
 eval{
     my $socket    = new Thrift::Socket("localhost",MYTABLE_PORT());
     my $transport = new Thrift::FramedTransport($socket);
     my $protocol  = new Thrift::BinaryProtocol($transport);
 
-    $thrudoc  = new MyTableClient($protocol);
+    $mytable  = new MyTableClient($protocol);
 
     $transport->open();
 }; if($@) {
@@ -44,8 +43,8 @@ eval {
     print Dumper ($rev, $rev->get ('foo'), $rev->get ('baz'));
 
     # now through mytable
-    $thrudoc->put ("partitions", "obj", $ser);
-    $rev = Obj::load ($thrudoc->get ("partitions", "obj"));
+    $mytable->put ("partitions", "obj", $ser);
+    $rev = Obj::load ($mytable->get ("partitions", "obj"));
     print Dumper ($rev, $rev->get ('foo'), $rev->get ('baz'));
 };
 if($@) {

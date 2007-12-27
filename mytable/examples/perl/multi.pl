@@ -11,7 +11,6 @@ use Thrift::BinaryProtocol;
 use Thrift::Socket;
 use Thrift::FramedTransport;
 
-#Thrudb
 use MyTable;
 
 #Config
@@ -32,13 +31,13 @@ foreach (@threads)
 
 sub make_calls
 {
-    my $thrudoc;
+    my $mytable;
     eval{
         my $socket    = new Thrift::Socket("localhost",MYTABLE_PORT());
         my $transport = new Thrift::FramedTransport($socket);
         my $protocol  = new Thrift::BinaryProtocol($transport);
 
-        $thrudoc  = new MyTableClient($protocol);
+        $mytable  = new MyTableClient($protocol);
 
         $transport->open();
     }; if($@) {
@@ -48,25 +47,25 @@ sub make_calls
 
     eval {
 
-        my $id = $thrudoc->put ("partitions", "key3", "val-key4");
+        my $id = $mytable->put ("partitions", "key3", "val-key4");
         my $key = "key.".rand;
-        $thrudoc->put ("partitions", $key, "val.$key");
+        $mytable->put ("partitions", $key, "val.$key");
 
-        print Dumper ($thrudoc->get ("partitions", "key3"));
-        print Dumper ($thrudoc->get ("partitions", $key));
+        print Dumper ($mytable->get ("partitions", "key3"));
+        print Dumper ($mytable->get ("partitions", $key));
 
         if (rand (100) > 50)
         {
-            $thrudoc->remove ("partitions", $key);
+            $mytable->remove ("partitions", $key);
         }
 
-        print Dumper ($thrudoc->get ("partitions", "key3"));
-#        print Dumper ($thrudoc->get ("partitions", $key));
+        print Dumper ($mytable->get ("partitions", "key3"));
+#        print Dumper ($mytable->get ("partitions", $key));
 
         foreach (0..100)
         {
-            $thrudoc->put ("partitions", "key.$_", "value_$_");
-            $thrudoc->get ("partitions", "key.$_");
+            $mytable->put ("partitions", "key.$_", "value_$_");
+            $mytable->get ("partitions", "key.$_");
         }
     };
     if($@) {

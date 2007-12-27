@@ -41,9 +41,6 @@ MySQLBackend::MySQLBackend ()
     master_username = ConfigManager->read<string> ("MYSQL_USERNAME", "mytable");
     LOG4CXX_INFO (logger, string ("master_username=") + master_username);
     master_password = ConfigManager->read<string> ("MYSQL_PASSWORD", "mytable");
-
-    // TODO: we should do something smarter than loading a single set here
-    this->load_partitions (string ("partitions"));
 }
 
 void MySQLBackend::load_partitions (const string & tablename)
@@ -248,22 +245,54 @@ FindReturn MySQLBackend::find_and_checkout (const string & tablename,
                    md5key);
 
     FindReturn find_return;
-    find_return.connection = NULL;
 
-    Partition * part = new Partition (md5key);
-    set<Partition*>::iterator p = partitions[tablename]->lower_bound (part);
-    // TODO how do we check if we got something "valid" back
-    if (*p)
+    // look for the partitions set
+    set<Partition*, bool(*)(Partition*, Partition*)> * partitions_set = 
+        partitions[tablename];
+
+    if (partitions_set == NULL)
     {
-        LOG4CXX_ERROR (logger, string ("found container, end=") +
-                       (*p)->get_end ());
-        find_return.connection = Connection::checkout
-            ((*p)->get_host (), (*p)->get_db (),
-             this->master_username.c_str (),
-             this->master_password.c_str ());
-        find_return.data_tablename = (*p)->get_table ();
-        return find_return;
+        // we didn't find it, try loading
+        this->load_partitions (tablename);
+        partitions_set = partitions[tablename];
     }
+
+    if (partitions_set != NULL)
+    {
+        // we now have the partitions set
+        Partition * part = new Partition (md5key);
+        // look for the matching partition
+        set<Partition*>::iterator partition = partitions_set->lower_bound (part);
+        // TODO how do we check if we got something "valid" back
+        if (*partition)
+        {
+            LOG4CXX_DEBUG (logger, string ("found container, end=") +
+                           (*partition)->get_end ());
+            find_return.connection = Connection::checkout
+                ((*partition)->get_host (), (*partition)->get_db (),
+                 this->master_username.c_str (),
+                 this->master_password.c_str ());
+            find_return.data_tablename = (*partition)->get_table ();
+            return find_return;
+        }
+        else
+        {
+            LOG4CXX_ERROR (logger, string ("table ") + tablename + 
+                           string (" has a partitioning problem for key ") + 
+                           key);
+            MyTableException e;
+            e.what = "MySQLBackend error";
+            throw e;
+        }
+    }
+    else
+    {
+        MyTableException e;
+        e.what = tablename + " not found in directory";
+        LOG4CXX_WARN (logger, string ("find_and_checkout: ") + e.what);
+        throw e;
+    }
+
     return find_return;
 }
 
@@ -321,7 +350,7 @@ void MySQLBackend::checkin (Connection * connection)
 
 string MySQLBackend::admin (const string & op, const string & data)
 {
-    if (op == "reload_partitions")
+    if (op == "load_partitions")
     {
         this->load_partitions (data);
         return "done";

@@ -11,19 +11,18 @@ use Thrift::BinaryProtocol;
 use Thrift::Socket;
 use Thrift::FramedTransport;
 
-#Thrudb
 use MyTable;
 
 #Config
 use constant MYTABLE_PORT    => 9091;
 
-my $thrudoc;
+my $mytable;
 eval{
     my $socket    = new Thrift::Socket("localhost",MYTABLE_PORT());
     my $transport = new Thrift::FramedTransport($socket);
     my $protocol  = new Thrift::BinaryProtocol($transport);
 
-    $thrudoc  = new MyTableClient($protocol);
+    $mytable  = new MyTableClient($protocol);
 
     $transport->open();
 }; if($@) {
@@ -33,26 +32,26 @@ eval{
 
 eval {
 
-    my $id = $thrudoc->put ("partitions", "key3", "val-key4");
+    my $id = $mytable->put ("partitions", "key3", "val-key4");
     my $key = "key.".rand;
-    $thrudoc->put ("partitions", $key, "val.$key");
+    $mytable->put ("partitions", $key, "val.$key");
 
-    print Dumper ($thrudoc->get ("partitions", "key3"));
-    print Dumper ($thrudoc->get ("partitions", $key));
+    print Dumper ($mytable->get ("partitions", "key3"));
+    print Dumper ($mytable->get ("partitions", $key));
 
     if (rand (100) > 50)
     {
-        $thrudoc->remove ("partitions", $key);
+        $mytable->remove ("partitions", $key);
     }
     else
     {
-        print Dumper ($thrudoc->get ("partitions", $key));
+        print Dumper ($mytable->get ("partitions", $key));
     }
 
-    print Dumper ($thrudoc->get ("partitions", "key3"));
+    print Dumper ($mytable->get ("partitions", "key3"));
 
     my $batch_size = 13;
-    my $ret = $thrudoc->scan ("partitions", undef, $batch_size);
+    my $ret = $mytable->scan ("partitions", undef, $batch_size);
     my $count = 0;
     while (scalar (@{$ret->{elements}}) > 0)
     {
@@ -62,7 +61,7 @@ eval {
             printf "\t%s => %s\n", $_->{key}, $_->{value};
         }
         $count += scalar (@{$ret->{elements}});
-        $ret = $thrudoc->scan ("partitions", $ret->{seed}, $batch_size);
+        $ret = $mytable->scan ("partitions", $ret->{seed}, $batch_size);
     }
     printf "count: %d\n", $count;
 };
