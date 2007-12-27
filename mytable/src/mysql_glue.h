@@ -16,8 +16,12 @@ namespace mysql {
     
     /* TODO: any reason not to make this huge?, i guess it will eat up
      * memory, but the number of these objects is limited by the number
-     * of connections and tables (pstmts) */
-    #define MAX_VALUE_SIZE 4096
+     * of connections and tables (pstmts) +1 for the null term */
+    #define MYSQL_BACKEND_MAX_HOST_SIZE 129
+    #define MYSQL_BACKEND_MAX_DB_SIZE 15
+    #define MYSQL_BACKEND_MAX_TABLE_SIZE 15
+    #define MYSQL_BACKEND_MAX_KEY_SIZE 33
+    #define MYSQL_BACKEND_MAX_VALUE_SIZE 4097
 
     class BindParams
     {
@@ -63,7 +67,7 @@ namespace mysql {
                 else
                 {
                     this->key_is_null = 0;
-                    strncpy (this->key, key, 38);
+                    strncpy (this->key, key, sizeof (this->key));
                     this->key_length = strlen (key);
                 }
             }
@@ -74,7 +78,7 @@ namespace mysql {
             }
 
         protected:
-            char key[38];
+            char key[MYSQL_BACKEND_MAX_KEY_SIZE];
             //MYSQL_TYPE key_type = MYSQL_TYPE_STRING;
             unsigned long key_length;
             my_bool key_is_null;
@@ -136,7 +140,7 @@ namespace mysql {
                 else
                 {
                     this->value_is_null = 0;
-                    strncpy (this->value, value, 1024);
+                    strncpy (this->value, value, sizeof (this->value));
                     this->value_length = strlen (value);
                 }
             }
@@ -147,7 +151,7 @@ namespace mysql {
             }
 
         protected:
-            char value[1024];
+            char value[MYSQL_BACKEND_MAX_VALUE_SIZE];
             //MYSQL_TYPE value_type = MYSQL_TYPE_STRING;
             unsigned long value_length;
             my_bool value_is_null;
@@ -216,35 +220,35 @@ namespace mysql {
             my_bool id_error;
 
             /* 1 */
-            char start[33];
+            char start[MYSQL_BACKEND_MAX_KEY_SIZE];
             //MYSQL_TYPE start_type = MYSQL_TYPE_STRING;
             unsigned long start_length;
             my_bool start_is_null;
             my_bool start_error;
 
             /* 2 */
-            char end[33];
+            char end[MYSQL_BACKEND_MAX_KEY_SIZE];
             //MYSQL_TYPE end_type = MYSQL_TYPE_STRING;
             unsigned long end_length;
             my_bool end_is_null;
             my_bool end_error;
 
             /* 3 */
-            char host[128];
+            char host[MYSQL_BACKEND_MAX_HOST_SIZE];
             //MYSQL_TYPE host_type = MYSQL_TYPE_STRING;
             unsigned long host_length;
             my_bool host_is_null;
             my_bool host_error;
 
             /* 4 */
-            char db[14];
+            char db[MYSQL_BACKEND_MAX_DB_SIZE];
             //MYSQL_TYPE db_type = MYSQL_TYPE_STRING;
             unsigned long db_length;
             my_bool db_is_null;
             my_bool db_error;
 
             /* 5 */
-            char table[14];
+            char table[MYSQL_BACKEND_MAX_TABLE_SIZE];
             //MYSQL_TYPE table_type = MYSQL_TYPE_STRING;
             unsigned long table_length;
             my_bool table_is_null;
@@ -299,14 +303,14 @@ namespace mysql {
 
         protected:
             /* 0 */
-            char key[37];
+            char key[MYSQL_BACKEND_MAX_KEY_SIZE];
             //MYSQL_TYPE key_type = MYSQL_TYPE_STRING;
             unsigned long key_length;
             my_bool key_is_null;
             my_bool key_error;
 
             /* 1 */
-            char value[MAX_VALUE_SIZE];
+            char value[MYSQL_BACKEND_MAX_VALUE_SIZE];
             //MYSQL_TYPE value_type = MYSQL_TYPE_STRING;
             unsigned long value_length;
             my_bool value_is_null;
@@ -385,6 +389,7 @@ namespace mysql {
 
             bool is_same (const char * hostname, const char * db);
 
+            PreparedStatement * find_partitions_statement (const char * tablename);
             PreparedStatement * find_next_statement (const char * tablename);
             PreparedStatement * find_find_statement (const char * tablename);
             PreparedStatement * find_get_statement (const char * tablename);
@@ -399,6 +404,7 @@ namespace mysql {
             string hostname;
             string db;
             MYSQL mysql;
+            map<string, PreparedStatement *> partitions_statements;
             map<string, PreparedStatement *> next_statements;
             map<string, PreparedStatement *> find_statements;
             map<string, PreparedStatement *> get_statements;

@@ -24,6 +24,8 @@ class MyTableHandler : virtual public MyTableIf {
         void remove(const string & tablename, const string & key);
         void scan (ScanResponse & _return, const string & tablename, const string & seed, int32_t count);
 
+        void admin (string & _return, const string & op, const string & data);
+
     private:
         MyTableHandler(){};
 

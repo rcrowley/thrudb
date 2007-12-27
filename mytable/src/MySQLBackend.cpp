@@ -7,9 +7,13 @@
  * - a caching system for the directory information, preferably one that lets
  *   us do lookups with it or else it's not that useful this should also help
  *   in the scan stuff, but is of much lower priority. can be local or shared
+ * - cleanly recover from lost/broken connections
+ * - look in to checkin's when exceptions are thrown
  */
 
 // protected
+map<string, set<Partition*, bool(*)(Partition*, Partition*)>* >
+    MySQLBackend::partitions; //(Partition::greater);
 string MySQLBackend::master_hostname;
 int MySQLBackend::master_port;
 string MySQLBackend::master_db;
@@ -26,14 +30,46 @@ MySQLBackend::MySQLBackend ()
                                                    "localhost");
     LOG4CXX_INFO (logger, string ("master_hostname=") + master_hostname);
     master_port = ConfigManager->read<int> ("MYSQL_MASTER_PORT", 3306);
-    char buf[64];
-    sprintf (buf, "master_port=%d\n", master_port);
-    LOG4CXX_INFO (logger, buf);
+    {
+        char buf[64];
+        sprintf (buf, "master_port=%d\n", master_port);
+        LOG4CXX_INFO (logger, buf);
+    }
     master_db = ConfigManager->read<string> ("MYSQL_MASTER_DB", "mytable");
     LOG4CXX_INFO (logger, string ("master_db=") + master_db);
     master_username = ConfigManager->read<string> ("MYSQL_USERNAME", "mytable");
     LOG4CXX_INFO (logger, string ("master_username=") + master_username);
     master_password = ConfigManager->read<string> ("MYSQL_PASSWORD", "mytable");
+
+    this->load_partitions (string ("partitions"));
+}
+
+void MySQLBackend::load_partitions (const string & tablename)
+{
+    set<Partition*, bool(*)(Partition*, Partition*)> * 
+        new_partitions = new set<Partition*, bool(*)(Partition*, Partition*)>
+        (Partition::greater);
+
+    Connection * connection = Connection::checkout 
+        (this->master_hostname.c_str (), this->master_db.c_str (),
+         this->master_username.c_str (), this->master_password.c_str ());
+
+    PreparedStatement * partitions_statement = 
+        connection->find_partitions_statement (tablename.c_str ());
+
+    partitions_statement->execute ();
+
+    PartitionsResults * pr = 
+        (PartitionsResults*)partitions_statement->get_bind_results ();
+
+    while (partitions_statement->fetch () != MYSQL_NO_DATA)
+    {
+        LOG4CXX_INFO (logger, string ("load_partitions inserting: table=") + 
+                      pr->get_table () + string (", end=") + pr->get_end ());
+        new_partitions->insert (new Partition (pr));
+    }
+
+    partitions[tablename] = new_partitions;
 }
 
 string MySQLBackend::get (const string & tablename, const string & key )
@@ -52,6 +88,7 @@ string MySQLBackend::get (const string & tablename, const string & key )
     string value;
     if (get_statement->fetch () == MYSQL_NO_DATA)
     {
+        this->checkin (find_return.connection);
         MyTableException e;
         e.what = key + " not found in " + tablename;
         LOG4CXX_ERROR(logger, string ("get: ") + e.what);
@@ -192,13 +229,6 @@ more:
 FindReturn MySQLBackend::find_and_checkout (const string & tablename, 
                                             const string & key)
 {
-    Connection * connection = Connection::checkout 
-        (this->master_hostname.c_str (), this->master_db.c_str (),
-         this->master_username.c_str (), this->master_password.c_str ());
-
-    PreparedStatement * find_statement = 
-        connection->find_find_statement (tablename.c_str ());
-
     // we partition by the md5 of the key so that we'll get an even
     // distrobution of keys across partitions, we still store with key tho
     // TODO: is there a better way to do key -> md5 string
@@ -215,16 +245,22 @@ FindReturn MySQLBackend::find_and_checkout (const string & tablename,
     LOG4CXX_DEBUG (logger, string ("key=") + key + string (" -> md5key=") +
                    md5key);
 
-    StringParams * fpp = (StringParams*)find_statement->get_bind_params ();
-    fpp->set_key (md5key.c_str ());
+    FindReturn find_return;
+    find_return.connection = NULL;
 
-    FindReturn find_return = and_checkout (connection, find_statement);
-    if (find_return.connection == NULL)
+    Partition * part = new Partition (md5key);
+    set<Partition*>::iterator p = partitions[tablename]->lower_bound (part);
+    // TODO how do we check if we got something "valid" back
+    if (*p)
     {
-        LOG4CXX_DEBUG (logger, "and_checkout: we didn't get a single row back from a find partition");
-        MyTableException e;
-        e.what = "MySQLBackend error";
-        throw e;
+        LOG4CXX_ERROR (logger, string ("found container, end=") + 
+                       (*p)->get_end ());
+        find_return.connection = Connection::checkout 
+            ((*p)->get_host (), (*p)->get_db (), 
+             this->master_username.c_str (), 
+             this->master_password.c_str ());
+        find_return.data_tablename = (*p)->get_table ();
+        return find_return;
     }
     return find_return;
 }
@@ -242,22 +278,16 @@ FindReturn MySQLBackend::find_next_and_checkout (const string & tablename,
     StringParams * fpp = (StringParams*)next_statement->get_bind_params ();
     fpp->set_key (current_data_tablename.c_str ());
 
-    return and_checkout (connection, next_statement);
-}
-
-FindReturn MySQLBackend::and_checkout (Connection * connection, 
-                                       PreparedStatement * statement)
-{
-    statement->execute ();
+    next_statement->execute ();
 
     FindReturn find_return;
     find_return.connection = NULL;
 
-    if (statement->fetch () == MYSQL_NO_DATA)
+    if (next_statement->fetch () == MYSQL_NO_DATA)
         return find_return;
 
     PartitionsResults * fpr = 
-        (PartitionsResults*)statement->get_bind_results ();
+        (PartitionsResults*)next_statement->get_bind_results ();
 
     find_return.data_tablename = fpr->get_table ();
     // if our connection to the master will work to get at the partition then
@@ -285,4 +315,14 @@ FindReturn MySQLBackend::and_checkout (Connection * connection,
 void MySQLBackend::checkin (Connection * connection)
 {
     Connection::checkin (connection);
+}
+        
+string MySQLBackend::admin (const string & op, const string & data)
+{
+    if (op == "reload_partitions")
+    {
+        this->load_partitions (data);
+        return "done";
+    }
+    return "";
 }

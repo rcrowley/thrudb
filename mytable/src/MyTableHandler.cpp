@@ -46,3 +46,8 @@ void MyTableHandler::scan (ScanResponse & _return, const string & tablename, con
     _return = this->backend->scan (tablename, seed, count);
 }
 
+void MyTableHandler::admin (string & _return, const string & op, const string & data)
+{
+    LOG4CXX_DEBUG (logger, "admin: op=" + op + ", data=" + data);
+    _return = this->backend->admin (op, data);
+}

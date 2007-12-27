@@ -320,6 +320,22 @@ bool Connection::is_same (const char * hostname, const char * db)
         strcmp (this->db.c_str (), db) == 0;
 }
 
+PreparedStatement * Connection::find_partitions_statement(const char * tablename)
+{
+    string key = string(tablename);
+    PreparedStatement * stmt = this->partitions_statements[key];
+    if (!stmt)
+    {
+        BindResults * bind_results = new PartitionsResults();
+        char query[256];
+        sprintf (query, "select id, start, end, host, db, tbl, est_size, created_at, retired_at from %s where retired_at is null order by end asc",
+                 tablename);
+        stmt = new PreparedStatement(&this->mysql, query, NULL, bind_results);
+        this->partitions_statements[key] = stmt;
+    }
+    return stmt;
+}
+
 PreparedStatement * Connection::find_next_statement(const char * tablename)
 {
     string key = string(tablename);

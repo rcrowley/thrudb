@@ -6,11 +6,10 @@
 #define _MYSQL_BACKEND_H_
 
 #include <string>
+#include <set>
 #include <log4cxx/logger.h>
-
 #include <thrift/transport/TTransportUtils.h>
 #include <thrift/protocol/TBinaryProtocol.h>
-
 #include "MyTable.h"
 #include "MyTableBackend.h"
 #include "mysql_glue.h"
@@ -26,6 +25,60 @@ struct FindReturn
     string data_tablename;
 };
 
+class Partition
+{
+    public:
+        static bool greater (Partition * a, Partition * b)
+        {
+            return strcmp (a->get_end (), b->get_end ()) <= 0;
+        }
+
+        Partition (const string & end)
+        {
+            memcpy (this->end, end.c_str (), end.length ());
+        }
+
+        Partition (PartitionsResults * partition_results)
+        {
+            strncpy (this->end, partition_results->get_end (), 
+                     sizeof (this->end));
+            strncpy (this->host, partition_results->get_host (), 
+                     sizeof (this->host));
+            strncpy (this->db, partition_results->get_db (), 
+                     sizeof (this->db));
+            strncpy (this->table, partition_results->get_table (), 
+                     sizeof (this->table));
+            fprintf (stderr, "part: %s %s %s %s\n", 
+                     this->end, this->host, this->db, this->table);
+        }
+
+        const char * get_end ()
+        {
+            return this->end;
+        }
+
+        const char * get_host ()
+        {
+            return this->host;
+        }
+
+        const char * get_db ()
+        {
+            return this->db;
+        }
+
+        const char * get_table ()
+        {
+            return this->table;
+        }
+
+    protected:
+        char end[MYSQL_BACKEND_MAX_KEY_SIZE];
+        char host[MYSQL_BACKEND_MAX_HOST_SIZE];
+        char db[MYSQL_BACKEND_MAX_DB_SIZE];
+        char table[MYSQL_BACKEND_MAX_TABLE_SIZE];
+};
+
 class MySQLBackend : public MyTableBackend
 {
     public:
@@ -37,8 +90,11 @@ class MySQLBackend : public MyTableBackend
         ScanResponse scan (const string & tablename, const string & seed, 
                            int32_t count);
 
+        string admin (const string & op, const string & data);
+
     protected:
 
+        static map<string, set<Partition*, bool(*)(Partition*, Partition*)>* > partitions;
         static string master_hostname;
         static int master_port;
         static string master_db;
@@ -53,6 +109,8 @@ class MySQLBackend : public MyTableBackend
 
     private:
         static log4cxx::LoggerPtr logger;
+
+        void load_partitions (const string & tablename);
 
         FindReturn and_checkout (Connection * connection, 
                                  PreparedStatement * statement);

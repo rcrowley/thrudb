@@ -5,7 +5,7 @@ java_package  MyTable
 
 exception MyTableException
 {
-    2: string what
+    1: string what
 }
 
 struct Element
@@ -34,5 +34,9 @@ service MyTable
     # exist at the time of the first call to scan. new elements _may_ be picked
     # up. a return of elements less than count means you've hit the end, this
     # includes 0 elements
-    ScanResponse scan(1:string tablename, 2:string seed, 3:i32 count)
+    ScanResponse scan(1:string tablename, 2:string seed, 3:i32 count),
+
+    # the following is protected api, it us only to be used by administrative
+    # programs and people who really know what they're doing.
+    string admin(1:string op, 2:string data) throws(MyTableException e)
 }
