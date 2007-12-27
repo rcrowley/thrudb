@@ -40,16 +40,14 @@ class Partition
 
         Partition (PartitionsResults * partition_results)
         {
-            strncpy (this->end, partition_results->get_end (), 
+            strncpy (this->end, partition_results->get_end (),
                      sizeof (this->end));
-            strncpy (this->host, partition_results->get_host (), 
+            strncpy (this->host, partition_results->get_host (),
                      sizeof (this->host));
-            strncpy (this->db, partition_results->get_db (), 
+            strncpy (this->db, partition_results->get_db (),
                      sizeof (this->db));
-            strncpy (this->table, partition_results->get_table (), 
+            strncpy (this->table, partition_results->get_table (),
                      sizeof (this->table));
-            fprintf (stderr, "part: %s %s %s %s\n", 
-                     this->end, this->host, this->db, this->table);
         }
 
         const char * get_end ()
@@ -82,26 +80,28 @@ class Partition
 class MySQLBackend : public MyTableBackend
 {
     public:
-        MySQLBackend();
+        MySQLBackend ();
 
         string get (const string & tablename, const string & key );
-        void put (const string & tablename, const string & key, const string & value);
+        void put (const string & tablename, const string & key, 
+                  const string & value);
         void remove (const string & tablename, const string & key );
-        ScanResponse scan (const string & tablename, const string & seed, 
+        ScanResponse scan (const string & tablename, const string & seed,
                            int32_t count);
 
         string admin (const string & op, const string & data);
 
     protected:
 
-        static map<string, set<Partition*, bool(*)(Partition*, Partition*)>* > partitions;
+        static map<string, set<Partition*, bool(*)(Partition*, Partition*)>* > 
+            partitions;
         static string master_hostname;
         static int master_port;
         static string master_db;
         static string master_username;
         static string master_password;
 
-        FindReturn find_and_checkout (const string & tablename, 
+        FindReturn find_and_checkout (const string & tablename,
                                       const string & key );
         FindReturn find_next_and_checkout (const string & tablename,
                                            const string & current_datatablename);
@@ -112,10 +112,10 @@ class MySQLBackend : public MyTableBackend
 
         void load_partitions (const string & tablename);
 
-        FindReturn and_checkout (Connection * connection, 
+        FindReturn and_checkout (Connection * connection,
                                  PreparedStatement * statement);
-        string scan_helper (ScanResponse & scan_response, 
-                            FindReturn & find_return, const string & offset, 
+        string scan_helper (ScanResponse & scan_response,
+                            FindReturn & find_return, const string & offset,
                             int32_t count);
 };
 

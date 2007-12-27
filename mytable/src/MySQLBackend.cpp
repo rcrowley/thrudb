@@ -9,11 +9,12 @@
  *   in the scan stuff, but is of much lower priority. can be local or shared
  * - cleanly recover from lost/broken connections
  * - look in to checkin's when exceptions are thrown
+ * - look at libmemcached for it's partitioning algoritms
+ * - think about straight key parititioning to allow in order scans etc...
  */
 
 // protected
-map<string, set<Partition*, bool(*)(Partition*, Partition*)>* >
-    MySQLBackend::partitions; //(Partition::greater);
+map<string, set<Partition*, bool(*)(Partition*, Partition*)>* > MySQLBackend::partitions;
 string MySQLBackend::master_hostname;
 int MySQLBackend::master_port;
 string MySQLBackend::master_db;
@@ -26,7 +27,7 @@ LoggerPtr MySQLBackend::logger (Logger::getLogger ("MySQLBackend"));
 MySQLBackend::MySQLBackend ()
 {
     LOG4CXX_INFO (logger, "MySQLBackend ()");
-    master_hostname = ConfigManager->read<string> ("MYSQL_MASTER_HOSTNAME", 
+    master_hostname = ConfigManager->read<string> ("MYSQL_MASTER_HOSTNAME",
                                                    "localhost");
     LOG4CXX_INFO (logger, string ("master_hostname=") + master_hostname);
     master_port = ConfigManager->read<int> ("MYSQL_MASTER_PORT", 3306);
@@ -41,30 +42,31 @@ MySQLBackend::MySQLBackend ()
     LOG4CXX_INFO (logger, string ("master_username=") + master_username);
     master_password = ConfigManager->read<string> ("MYSQL_PASSWORD", "mytable");
 
+    // TODO: we should do something smarter than loading a single set here
     this->load_partitions (string ("partitions"));
 }
 
 void MySQLBackend::load_partitions (const string & tablename)
 {
-    set<Partition*, bool(*)(Partition*, Partition*)> * 
+    set<Partition*, bool(*)(Partition*, Partition*)> *
         new_partitions = new set<Partition*, bool(*)(Partition*, Partition*)>
         (Partition::greater);
 
-    Connection * connection = Connection::checkout 
+    Connection * connection = Connection::checkout
         (this->master_hostname.c_str (), this->master_db.c_str (),
          this->master_username.c_str (), this->master_password.c_str ());
 
-    PreparedStatement * partitions_statement = 
+    PreparedStatement * partitions_statement =
         connection->find_partitions_statement (tablename.c_str ());
 
     partitions_statement->execute ();
 
-    PartitionsResults * pr = 
+    PartitionsResults * pr =
         (PartitionsResults*)partitions_statement->get_bind_results ();
 
     while (partitions_statement->fetch () != MYSQL_NO_DATA)
     {
-        LOG4CXX_INFO (logger, string ("load_partitions inserting: table=") + 
+        LOG4CXX_INFO (logger, string ("load_partitions inserting: table=") +
                       pr->get_table () + string (", end=") + pr->get_end ());
         new_partitions->insert (new Partition (pr));
     }
@@ -76,7 +78,7 @@ string MySQLBackend::get (const string & tablename, const string & key )
 {
     FindReturn find_return = this->find_and_checkout (tablename, key);
 
-    PreparedStatement * get_statement = 
+    PreparedStatement * get_statement =
         find_return.connection->find_get_statement
         (find_return.data_tablename.c_str ());
 
@@ -91,13 +93,13 @@ string MySQLBackend::get (const string & tablename, const string & key )
         this->checkin (find_return.connection);
         MyTableException e;
         e.what = key + " not found in " + tablename;
-        LOG4CXX_ERROR(logger, string ("get: ") + e.what);
+        LOG4CXX_ERROR (logger, string ("get: ") + e.what);
         throw e;
     }
 
-    KeyValueResults * kvr = 
+    KeyValueResults * kvr =
         (KeyValueResults*)get_statement->get_bind_results ();
-    LOG4CXX_DEBUG (logger, string ("get: key=") + kvr->get_key () + 
+    LOG4CXX_DEBUG (logger, string ("get: key=") + kvr->get_key () +
                    string (", value=") + kvr->get_value ());
     value = kvr->get_value ();
 
@@ -110,8 +112,8 @@ void MySQLBackend::put (const string & tablename, const string & key, const stri
 {
     FindReturn find_return = this->find_and_checkout (tablename, key);
 
-    PreparedStatement * put_statement = 
-        find_return.connection->find_put_statement 
+    PreparedStatement * put_statement =
+        find_return.connection->find_put_statement
         (find_return.data_tablename.c_str ());
 
     StringStringParams * kvp = (StringStringParams*)put_statement->get_bind_params ();
@@ -127,8 +129,8 @@ void MySQLBackend::remove (const string & tablename, const string & key )
 {
     FindReturn find_return = this->find_and_checkout (tablename, key);
 
-    PreparedStatement * delete_statement = 
-        find_return.connection->find_delete_statement 
+    PreparedStatement * delete_statement =
+        find_return.connection->find_delete_statement
         (find_return.data_tablename.c_str ());
 
     StringParams * kvp = (StringParams*)delete_statement->get_bind_params ();
@@ -139,29 +141,29 @@ void MySQLBackend::remove (const string & tablename, const string & key )
     this->checkin (find_return.connection);
 }
 
-string MySQLBackend::scan_helper (ScanResponse & scan_response, 
-                                  FindReturn & find_return, 
-                                  const string & seed, 
+string MySQLBackend::scan_helper (ScanResponse & scan_response,
+                                  FindReturn & find_return,
+                                  const string & seed,
                                   int32_t count)
 {
-    PreparedStatement * scan_statement = 
-        find_return.connection->find_scan_statement 
+    PreparedStatement * scan_statement =
+        find_return.connection->find_scan_statement
         (find_return.data_tablename.c_str ());
 
-    StringIntParams * kcp = 
+    StringIntParams * kcp =
         (StringIntParams*)scan_statement->get_bind_params ();
     kcp->set_key (seed.c_str ());
     kcp->set_count (count);
 
-    scan_statement->execute();
+    scan_statement->execute ();
 
     int ret;
-    KeyValueResults * kvr = 
+    KeyValueResults * kvr =
         (KeyValueResults*)scan_statement->get_bind_results ();
     while ((ret = scan_statement->fetch ()) == 0)
     {
         // we gots results
-        Element * e = new Element();
+        Element * e = new Element ();
         e->key = kvr->get_key ();
         e->value = kvr->get_value ();
         scan_response.elements.push_back (*e);
@@ -188,7 +190,7 @@ ScanResponse MySQLBackend::scan (const string & tablename, const string & seed,
         // first call, get the first data_tablename
         find_return = this->find_next_and_checkout (tablename, "0");
     }
-    LOG4CXX_DEBUG (logger, string ("scan: data_tablename=") + 
+    LOG4CXX_DEBUG (logger, string ("scan: data_tablename=") +
                    find_return.data_tablename);
 
     ScanResponse scan_response;
@@ -197,9 +199,9 @@ ScanResponse MySQLBackend::scan (const string & tablename, const string & seed,
     string offset = seed == "" ? string ("0") : seed;
 
 more:
-    // get data from our current find_return (parition) starting with values 
+    // get data from our current find_return (parition) starting with values
     // greater than offset, returning count - size values
-    offset = this->scan_helper (scan_response, find_return, offset, 
+    offset = this->scan_helper (scan_response, find_return, offset,
                                 count - size);
     // grab the current size of our returned elements
     size = (int)scan_response.elements.size ();
@@ -208,7 +210,7 @@ more:
     if (scan_response.elements.size () < (unsigned int)count)
     {
         // try and find the next partition
-        find_return = this->find_next_and_checkout (tablename, 
+        find_return = this->find_next_and_checkout (tablename,
                                                     find_return.data_tablename);
         if (find_return.connection != NULL)
         {
@@ -226,7 +228,7 @@ more:
     return scan_response;
 }
 
-FindReturn MySQLBackend::find_and_checkout (const string & tablename, 
+FindReturn MySQLBackend::find_and_checkout (const string & tablename,
                                             const string & key)
 {
     // we partition by the md5 of the key so that we'll get an even
@@ -234,7 +236,7 @@ FindReturn MySQLBackend::find_and_checkout (const string & tablename,
     // TODO: is there a better way to do key -> md5 string
     unsigned char md5[16];
     memset (md5, 0, sizeof (md5));
-    MD5((const unsigned char *)key.c_str (), key.length (), md5);
+    MD5 ((const unsigned char *)key.c_str (), key.length (), md5);
     string md5key;
     char hex[3];
     for (int i = 0; i < 16; i++)
@@ -253,11 +255,11 @@ FindReturn MySQLBackend::find_and_checkout (const string & tablename,
     // TODO how do we check if we got something "valid" back
     if (*p)
     {
-        LOG4CXX_ERROR (logger, string ("found container, end=") + 
+        LOG4CXX_ERROR (logger, string ("found container, end=") +
                        (*p)->get_end ());
-        find_return.connection = Connection::checkout 
-            ((*p)->get_host (), (*p)->get_db (), 
-             this->master_username.c_str (), 
+        find_return.connection = Connection::checkout
+            ((*p)->get_host (), (*p)->get_db (),
+             this->master_username.c_str (),
              this->master_password.c_str ());
         find_return.data_tablename = (*p)->get_table ();
         return find_return;
@@ -265,14 +267,14 @@ FindReturn MySQLBackend::find_and_checkout (const string & tablename,
     return find_return;
 }
 
-FindReturn MySQLBackend::find_next_and_checkout (const string & tablename, 
+FindReturn MySQLBackend::find_next_and_checkout (const string & tablename,
                                                  const string & current_data_tablename)
 {
-    Connection * connection = Connection::checkout 
+    Connection * connection = Connection::checkout
         (this->master_hostname.c_str (), this->master_db.c_str (),
          this->master_username.c_str (), this->master_password.c_str ());
 
-    PreparedStatement * next_statement = 
+    PreparedStatement * next_statement =
         connection->find_next_statement (tablename.c_str ());
 
     StringParams * fpp = (StringParams*)next_statement->get_bind_params ();
@@ -286,27 +288,27 @@ FindReturn MySQLBackend::find_next_and_checkout (const string & tablename,
     if (next_statement->fetch () == MYSQL_NO_DATA)
         return find_return;
 
-    PartitionsResults * fpr = 
+    PartitionsResults * fpr =
         (PartitionsResults*)next_statement->get_bind_results ();
 
     find_return.data_tablename = fpr->get_table ();
     // if our connection to the master will work to get at the partition then
-    // use it rather than checking out another, that will be 
+    // use it rather than checking out another, that will be
     if (connection->is_same (fpr->get_host (), fpr->get_db ()))
     {
         find_return.connection = connection;
     }
     else
     {
-        find_return.connection = Connection::checkout 
+        find_return.connection = Connection::checkout
             (fpr->get_host (), fpr->get_db (),
-             this->master_username.c_str (), 
+             this->master_username.c_str (),
              this->master_password.c_str ());
         // if we're not returning our connection, check it back in
         Connection::checkin (connection);
     }
 
-    LOG4CXX_DEBUG (logger, string ("data_tablename=") + 
+    LOG4CXX_DEBUG (logger, string ("data_tablename=") +
                    find_return.data_tablename);
 
     return find_return;
@@ -316,7 +318,7 @@ void MySQLBackend::checkin (Connection * connection)
 {
     Connection::checkin (connection);
 }
-        
+
 string MySQLBackend::admin (const string & op, const string & data)
 {
     if (op == "reload_partitions")

@@ -19,20 +19,22 @@ class MyTableHandler : virtual public MyTableIf {
     public:
         MyTableHandler (boost::shared_ptr<MyTableBackend> backend);
 
-        void put(const string & tablename, const string & key, const string & value);
-        void get(string & _return, const string & tablename, const string & key);
-        void remove(const string & tablename, const string & key);
-        void scan (ScanResponse & _return, const string & tablename, const string & seed, int32_t count);
+        void put (const string & tablename, const string & key,
+                  const string & value);
+        void get (string & _return, const string & tablename,
+                  const string & key);
+        void remove (const string & tablename, const string & key);
+        void scan (ScanResponse & _return, const string & tablename,
+                   const string & seed, int32_t count);
 
         void admin (string & _return, const string & op, const string & data);
 
     private:
-        MyTableHandler(){};
+        MyTableHandler (){};
 
         boost::shared_ptr<MyTableBackend> backend;
 
         static log4cxx::LoggerPtr logger;
 };
-
 
 #endif

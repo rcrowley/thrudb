@@ -13,7 +13,7 @@ using namespace std;
 using namespace mytable;
 
 namespace mysql {
-    
+
     /* TODO: any reason not to make this huge?, i guess it will eat up
      * memory, but the number of these objects is limited by the number
      * of connections and tables (pstmts) +1 for the null term */
@@ -26,7 +26,7 @@ namespace mysql {
     class BindParams
     {
         public:
-            MYSQL_BIND * get_params()
+            MYSQL_BIND * get_params ()
             {
                 return this->params;
             }
@@ -37,7 +37,7 @@ namespace mysql {
     class BindResults
     {
         public:
-            MYSQL_BIND * get_results()
+            MYSQL_BIND * get_results ()
             {
                 return this->results;
             }
@@ -48,12 +48,12 @@ namespace mysql {
     class StringParams : public BindParams
     {
         public:
-            StringParams()
+            StringParams ()
             {
-                init(NULL);
+                init (NULL);
             }
 
-            StringParams(const char * key)
+            StringParams (const char * key)
             {
                 init (key);
             }
@@ -90,12 +90,12 @@ namespace mysql {
     class StringIntParams : public StringParams
     {
         public:
-            StringIntParams()
+            StringIntParams ()
             {
-                init(NULL, 0);
+                init (NULL, 0);
             }
 
-            StringIntParams(const char * key, unsigned int count)
+            StringIntParams (const char * key, unsigned int count)
             {
                 init (key, count);
             }
@@ -121,12 +121,12 @@ namespace mysql {
     class StringStringParams : public StringParams
     {
         public:
-            StringStringParams()
+            StringStringParams ()
             {
-                init(NULL, NULL);
+                init (NULL, NULL);
             }
 
-            StringStringParams(const char * key, const char * value)
+            StringStringParams (const char * key, const char * value)
             {
                 init (key, value);
             }
@@ -164,7 +164,7 @@ namespace mysql {
     class PartitionsResults : public BindResults
     {
         public:
-            PartitionsResults();
+            PartitionsResults ();
 
             unsigned long get_id ()
             {
@@ -279,14 +279,14 @@ namespace mysql {
     class KeyValueResults : public BindResults
     {
         public:
-            KeyValueResults();
+            KeyValueResults ();
 
             const char * get_key ()
             {
                 return this->key;
             }
 
-            const char * get_value()
+            const char * get_value ()
             {
                 return this->value;
             }
@@ -335,14 +335,14 @@ namespace mysql {
     class PreparedStatement
     {
         public:
-            PreparedStatement(MYSQL * mysql,
-                              const char * query,
-                              BindParams * bind_params);
+            PreparedStatement (MYSQL * mysql,
+                               const char * query,
+                               BindParams * bind_params);
 
-            PreparedStatement(MYSQL * mysql,
-                              const char * query,
-                              BindParams * bind_params, 
-                              BindResults * bind_results);
+            PreparedStatement (MYSQL * mysql,
+                               const char * query,
+                               BindParams * bind_params,
+                               BindResults * bind_results);
 
             MYSQL_STMT * get_stmt ()
             {
@@ -374,15 +374,15 @@ namespace mysql {
         private:
             static log4cxx::LoggerPtr logger;
 
-            void init(MYSQL * mysql, const char * query,
-                      BindParams * bind_params, BindResults * bind_results);
+            void init (MYSQL * mysql, const char * query,
+                       BindParams * bind_params, BindResults * bind_results);
     };
 
     class Connection
     {
         public:
-            static Connection * checkout (const char * hostname, 
-                                          const char * db, 
+            static Connection * checkout (const char * hostname,
+                                          const char * db,
                                           const char * username,
                                           const char * password);
             static void checkin (Connection * connection);
@@ -412,8 +412,8 @@ namespace mysql {
             map<string, PreparedStatement *> delete_statements;
             map<string, PreparedStatement *> scan_statements;
 
-            Connection(const char * host, const char * db, 
-                       const char * username, const char * password);
+            Connection (const char * host, const char * db,
+                        const char * username, const char * password);
     };
 };
 
