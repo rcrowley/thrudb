@@ -99,7 +99,7 @@ string MySQLBackend::get (const string & tablename, const string & key )
         this->checkin (find_return.connection);
         MyTableException e;
         e.what = key + " not found in " + tablename;
-        LOG4CXX_ERROR (logger, string ("get: ") + e.what);
+        LOG4CXX_WARN (logger, string ("get: ") + e.what);
         throw e;
     }
 
