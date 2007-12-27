@@ -54,7 +54,10 @@ void MySQLBackend::load_partitions (const string & tablename)
          this->master_username.c_str (), this->master_password.c_str ());
 
     PreparedStatement * partitions_statement =
-        connection->find_partitions_statement (tablename.c_str ());
+        connection->find_partitions_statement ("directory");
+
+    StringParams * fp = (StringParams*)partitions_statement->get_bind_params ();
+    fp->set_str (tablename.c_str ());
 
     partitions_statement->execute ();
 
@@ -63,12 +66,18 @@ void MySQLBackend::load_partitions (const string & tablename)
 
     while (partitions_statement->fetch () != MYSQL_NO_DATA)
     {
-        LOG4CXX_INFO (logger, string ("load_partitions inserting: table=") +
-                      pr->get_table () + string (", end=") + pr->get_end ());
+        LOG4CXX_INFO (logger, string ("load_partitions inserting: datatable=") +
+                      pr->get_datatable () + string (", end=") + 
+                      pr->get_end ());
         new_partitions->insert (new Partition (pr));
     }
 
-    partitions[tablename] = new_partitions;
+    if (new_partitions->size () > 0)
+    {
+        LOG4CXX_WARN (logger, string ("load_partitions: request to load ") + 
+                      tablename + string (" with now partitions"));
+        partitions[tablename] = new_partitions;
+    }
 }
 
 string MySQLBackend::get (const string & tablename, const string & key )
@@ -77,10 +86,10 @@ string MySQLBackend::get (const string & tablename, const string & key )
 
     PreparedStatement * get_statement =
         find_return.connection->find_get_statement
-        (find_return.data_tablename.c_str ());
+        (find_return.datatable.c_str ());
 
     StringParams * tkp = (StringParams*)get_statement->get_bind_params ();
-    tkp->set_key (key.c_str ());
+    tkp->set_str (key.c_str ());
 
     get_statement->execute ();
 
@@ -111,11 +120,11 @@ void MySQLBackend::put (const string & tablename, const string & key, const stri
 
     PreparedStatement * put_statement =
         find_return.connection->find_put_statement
-        (find_return.data_tablename.c_str ());
+        (find_return.datatable.c_str ());
 
     StringStringParams * kvp = (StringStringParams*)put_statement->get_bind_params ();
-    kvp->set_key (key.c_str ());
-    kvp->set_value (value.c_str ());
+    kvp->set_str1 (key.c_str ());
+    kvp->set_str2 (value.c_str ());
 
     put_statement->execute ();
 
@@ -128,10 +137,10 @@ void MySQLBackend::remove (const string & tablename, const string & key )
 
     PreparedStatement * delete_statement =
         find_return.connection->find_delete_statement
-        (find_return.data_tablename.c_str ());
+        (find_return.datatable.c_str ());
 
     StringParams * kvp = (StringParams*)delete_statement->get_bind_params ();
-    kvp->set_key (key.c_str ());
+    kvp->set_str (key.c_str ());
 
     delete_statement->execute ();
 
@@ -145,12 +154,12 @@ string MySQLBackend::scan_helper (ScanResponse & scan_response,
 {
     PreparedStatement * scan_statement =
         find_return.connection->find_scan_statement
-        (find_return.data_tablename.c_str ());
+        (find_return.datatable.c_str ());
 
     StringIntParams * kcp =
         (StringIntParams*)scan_statement->get_bind_params ();
-    kcp->set_key (seed.c_str ());
-    kcp->set_count (count);
+    kcp->set_str (seed.c_str ());
+    kcp->set_i (count);
 
     scan_statement->execute ();
 
@@ -175,7 +184,7 @@ string MySQLBackend::scan_helper (ScanResponse & scan_response,
 ScanResponse MySQLBackend::scan (const string & tablename, const string & seed,
                                  int32_t count)
 {
-    // base data_tablename should be > "0"
+    // base datatable should be > "0"
     FindReturn find_return;
     if (seed != "")
     {
@@ -184,11 +193,11 @@ ScanResponse MySQLBackend::scan (const string & tablename, const string & seed,
     }
     else
     {
-        // first call, get the first data_tablename
+        // first call, get the first datatable
         find_return = this->find_next_and_checkout (tablename, "0");
     }
-    LOG4CXX_DEBUG (logger, string ("scan: data_tablename=") +
-                   find_return.data_tablename);
+    LOG4CXX_DEBUG (logger, string ("scan: datatable=") +
+                   find_return.datatable);
 
     ScanResponse scan_response;
 
@@ -208,7 +217,7 @@ more:
     {
         // try and find the next partition
         find_return = this->find_next_and_checkout (tablename,
-                                                    find_return.data_tablename);
+                                                    find_return.datatable);
         if (find_return.connection != NULL)
         {
             // we have more partitions
@@ -272,7 +281,7 @@ FindReturn MySQLBackend::find_and_checkout (const string & tablename,
                 ((*partition)->get_host (), (*partition)->get_db (),
                  this->master_username.c_str (),
                  this->master_password.c_str ());
-            find_return.data_tablename = (*partition)->get_table ();
+            find_return.datatable = (*partition)->get_datatable ();
             return find_return;
         }
         else
@@ -297,17 +306,19 @@ FindReturn MySQLBackend::find_and_checkout (const string & tablename,
 }
 
 FindReturn MySQLBackend::find_next_and_checkout (const string & tablename,
-                                                 const string & current_data_tablename)
+                                                 const string & current_datatable)
 {
     Connection * connection = Connection::checkout
         (this->master_hostname.c_str (), this->master_db.c_str (),
          this->master_username.c_str (), this->master_password.c_str ());
 
     PreparedStatement * next_statement =
-        connection->find_next_statement (tablename.c_str ());
+        connection->find_next_statement ("directory");
 
-    StringParams * fpp = (StringParams*)next_statement->get_bind_params ();
-    fpp->set_key (current_data_tablename.c_str ());
+    StringStringParams * fpp = 
+        (StringStringParams*)next_statement->get_bind_params ();
+    fpp->set_str1 (tablename.c_str ());
+    fpp->set_str2 (current_datatable.c_str ());
 
     next_statement->execute ();
 
@@ -320,7 +331,7 @@ FindReturn MySQLBackend::find_next_and_checkout (const string & tablename,
     PartitionsResults * fpr =
         (PartitionsResults*)next_statement->get_bind_results ();
 
-    find_return.data_tablename = fpr->get_table ();
+    find_return.datatable = fpr->get_datatable ();
     // if our connection to the master will work to get at the partition then
     // use it rather than checking out another, that will be
     if (connection->is_same (fpr->get_host (), fpr->get_db ()))
@@ -337,8 +348,7 @@ FindReturn MySQLBackend::find_next_and_checkout (const string & tablename,
         Connection::checkin (connection);
     }
 
-    LOG4CXX_DEBUG (logger, string ("data_tablename=") +
-                   find_return.data_tablename);
+    LOG4CXX_DEBUG (logger, string ("datatable=") + find_return.datatable);
 
     return find_return;
 }

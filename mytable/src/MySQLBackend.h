@@ -22,7 +22,7 @@ using namespace std;
 struct FindReturn
 {
     Connection * connection;
-    string data_tablename;
+    string datatable;
 };
 
 class Partition
@@ -46,8 +46,8 @@ class Partition
                      sizeof (this->host));
             strncpy (this->db, partition_results->get_db (),
                      sizeof (this->db));
-            strncpy (this->table, partition_results->get_table (),
-                     sizeof (this->table));
+            strncpy (this->datatable, partition_results->get_datatable (),
+                     sizeof (this->datatable));
         }
 
         const char * get_end ()
@@ -65,16 +65,16 @@ class Partition
             return this->db;
         }
 
-        const char * get_table ()
+        const char * get_datatable ()
         {
-            return this->table;
+            return this->datatable;
         }
 
     protected:
         char end[MYSQL_BACKEND_MAX_KEY_SIZE];
         char host[MYSQL_BACKEND_MAX_HOST_SIZE];
         char db[MYSQL_BACKEND_MAX_DB_SIZE];
-        char table[MYSQL_BACKEND_MAX_TABLE_SIZE];
+        char datatable[MYSQL_BACKEND_MAX_DATATABLE_SIZE];
 };
 
 class MySQLBackend : public MyTableBackend

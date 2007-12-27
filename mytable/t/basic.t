@@ -11,7 +11,7 @@ use Thrift::FramedTransport;
 use Thrift::BinaryProtocol;
 use MyTable;
 
-my $tests_left = 6;
+my $tests_left = 7;
 plan tests => $tests_left;
 
 eval 
@@ -27,12 +27,12 @@ eval
     my $key = "key.$rand";
     my $value = "value.$rand";
 
-#    eval
-#    {
-#        $client->get ('nonexistent_table', 'nonexistent key');
-#    };
-#    ok ($@->{what} =~ /not found in directory/, 'nonexistent table');
-#    $tests_left--;
+    eval
+    {
+        $client->get ('nonexistent_table', 'nonexistent key');
+    };
+    ok ($@->{what} =~ /not found in directory/, 'nonexistent table');
+    $tests_left--;
 
     eval
     {

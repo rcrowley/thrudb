@@ -14,13 +14,16 @@ using namespace mytable;
 
 namespace mysql {
 
+    #define MYSQL_BACKEND_MAX_STRING_SIZE 64
+
+    #define MYSQL_BACKEND_MAX_TABLENAME_SIZE 33
+    #define MYSQL_BACKEND_MAX_HOST_SIZE 129
+    #define MYSQL_BACKEND_MAX_DB_SIZE 15
+    #define MYSQL_BACKEND_MAX_DATATABLE_SIZE 15
+    #define MYSQL_BACKEND_MAX_KEY_SIZE 33
     /* TODO: any reason not to make this huge?, i guess it will eat up
      * memory, but the number of these objects is limited by the number
      * of connections and tables (pstmts) +1 for the null term */
-    #define MYSQL_BACKEND_MAX_HOST_SIZE 129
-    #define MYSQL_BACKEND_MAX_DB_SIZE 15
-    #define MYSQL_BACKEND_MAX_TABLE_SIZE 15
-    #define MYSQL_BACKEND_MAX_KEY_SIZE 33
     #define MYSQL_BACKEND_MAX_VALUE_SIZE 4097
 
     class BindParams
@@ -53,41 +56,41 @@ namespace mysql {
                 init (NULL);
             }
 
-            StringParams (const char * key)
+            StringParams (const char * str)
             {
-                init (key);
+                init (str);
             }
 
-            void set_key (const char * key)
+            void set_str (const char * str)
             {
-                if (key == NULL)
+                if (str == NULL)
                 {
-                    this->key_is_null = 1;
+                    this->str_is_null = 1;
                 }
                 else
                 {
-                    this->key_is_null = 0;
-                    strncpy (this->key, key, sizeof (this->key));
-                    this->key_length = strlen (key);
+                    this->str_is_null = 0;
+                    strncpy (this->str, str, sizeof (this->str));
+                    this->str_length = strlen (str);
                 }
             }
 
-            const char * get_key ()
+            const char * get_str ()
             {
-                return this->key;
+                return this->str;
             }
 
         protected:
-            char key[MYSQL_BACKEND_MAX_KEY_SIZE];
-            //MYSQL_TYPE key_type = MYSQL_TYPE_STRING;
-            unsigned long key_length;
-            my_bool key_is_null;
+            char str[MYSQL_BACKEND_MAX_STRING_SIZE];
+            //MYSQL_TYPE str_type = MYSQL_TYPE_STRING;
+            unsigned long str_length;
+            my_bool str_is_null;
 
         private:
-            void init (const char * key);
+            void init (const char * str);
     };
 
-    class StringIntParams : public StringParams
+    class StringIntParams : public BindParams
     {
         public:
             StringIntParams ()
@@ -95,30 +98,55 @@ namespace mysql {
                 init (NULL, 0);
             }
 
-            StringIntParams (const char * key, unsigned int count)
+            StringIntParams (const char * str, unsigned int i)
             {
-                init (key, count);
+                init (str, i);
             }
 
-            void set_count (unsigned int count)
+            void set_str (const char * str)
             {
-                this->count = count;
+                if (str == NULL)
+                {
+                    this->str_is_null = 1;
+                }
+                else
+                {
+                    this->str_is_null = 0;
+                    strncpy (this->str, str, sizeof (this->str));
+                    this->str_length = strlen (str);
+                }
             }
 
-            unsigned int get_count ()
+            const char * get_str ()
             {
-                return this->count;
+                return this->str;
+            }
+
+
+            void set_i (unsigned int i)
+            {
+                this->i = i;
+            }
+
+            unsigned int get_i ()
+            {
+                return this->i;
             }
 
         protected:
-            unsigned int count;
-            //MYSQL_TYPE count_type = MYSQL_TYPE_STRING;
+            char str[MYSQL_BACKEND_MAX_STRING_SIZE];
+            //MYSQL_TYPE str_type = MYSQL_TYPE_STRING;
+            unsigned long str_length;
+            my_bool str_is_null;
+
+            unsigned int i;
+            //MYSQL_TYPE i_type = MYSQL_TYPE_STRING;
 
         private:
-            void init (const char * key, unsigned int count);
+            void init (const char * str, unsigned int i);
     };
 
-    class StringStringParams : public StringParams
+    class StringStringParams : public BindParams
     {
         public:
             StringStringParams ()
@@ -126,38 +154,62 @@ namespace mysql {
                 init (NULL, NULL);
             }
 
-            StringStringParams (const char * key, const char * value)
+            StringStringParams (const char * str1, const char * str2)
             {
-                init (key, value);
+                init (str1, str2);
             }
 
-            void set_value (const char * value)
+            void set_str1 (const char * str1)
             {
-                if (value == NULL)
+                if (str1 == NULL)
                 {
-                    this->value_is_null = 1;
+                    this->str1_is_null = 1;
                 }
                 else
                 {
-                    this->value_is_null = 0;
-                    strncpy (this->value, value, sizeof (this->value));
-                    this->value_length = strlen (value);
+                    this->str1_is_null = 0;
+                    strncpy (this->str1, str1, sizeof (this->str1));
+                    this->str1_length = strlen (str1);
                 }
             }
 
-            const char * get_value ()
+            const char * get_str1 ()
             {
-                return this->value;
+                return this->str1;
+            }
+
+            void set_str2 (const char * str2)
+            {
+                if (str2 == NULL)
+                {
+                    this->str2_is_null = 1;
+                }
+                else
+                {
+                    this->str2_is_null = 0;
+                    strncpy (this->str2, str2, sizeof (this->str2));
+                    this->str2_length = strlen (str2);
+                }
+            }
+
+            const char * get_str2 ()
+            {
+                return this->str2;
             }
 
         protected:
-            char value[MYSQL_BACKEND_MAX_VALUE_SIZE];
-            //MYSQL_TYPE value_type = MYSQL_TYPE_STRING;
-            unsigned long value_length;
-            my_bool value_is_null;
+            char str1[MYSQL_BACKEND_MAX_STRING_SIZE];
+            //MYSQL_TYPE str1_type = MYSQL_TYPE_STRING;
+            unsigned long str1_length;
+            my_bool str1_is_null;
+
+            char str2[MYSQL_BACKEND_MAX_STRING_SIZE];
+            //MYSQL_TYPE str2_type = MYSQL_TYPE_STRING;
+            unsigned long str2_length;
+            my_bool str2_is_null;
 
         private:
-            void init (const char * key, const char * value);
+            void init (const char * str1, const char * str2);
     };
 
 
@@ -169,6 +221,11 @@ namespace mysql {
             unsigned long get_id ()
             {
                 return this->id;
+            }
+
+            const char * get_tablename ()
+            {
+                return this->tablename;
             }
 
             const char * get_start ()
@@ -191,14 +248,9 @@ namespace mysql {
                 return this->db;
             }
 
-            const char * get_table ()
+            const char * get_datatable ()
             {
-                return this->table;
-            }
-
-            unsigned int get_est_size ()
-            {
-                return this->est_size;
+                return this->datatable;
             }
 
             MYSQL_TIME get_created_at ()
@@ -220,46 +272,46 @@ namespace mysql {
             my_bool id_error;
 
             /* 1 */
+            char tablename[MYSQL_BACKEND_MAX_TABLENAME_SIZE];
+            //MYSQL_TYPE tablename_type = MYSQL_TYPE_STRING;
+            unsigned long tablename_length;
+            my_bool tablename_is_null;
+            my_bool tablename_error;
+
+            /* 2 */
             char start[MYSQL_BACKEND_MAX_KEY_SIZE];
             //MYSQL_TYPE start_type = MYSQL_TYPE_STRING;
             unsigned long start_length;
             my_bool start_is_null;
             my_bool start_error;
 
-            /* 2 */
+            /* 3 */
             char end[MYSQL_BACKEND_MAX_KEY_SIZE];
             //MYSQL_TYPE end_type = MYSQL_TYPE_STRING;
             unsigned long end_length;
             my_bool end_is_null;
             my_bool end_error;
 
-            /* 3 */
+            /* 4 */
             char host[MYSQL_BACKEND_MAX_HOST_SIZE];
             //MYSQL_TYPE host_type = MYSQL_TYPE_STRING;
             unsigned long host_length;
             my_bool host_is_null;
             my_bool host_error;
 
-            /* 4 */
+            /* 5 */
             char db[MYSQL_BACKEND_MAX_DB_SIZE];
             //MYSQL_TYPE db_type = MYSQL_TYPE_STRING;
             unsigned long db_length;
             my_bool db_is_null;
             my_bool db_error;
 
-            /* 5 */
-            char table[MYSQL_BACKEND_MAX_TABLE_SIZE];
-            //MYSQL_TYPE table_type = MYSQL_TYPE_STRING;
-            unsigned long table_length;
-            my_bool table_is_null;
-            my_bool table_error;
-
             /* 6 */
-            unsigned int est_size;
-            //MYSQL_TYPE est_size_type = MYSQL_TYPE_LONG;
-            unsigned long est_size_length;
-            my_bool est_size_is_null;
-            my_bool est_size_error;
+            char datatable[MYSQL_BACKEND_MAX_DATATABLE_SIZE];
+            //MYSQL_TYPE datatable_type = MYSQL_TYPE_STRING;
+            unsigned long datatable_length;
+            my_bool datatable_is_null;
+            my_bool datatable_error;
 
             /* 7 */
             MYSQL_TIME created_at;
@@ -391,7 +443,6 @@ namespace mysql {
 
             PreparedStatement * find_partitions_statement (const char * tablename);
             PreparedStatement * find_next_statement (const char * tablename);
-            PreparedStatement * find_find_statement (const char * tablename);
             PreparedStatement * find_get_statement (const char * tablename);
             PreparedStatement * find_put_statement (const char * tablename);
             PreparedStatement * find_delete_statement (const char * tablename);
@@ -406,7 +457,6 @@ namespace mysql {
             MYSQL mysql;
             map<string, PreparedStatement *> partitions_statements;
             map<string, PreparedStatement *> next_statements;
-            map<string, PreparedStatement *> find_statements;
             map<string, PreparedStatement *> get_statements;
             map<string, PreparedStatement *> put_statements;
             map<string, PreparedStatement *> delete_statements;
