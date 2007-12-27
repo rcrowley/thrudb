@@ -1,4 +1,4 @@
-* arch doc
+* mysql backend arch doc
 ** talk about how multi master is a safe/good solution here and can provide for
 failover 
 ** master -> slaves is a safe/good pattern for scaling masters, caching is
@@ -6,4 +6,3 @@ probably a lot better, see MySQLBackend todo's
 * MySQLBackend manager
 ** will require introduction of a read-only mode
 ** put parition in to read only, wait for master info cache timeouts, then rework
-

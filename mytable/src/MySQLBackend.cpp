@@ -4,9 +4,7 @@
 
 /*
  * TODO:
- * - a caching system for the directory information, preferably one that lets
- *   us do lookups with it or else it's not that useful this should also help
- *   in the scan stuff, but is of much lower priority. can be local or shared
+ * - time out the directory info at some interval
  * - cleanly recover from lost/broken connections
  * - look in to checkin's when exceptions are thrown
  * - look at libmemcached for it's partitioning algoritms

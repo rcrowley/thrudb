@@ -4,7 +4,7 @@
 /*
  * TODO:
  * - shared caching (memcached) hooked in to put, get, remove
- * - input validation, tablenames, etc.
+ * - input validation, tablenames, key length, value size, etc.
  */
 
 using namespace log4cxx;
