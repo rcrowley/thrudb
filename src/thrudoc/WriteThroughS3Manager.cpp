@@ -44,7 +44,7 @@ public:
     }
 
     map<string,bool>   disk_cache;
-    map<string,bool> s3_cache;
+    map<string,bool>   s3_cache;
 private:
     bool tracking;
 };

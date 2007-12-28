@@ -1,4 +1,4 @@
-bin_PROGRAMS = thrudoc thrucene thrudoc_bench
+bin_PROGRAMS = thrudoc thrucene thrudoc_bench thruqueue
 
 thrudoc_OBJDIR = obj
 
@@ -71,6 +71,22 @@ thrucene_LDFLAGS = -Wall -L/usr/local/lib -luuid -lthrift -lthriftnb -levent -lt
 
 ###########################################################################
 
+thruqueue_SOURCES= gen-cpp/Thruqueue.cpp \
+                  gen-cpp/Thruqueue_types.cpp \
+                  gen-cpp/Thruqueue_constants.cpp \
+		  gen-cpp/QueueLog.cpp \
+		  src/thruqueue/QueueManager.cpp \
+		  src/thruqueue/Queue.cpp \
+		  src/thruqueue/ThruqueueHandler.cpp \
+		  src/thruqueue/main.cpp \
+                  src/common/ConfigFile.cpp 
+
+thruqueue_CXXFLAGS = -Wall -I/usr/local/include/thrift -I/usr/include/thrift -Isrc/common -Igen-cpp -Isrc/thrucene
+thruqueue_LDFLAGS = -Wall -L/usr/local/lib -luuid -lthrift -lthriftnb -levent -ltspread-core -llog4cxx -lmemcached
+
+
+###########################################################################
+
 gen-cpp/Thrudoc.cpp:
 	${THRIFT} -cpp Thrudoc.thrift
 
@@ -79,6 +95,9 @@ gen-cpp/Redo.cpp:
 
 gen-cpp/Thrucene.cpp:
 	${THRIFT} -cpp Thrucene.thrift
+
+gen-cpp/Thruqueue.cpp:
+	${THRIFT} -cpp Thruqueue.thrift
 
 clean-local:
 	rm -fr gen-cpp
