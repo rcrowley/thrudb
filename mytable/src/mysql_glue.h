@@ -434,13 +434,8 @@ namespace mysql {
     class Connection
     {
         public:
-            static Connection * checkout (const char * hostname,
-                                          const char * db,
-                                          const char * username,
-                                          const char * password);
-            static void checkin (Connection * connection);
-
-            bool is_same (const char * hostname, const char * db);
+            Connection (const char * host, const char * db,
+                        const char * username, const char * password);
 
             PreparedStatement * find_partitions_statement (const char * tablename);
             PreparedStatement * find_next_statement (const char * tablename);
@@ -460,8 +455,6 @@ namespace mysql {
             }
 
         protected:
-            static map<string, stack<Connection *>*> connections;
-            static facebook::thrift::concurrency::Mutex connections_mutex;
             static log4cxx::LoggerPtr logger;
 
             string hostname;
@@ -474,8 +467,6 @@ namespace mysql {
             map<string, PreparedStatement *> delete_statements;
             map<string, PreparedStatement *> scan_statements;
 
-            Connection (const char * host, const char * db,
-                        const char * username, const char * password);
     };
 };
 

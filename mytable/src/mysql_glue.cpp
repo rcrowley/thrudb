@@ -271,65 +271,6 @@ int PreparedStatement::fetch ()
     return ret;
 }
 
-map<string, stack<Connection *>*> Connection::connections;
-Mutex Connection::connections_mutex = Mutex();
-
-Connection * Connection::checkout (const char * hostname, const char * db,
-                                   const char * username, const char * password)
-{
-    string key = string (hostname) + ":" + string (db);
-    stack<Connection *> * conns = connections[key];
-    Connection * conn = NULL;
-    // a block to wrap up connection pool mod operations, should be looked at
-    // TODO: someone who knows what they're doing should look at this :)
-    // TODO: this could probably be pushed down another level to lock per
-    // stack, but that would introduce some complexity and perf penalty, best
-    // to keep it simple until someone has the time to look at the decision
-    // closely.
-    { 
-        Guard guard(connections_mutex);
-        if (!conns)
-        {
-            conns = new stack<Connection*>();
-            connections[key] = conns;
-        }
-        if (!conns->empty ())
-        {
-            conn = conns->top ();
-            conns->pop ();
-        }
-    }
-    if (!conn)
-    {
-        conn = new Connection (hostname, db, username, password);
-    }
-    LOG4CXX_DEBUG (logger, "checkout");
-    return conn;
-}
-
-void Connection::checkin (Connection * connection)
-{
-    string key = string (connection->hostname) + ":" + string (connection->db);
-    stack<Connection *> * conns = connections[key];
-    // a block to wrap up connection pool mod operations, should be looked at
-    // TODO: someone who knows what they're doing should look at this :)
-    // TODO: this could probably be pushed down another level to lock per
-    // stack, but that would introduce some complexity and perf penalty, best
-    // to keep it simple until someone has the time to look at the decision
-    // closely.
-    {
-        Guard guard(connections_mutex);
-        if (!conns)
-        {
-            // this should never happen
-            conns = new stack<Connection*>;
-            connections[key] = conns;
-        }
-        LOG4CXX_DEBUG (logger, "checkin");
-        conns->push (connection);
-    }
-}
-
 Connection::Connection (const char * hostname, const char * db,
                         const char * username, const char * password)
 {
@@ -344,12 +285,6 @@ Connection::Connection (const char * hostname, const char * db,
         LOG4CXX_ERROR (logger, string ("mysql_real_connect failed: host=") +
                        string (hostname) + string (", db=") + string (db) +
                        string (", username=") + string (username));
-}
-
-bool Connection::is_same (const char * hostname, const char * db)
-{
-    return strcmp (this->hostname.c_str (), hostname) == 0 &&
-        strcmp (this->db.c_str (), db) == 0;
 }
 
 PreparedStatement * Connection::find_partitions_statement (const char * tablename)

@@ -21,6 +21,7 @@ string MySQLBackend::master_password;
 
 // private
 LoggerPtr MySQLBackend::logger (Logger::getLogger ("MySQLBackend"));
+pthread_key_t MySQLBackend::connections_key;
 
 MySQLBackend::MySQLBackend ()
 {
@@ -47,9 +48,8 @@ void MySQLBackend::load_partitions (const string & tablename)
         new_partitions = new set<Partition*, bool(*)(Partition*, Partition*)>
         (Partition::greater);
 
-    Connection * connection = Connection::checkout
-        (this->master_hostname.c_str (), this->master_db.c_str (),
-         this->master_username.c_str (), this->master_password.c_str ());
+    Connection * connection = get_connection
+        (this->master_hostname.c_str (), this->master_db.c_str ());
 
     PreparedStatement * partitions_statement =
         connection->find_partitions_statement ("directory");
@@ -76,8 +76,6 @@ void MySQLBackend::load_partitions (const string & tablename)
                       tablename + string (" with now partitions"));
         partitions[tablename] = new_partitions;
     }
-
-    this->checkin (connection);
 }
 
 string MySQLBackend::get (const string & tablename, const string & key )
@@ -96,7 +94,6 @@ string MySQLBackend::get (const string & tablename, const string & key )
     string value;
     if (get_statement->fetch () == MYSQL_NO_DATA)
     {
-        this->checkin (find_return.connection);
         MyTableException e;
         e.what = key + " not found in " + tablename;
         LOG4CXX_WARN (logger, string ("get: ") + e.what);
@@ -108,8 +105,6 @@ string MySQLBackend::get (const string & tablename, const string & key )
     LOG4CXX_DEBUG (logger, string ("get: key=") + kvr->get_key () +
                    string (", value=") + kvr->get_value ());
     value = kvr->get_value ();
-
-    this->checkin (find_return.connection);
 
     return value;
 }
@@ -127,8 +122,6 @@ void MySQLBackend::put (const string & tablename, const string & key, const stri
     kvp->set_str2 (value.c_str ());
 
     put_statement->execute ();
-
-    this->checkin (find_return.connection);
 }
 
 void MySQLBackend::remove (const string & tablename, const string & key )
@@ -143,8 +136,6 @@ void MySQLBackend::remove (const string & tablename, const string & key )
     kvp->set_str (key.c_str ());
 
     delete_statement->execute ();
-
-    this->checkin (find_return.connection);
 }
 
 string MySQLBackend::scan_helper (ScanResponse & scan_response,
@@ -214,9 +205,6 @@ more:
     // grab the current size of our returned elements
     size = (int)scan_response.elements.size ();
 
-    // checkin our current connection
-    this->checkin (find_return.connection);
-
     // if we don't have enough elements
     if (scan_response.elements.size () < (unsigned int)count)
     {
@@ -282,10 +270,8 @@ FindReturn MySQLBackend::find_and_checkout (const string & tablename,
         {
             LOG4CXX_DEBUG (logger, string ("found container, end=") +
                            (*partition)->get_end ());
-            find_return.connection = Connection::checkout
-                ((*partition)->get_host (), (*partition)->get_db (),
-                 this->master_username.c_str (),
-                 this->master_password.c_str ());
+            find_return.connection = get_connection
+                ((*partition)->get_host (), (*partition)->get_db ());
             find_return.datatable = (*partition)->get_datatable ();
             return find_return;
         }
@@ -313,9 +299,8 @@ FindReturn MySQLBackend::find_and_checkout (const string & tablename,
 FindReturn MySQLBackend::find_next_and_checkout (const string & tablename,
                                                  const string & current_datatable)
 {
-    Connection * connection = Connection::checkout
-        (this->master_hostname.c_str (), this->master_db.c_str (),
-         this->master_username.c_str (), this->master_password.c_str ());
+    Connection * connection = get_connection 
+        (this->master_hostname.c_str (), this->master_db.c_str ());
 
     PreparedStatement * next_statement =
         connection->find_next_statement ("directory");
@@ -331,30 +316,14 @@ FindReturn MySQLBackend::find_next_and_checkout (const string & tablename,
     find_return.connection = NULL;
 
     if (next_statement->fetch () == MYSQL_NO_DATA)
-    {
-        Connection::checkin (connection);
         return find_return;
-    }
 
     PartitionsResults * fpr =
         (PartitionsResults*)next_statement->get_bind_results ();
 
     find_return.datatable = fpr->get_datatable ();
-    // if our connection to the master will work to get at the partition then
-    // use it rather than checking out another, that will be
-    if (connection->is_same (fpr->get_host (), fpr->get_db ()))
-    {
-        find_return.connection = connection;
-    }
-    else
-    {
-        find_return.connection = Connection::checkout
-            (fpr->get_host (), fpr->get_db (),
-             this->master_username.c_str (),
-             this->master_password.c_str ());
-        // if we're not returning our connection, check it back in
-        Connection::checkin (connection);
-    }
+    
+    find_return.connection = get_connection(fpr->get_host (), fpr->get_db ());
 
     LOG4CXX_DEBUG (logger, 
                    string ("find_next_and_checkout: hostname=") + 
@@ -365,9 +334,30 @@ FindReturn MySQLBackend::find_next_and_checkout (const string & tablename,
     return find_return;
 }
 
-void MySQLBackend::checkin (Connection * connection)
+Connection * MySQLBackend::get_connection(const char * hostname, 
+                                          const char * db)
 {
-    Connection::checkin (connection);
+    map<string, Connection*> * connections = (map<string, Connection*>*)
+        pthread_getspecific(connections_key);
+
+    if (connections == NULL)
+    {
+        connections = new map<string, Connection*>();
+        pthread_setspecific(connections_key, connections);
+    }
+
+    string key = string (hostname) + ":" + string (db);
+    Connection * connection = (*connections)[key];
+
+    if (!connection)
+    {
+        connection = new Connection (hostname, db, 
+                                     this->master_username.c_str (),
+                                     this->master_password.c_str ());
+        (*connections)[key] = connection;
+    }
+
+    return connection;
 }
 
 string MySQLBackend::admin (const string & op, const string & data)

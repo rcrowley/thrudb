@@ -35,7 +35,7 @@ class Partition
 
         Partition (const string & end)
         {
-            memcpy (this->end, end.c_str (), end.length ());
+            strncpy (this->end, end.c_str (), sizeof (this->end));
         }
 
         Partition (PartitionsResults * partition_results)
@@ -105,10 +105,11 @@ class MySQLBackend : public MyTableBackend
                                       const string & key );
         FindReturn find_next_and_checkout (const string & tablename,
                                            const string & current_datatablename);
-        void checkin (Connection * connection);
+        Connection * get_connection(const char * hostname, const char * db);
 
     private:
         static log4cxx::LoggerPtr logger;
+        static pthread_key_t connections_key;
 
         void load_partitions (const string & tablename);
 
