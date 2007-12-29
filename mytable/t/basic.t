@@ -22,7 +22,7 @@ eval
     my $client = new MyTableClient ($protocol);
     $transport->open;
 
-    my $table = 'partitions';
+    my $table = 'test';
     my $rand = rand;
     my $key = "key.$rand";
     my $value = "value.$rand";
@@ -58,7 +58,7 @@ eval
     my $done = undef;
     do
     {
-        $batch = $client->scan ("partitions", $batch->{seed}, $batch_size);
+        $batch = $client->scan ($table, $batch->{seed}, $batch_size);
         foreach my $element (@{$batch->{elements}})
         {
             if ($element->{key} eq $key)
