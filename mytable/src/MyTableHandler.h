@@ -11,9 +11,10 @@
 #include <string>
 #include <log4cxx/logger.h>
 
-using namespace std;
+using namespace boost;
 using namespace facebook::thrift;
 using namespace mytable;
+using namespace std;
 
 class MyTableHandler : virtual public MyTableIf {
     public:
@@ -30,11 +31,10 @@ class MyTableHandler : virtual public MyTableIf {
         void admin (string & _return, const string & op, const string & data);
 
     private:
-        MyTableHandler (){};
-
-        boost::shared_ptr<MyTableBackend> backend;
-
+        shared_ptr<MyTableBackend> backend;
         static log4cxx::LoggerPtr logger;
+
+        MyTableHandler (){};
 };
 
 #endif

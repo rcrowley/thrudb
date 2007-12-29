@@ -168,29 +168,36 @@ void PreparedStatement::init (MYSQL * mysql, const char * query,
     this->stmt = mysql_stmt_init (mysql);
     if (this->stmt == NULL)
     {
-        LOG4CXX_ERROR (logger, string ("mysql_stmt_init failed: ") +
-                       string (query));
         char buf[1024];
-        sprintf (buf, "*** %p - %d - %s", this->stmt, mysql_errno (mysql),
-                 mysql_error (mysql));
-        LOG4CXX_ERROR (logger,buf);
+        sprintf (buf, "mysql_stmt_init failed: %p - %d - %s - %s", this->stmt, 
+                 mysql_errno (mysql), mysql_error (mysql), query);
+        LOG4CXX_ERROR (logger, buf);
+        MyTableException e;
+        e.what = "MySQLBackend error";
+        throw e;
     }
 
     if (mysql_stmt_prepare (this->stmt, this->query, strlen (this->query)))
     {
-        LOG4CXX_ERROR (logger, string ("mysql_stmt_prepare failed: ") +
-                       string (query));
         char buf[1024];
-        sprintf (buf, "*** %p - %d - %s", this->stmt, mysql_errno (mysql),
-                 mysql_error (mysql));
-        LOG4CXX_ERROR (logger,buf);
+        sprintf (buf, "mysql_stmt_prepare failed: %p - %d - %s - %s", 
+                 this->stmt, mysql_errno (mysql), mysql_error (mysql), query);
+        LOG4CXX_ERROR (logger, buf);
+        MyTableException e;
+        e.what = "MySQLBackend error";
+        throw e;
     }
 
     if (this->bind_params != NULL)
     {
         if (mysql_stmt_bind_param (this->stmt,
                                    this->bind_params->get_params ()))
+        {
             LOG4CXX_ERROR (logger, "mysql_stmt_bind_param failed");
+            MyTableException e;
+            e.what = "MySQLBackend error";
+            throw e;
+        }
     }
 
     if (this->bind_results)
@@ -202,7 +209,7 @@ void PreparedStatement::init (MYSQL * mysql, const char * query,
             sprintf (buf, "mysql_stmt_bind_result failed: %p - %d - %s",
                      this->stmt, mysql_stmt_errno (this->stmt),
                      mysql_stmt_error (this->stmt));
-            LOG4CXX_ERROR (logger,buf);
+            LOG4CXX_ERROR (logger, buf);
             MyTableException e;
             e.what = "MySQLBackend error";
             throw e;
@@ -296,6 +303,7 @@ Connection * Connection::checkout (const char * hostname, const char * db,
     {
         conn = new Connection (hostname, db, username, password);
     }
+    LOG4CXX_DEBUG (logger, "checkout");
     return conn;
 }
 
@@ -317,6 +325,7 @@ void Connection::checkin (Connection * connection)
             conns = new stack<Connection*>;
             connections[key] = conns;
         }
+        LOG4CXX_DEBUG (logger, "checkin");
         conns->push (connection);
     }
 }
