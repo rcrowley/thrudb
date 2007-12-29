@@ -32,26 +32,26 @@ eval{
 
 eval {
 
-    my $id = $mytable->put ("partitions", "key3", "val-key4");
+    my $id = $mytable->put ("data", "key3", "val-key4");
     my $key = "key.".rand;
-    $mytable->put ("partitions", $key, "val.$key");
+    $mytable->put ("data", $key, "val.$key");
 
-    print Dumper ($mytable->get ("partitions", "key3"));
-    print Dumper ($mytable->get ("partitions", $key));
+    print Dumper ($mytable->get ("data", "key3"));
+    print Dumper ($mytable->get ("data", $key));
 
     if (rand (100) > 50)
     {
-        $mytable->remove ("partitions", $key);
+        $mytable->remove ("data", $key);
     }
     else
     {
-        print Dumper ($mytable->get ("partitions", $key));
+        print Dumper ($mytable->get ("data", $key));
     }
 
-    print Dumper ($mytable->get ("partitions", "key3"));
+    print Dumper ($mytable->get ("data", "key3"));
 
     my $batch_size = 13;
-    my $ret = $mytable->scan ("partitions", undef, $batch_size);
+    my $ret = $mytable->scan ("data", undef, $batch_size);
     my $count = 0;
     while (scalar (@{$ret->{elements}}) > 0)
     {
@@ -61,7 +61,7 @@ eval {
             printf "\t%s => %s\n", $_->{key}, $_->{value};
         }
         $count += scalar (@{$ret->{elements}});
-        $ret = $mytable->scan ("partitions", $ret->{seed}, $batch_size);
+        $ret = $mytable->scan ("data", $ret->{seed}, $batch_size);
     }
     printf "count: %d\n", $count;
 };
