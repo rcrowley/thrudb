@@ -76,6 +76,8 @@ void MySQLBackend::load_partitions (const string & tablename)
                       tablename + string (" with now partitions"));
         partitions[tablename] = new_partitions;
     }
+
+    this->checkin (connection);
 }
 
 string MySQLBackend::get (const string & tablename, const string & key )
@@ -210,10 +212,13 @@ more:
     // grab the current size of our returned elements
     size = (int)scan_response.elements.size ();
 
+    // checkin our current connection
+    this->checkin (find_return.connection);
+
     // if we don't have enough elements
     if (scan_response.elements.size () < (unsigned int)count)
     {
-        // try and find the next partition
+        // try to find the next partition
         find_return = this->find_next_and_checkout (tablename,
                                                     find_return.datatable);
         if (find_return.connection != NULL)
@@ -324,7 +329,10 @@ FindReturn MySQLBackend::find_next_and_checkout (const string & tablename,
     find_return.connection = NULL;
 
     if (next_statement->fetch () == MYSQL_NO_DATA)
+    {
+        Connection::checkin (connection);
         return find_return;
+    }
 
     PartitionsResults * fpr =
         (PartitionsResults*)next_statement->get_bind_results ();
