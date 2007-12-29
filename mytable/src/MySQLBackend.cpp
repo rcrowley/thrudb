@@ -196,8 +196,10 @@ ScanResponse MySQLBackend::scan (const string & tablename, const string & seed,
         // first call, get the first datatable
         find_return = this->find_next_and_checkout (tablename, "0");
     }
-    LOG4CXX_DEBUG (logger, string ("scan: datatable=") +
-                   find_return.datatable);
+    LOG4CXX_DEBUG (logger, 
+                   string ("scan: hostname=") + find_return.connection->get_hostname () +
+                   string (", db=") + find_return.connection->get_db () +
+                   string (", datatable=") + find_return.datatable);
 
     ScanResponse scan_response;
 
@@ -354,7 +356,11 @@ FindReturn MySQLBackend::find_next_and_checkout (const string & tablename,
         Connection::checkin (connection);
     }
 
-    LOG4CXX_DEBUG (logger, string ("datatable=") + find_return.datatable);
+    LOG4CXX_DEBUG (logger, 
+                   string ("find_next_and_checkout: hostname=") + 
+                   find_return.connection->get_hostname () +
+                   string (", db=") + find_return.connection->get_db () +
+                   string (", datatable=") + find_return.datatable);
 
     return find_return;
 }

@@ -449,6 +449,16 @@ namespace mysql {
             PreparedStatement * find_delete_statement (const char * tablename);
             PreparedStatement * find_scan_statement (const char * tablename);
 
+            string get_hostname ()
+            {
+                return this->hostname;
+            }
+
+            string get_db ()
+            {
+                return this->db;
+            }
+
         protected:
             static map<string, stack<Connection *>*> connections;
             static facebook::thrift::concurrency::Mutex connections_mutex;

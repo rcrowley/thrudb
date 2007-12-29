@@ -10,6 +10,9 @@
 
 #include <string>
 #include <log4cxx/logger.h>
+#include <libmemcached/memcached.h>
+
+#include "boost/thread/tss.hpp"
 
 using namespace boost;
 using namespace facebook::thrift;
@@ -30,9 +33,15 @@ class MyTableHandler : virtual public MyTableIf {
 
         void admin (string & _return, const string & op, const string & data);
 
+    protected:
+        memcached_st * get_cache ();
+
     private:
-        shared_ptr<MyTableBackend> backend;
         static log4cxx::LoggerPtr logger;
+        static pthread_key_t memcache_key;
+        static string memcached_servers;
+
+        shared_ptr<MyTableBackend> backend;
 
         MyTableHandler (){};
 };
