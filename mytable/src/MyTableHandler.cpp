@@ -47,6 +47,12 @@ memcached_st * MyTableHandler::get_cache ()
     return cache;
 }
 
+void MyTableHandler::getTablenames (vector<string> & _return)
+{
+    LOG4CXX_DEBUG (logger, "getTablenames: ");
+    _return = this->backend->getTablenames ();
+}
+
 void MyTableHandler::put (const string & tablename, const string & key,
                           const string & value)
 {

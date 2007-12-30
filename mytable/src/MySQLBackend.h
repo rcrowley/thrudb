@@ -82,6 +82,7 @@ class MySQLBackend : public MyTableBackend
     public:
         MySQLBackend ();
 
+        vector<string> getTablenames ();
         string get (const string & tablename, const string & key );
         void put (const string & tablename, const string & key, 
                   const string & value);
@@ -111,7 +112,8 @@ class MySQLBackend : public MyTableBackend
         static log4cxx::LoggerPtr logger;
         static pthread_key_t connections_key;
 
-        void load_partitions (const string & tablename);
+        set<Partition*, bool(*)(Partition*, Partition*)> * 
+            load_partitions (const string & tablename);
 
         FindReturn and_checkout (Connection * connection,
                                  PreparedStatement * statement);

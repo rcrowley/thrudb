@@ -21,6 +21,8 @@ class MyTableHandler : virtual public MyTableIf {
     public:
         MyTableHandler (boost::shared_ptr<MyTableBackend> backend);
 
+        void getTablenames (vector<string> & _return);
+
         void put (const string & tablename, const string & key,
                   const string & value);
         void get (string & _return, const string & tablename,

@@ -4,9 +4,8 @@
 
 /*
  * TODO:
- * - time out the directory info at some interval
+ * - timeout the directory info at some interval
  * - cleanly recover from lost/broken connections
- * - look in to checkin's when exceptions are thrown
  * - look at libmemcached for it's partitioning algoritms
  * - think about straight key parititioning to allow in order scans etc...
  */
@@ -44,7 +43,8 @@ MySQLBackend::MySQLBackend ()
     pthread_key_create (&connections_key, NULL);
 }
 
-void MySQLBackend::load_partitions (const string & tablename)
+set<Partition*, bool(*)(Partition*, Partition*)> * 
+MySQLBackend::load_partitions (const string & tablename)
 {
     LOG4CXX_INFO (logger, string ("load_partitions: tablename=") + tablename);
 
@@ -82,7 +82,22 @@ void MySQLBackend::load_partitions (const string & tablename)
     {
         LOG4CXX_WARN (logger, string ("load_partitions: request to load ") + 
                       tablename + string (" with no partitions"));
+        delete new_partitions;
+        new_partitions = NULL;
     }
+
+    return new_partitions;
+}
+
+vector<string> MySQLBackend::getTablenames ()
+{
+    vector<string> tablenames;
+    map<string, set<Partition*, bool(*)(Partition*, Partition*)>* >::iterator i;
+    for (i = partitions.begin (); i != partitions.end (); i++)
+    {
+        tablenames.push_back ((*i).first);
+    }
+    return tablenames;
 }
 
 string MySQLBackend::get (const string & tablename, const string & key )
@@ -256,15 +271,20 @@ FindReturn MySQLBackend::find_and_checkout (const string & tablename,
 
     FindReturn find_return;
 
-    // look for the partitions set
-    set<Partition*, bool(*)(Partition*, Partition*)> * partitions_set = 
-        partitions[tablename];
+    // look for the partitions set, this god awful mess is b/c std::map []
+    // creates elements if they don't exist and find returns the last element
+    // if what you're looking for doesn't exists, who the fuck came up with
+    // this shit.
+    set<Partition*, bool(*)(Partition*, Partition*)> * partitions_set = NULL;
+    if (partitions.find (tablename) != partitions.end ())
+    {
+        partitions_set = partitions[tablename];
+    }
 
     if (partitions_set == NULL)
     {
         // we didn't find it, try loading
-        this->load_partitions (tablename);
-        partitions_set = partitions[tablename];
+        partitions_set = this->load_partitions (tablename);
     }
 
     if (partitions_set != NULL)

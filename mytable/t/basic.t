@@ -11,7 +11,7 @@ use Thrift::FramedTransport;
 use Thrift::BinaryProtocol;
 use MyTable;
 
-my $tests_left = 7;
+my $tests_left = 8;
 plan tests => $tests_left;
 
 eval 
@@ -79,6 +79,9 @@ eval
         $client->get ($table, $key);
     };
     ok ($@->{what} =~ /not found/, 'removed');
+    $tests_left--;
+
+    ok (scalar (@{$client->getTablenames ()}) > 0, 'getTablenames');
     $tests_left--;
 };
 if ($@)

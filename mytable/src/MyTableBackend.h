@@ -20,6 +20,7 @@ class MyTableBackend
     public:
         virtual ~MyTableBackend () {};
 
+        virtual vector<string> getTablenames () = 0;
         virtual string get (const string & tablename, const string & key ) = 0;
         virtual void put (const string & tablename, const string & key,
                           const string & value) = 0;
