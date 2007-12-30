@@ -280,11 +280,18 @@ Connection::Connection (const char * hostname, const char * db,
     if (!mysql_init (&this->mysql))
         LOG4CXX_ERROR (logger, "mysql_init failed");
 
+    my_bool val = true;
+    mysql_options (&this->mysql, MYSQL_OPT_RECONNECT, &val);
+
     if (!mysql_real_connect (&this->mysql, hostname, username, password, db,
                              3306, NULL, 0))
         LOG4CXX_ERROR (logger, string ("mysql_real_connect failed: host=") +
                        string (hostname) + string (", db=") + string (db) +
                        string (", username=") + string (username));
+
+    // doing this before and after to work around potential bugs in mysql 
+    // server versions < 5.0.19
+    mysql_options (&this->mysql, MYSQL_OPT_RECONNECT, &val);
 }
 
 PreparedStatement * Connection::find_partitions_statement (const char * tablename)

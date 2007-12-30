@@ -107,6 +107,7 @@ class MySQLBackend : public MyTableBackend
         FindReturn find_next_and_checkout (const string & tablename,
                                            const string & current_datatablename);
         Connection * get_connection(const char * hostname, const char * db);
+        void destroy_connection(Connection * connection);
 
     private:
         static log4cxx::LoggerPtr logger;

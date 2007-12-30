@@ -61,7 +61,15 @@ MySQLBackend::load_partitions (const string & tablename)
     StringParams * fp = (StringParams*)partitions_statement->get_bind_params ();
     fp->set_str (tablename.c_str ());
 
-    partitions_statement->execute ();
+    try
+    {
+        partitions_statement->execute ();
+    }
+    catch (MyTableException e)
+    {
+        destroy_connection (connection);
+        throw e;
+    }
 
     PartitionsResults * pr =
         (PartitionsResults*)partitions_statement->get_bind_results ();
@@ -111,7 +119,15 @@ string MySQLBackend::get (const string & tablename, const string & key )
     StringParams * tkp = (StringParams*)get_statement->get_bind_params ();
     tkp->set_str (key.c_str ());
 
-    get_statement->execute ();
+    try
+    {
+        get_statement->execute ();
+    }
+    catch (MyTableException e)
+    {
+        destroy_connection (find_return.connection);
+        throw e;
+    }
 
     string value;
     if (get_statement->fetch () == MYSQL_NO_DATA)
@@ -143,7 +159,15 @@ void MySQLBackend::put (const string & tablename, const string & key, const stri
     kvp->set_str1 (key.c_str ());
     kvp->set_str2 (value.c_str ());
 
-    put_statement->execute ();
+    try
+    {
+        put_statement->execute ();
+    }
+    catch (MyTableException e)
+    {
+        destroy_connection (find_return.connection);
+        throw e;
+    }
 }
 
 void MySQLBackend::remove (const string & tablename, const string & key )
@@ -157,7 +181,15 @@ void MySQLBackend::remove (const string & tablename, const string & key )
     StringParams * kvp = (StringParams*)delete_statement->get_bind_params ();
     kvp->set_str (key.c_str ());
 
-    delete_statement->execute ();
+    try
+    {
+        delete_statement->execute ();
+    }
+    catch (MyTableException e)
+    {
+        destroy_connection (find_return.connection);
+        throw e;
+    }
 }
 
 string MySQLBackend::scan_helper (ScanResponse & scan_response,
@@ -174,7 +206,15 @@ string MySQLBackend::scan_helper (ScanResponse & scan_response,
     kcp->set_str (seed.c_str ());
     kcp->set_i (count);
 
-    scan_statement->execute ();
+    try
+    {
+        scan_statement->execute ();
+    }
+    catch (MyTableException e)
+    {
+        destroy_connection (find_return.connection);
+        throw e;
+    }
 
     int ret;
     KeyValueResults * kvr =
@@ -338,7 +378,15 @@ FindReturn MySQLBackend::find_next_and_checkout (const string & tablename,
     fpp->set_str1 (tablename.c_str ());
     fpp->set_str2 (current_datatable.c_str ());
 
-    next_statement->execute ();
+    try
+    {
+        next_statement->execute ();
+    }
+    catch (MyTableException e)
+    {
+        destroy_connection (connection);
+        throw e;
+    }
 
     FindReturn find_return;
     find_return.connection = NULL;
@@ -386,6 +434,17 @@ Connection * MySQLBackend::get_connection(const char * hostname,
     }
 
     return connection;
+}
+
+void MySQLBackend::destroy_connection (Connection * connection)
+{
+    string key = string (connection->get_hostname ()) + ":" + 
+        string (connection->get_db ());
+    LOG4CXX_ERROR (logger, string ("destroy_connection: key=") + key);
+    map<string, Connection*> * connections = 
+        (map<string, Connection*>*) pthread_getspecific(connections_key);
+    (*connections)[key] = NULL;
+    delete connection;
 }
 
 string MySQLBackend::admin (const string & op, const string & data)
