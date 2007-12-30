@@ -397,6 +397,8 @@ namespace mysql {
                                BindParams * bind_params,
                                BindResults * bind_results);
 
+            ~PreparedStatement ();
+
             MYSQL_STMT * get_stmt ()
             {
                 return this->stmt;
@@ -438,6 +440,7 @@ namespace mysql {
         public:
             Connection (const char * host, const char * db,
                         const char * username, const char * password);
+            ~Connection ();
 
             PreparedStatement * find_partitions_statement (const char * tablename);
             PreparedStatement * find_next_statement (const char * tablename);

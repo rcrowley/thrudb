@@ -169,7 +169,7 @@ void PreparedStatement::init (MYSQL * mysql, const char * query,
     if (this->stmt == NULL)
     {
         char buf[1024];
-        sprintf (buf, "mysql_stmt_init failed: %p - %d - %s - %s", this->stmt, 
+        sprintf (buf, "mysql_stmt_init failed: %p - %d - %s - %s", this->stmt,
                  mysql_errno (mysql), mysql_error (mysql), query);
         LOG4CXX_ERROR (logger, buf);
         MyTableException e;
@@ -180,7 +180,7 @@ void PreparedStatement::init (MYSQL * mysql, const char * query,
     if (mysql_stmt_prepare (this->stmt, this->query, strlen (this->query)))
     {
         char buf[1024];
-        sprintf (buf, "mysql_stmt_prepare failed: %p - %d - %s - %s", 
+        sprintf (buf, "mysql_stmt_prepare failed: %p - %d - %s - %s",
                  this->stmt, mysql_errno (mysql), mysql_error (mysql), query);
         LOG4CXX_ERROR (logger, buf);
         MyTableException e;
@@ -303,9 +303,35 @@ Connection::Connection (const char * hostname, const char * db,
                        string (hostname) + string (", db=") + string (db) +
                        string (", username=") + string (username));
 
-    // doing this before and after to work around potential bugs in mysql 
+    // doing this before and after to work around potential bugs in mysql
     // server versions < 5.0.19
     mysql_options (&this->mysql, MYSQL_OPT_RECONNECT, &val);
+}
+
+PreparedStatement::~PreparedStatement ()
+{
+    LOG4CXX_DEBUG (logger, "~PreparedStatement");
+    mysql_stmt_close (this->stmt);
+}
+
+Connection::~Connection ()
+{
+    LOG4CXX_DEBUG (logger, "~Connection");
+    map<string, PreparedStatement *>::iterator i;
+    for (i = partitions_statements.begin (); 
+         i != partitions_statements.end (); i++)
+        delete i->second;
+    for (i = next_statements.begin (); i != next_statements.end (); i++)
+        delete i->second;
+    for (i = get_statements.begin (); i != get_statements.end (); i++)
+        delete i->second;
+    for (i = put_statements.begin (); i != put_statements.end (); i++)
+        delete i->second;
+    for (i = delete_statements.begin (); i != delete_statements.end (); i++)
+        delete i->second;
+    for (i = scan_statements.begin (); i != scan_statements.end (); i++)
+        delete i->second;
+    mysql_close (&this->mysql);
 }
 
 PreparedStatement * Connection::find_partitions_statement (const char * tablename)
