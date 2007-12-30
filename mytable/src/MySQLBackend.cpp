@@ -82,6 +82,8 @@ MySQLBackend::load_partitions (const string & tablename)
         new_partitions->insert (new Partition (pr));
     }
 
+    partitions_statement->free_result ();
+
     if (new_partitions->size () > 0)
     {
         partitions[tablename] = new_partitions;
@@ -143,6 +145,8 @@ string MySQLBackend::get (const string & tablename, const string & key )
     LOG4CXX_DEBUG (logger, string ("get: key=") + kvr->get_key () +
                    string (", value=") + kvr->get_value ());
     value = kvr->get_value ();
+
+    get_statement->free_result ();
 
     return value;
 }
@@ -227,6 +231,9 @@ string MySQLBackend::scan_helper (ScanResponse & scan_response,
         e->value = kvr->get_value ();
         scan_response.elements.push_back (*e);
     }
+
+    scan_statement->free_result ();
+
     return scan_response.elements.size() > 0 ? 
         scan_response.elements.back ().key : "";
 }
@@ -333,8 +340,8 @@ FindReturn MySQLBackend::find_and_checkout (const string & tablename,
         Partition * part = new Partition (md5key);
         // look for the matching partition
         set<Partition*>::iterator partition = partitions_set->lower_bound (part);
-        // TODO how do we check if we got something "valid" back
-        if (*partition)
+        delete part;
+        if (partition != partitions_set->end ())
         {
             LOG4CXX_DEBUG (logger, string ("found container, end=") +
                            (*partition)->get_end ());
@@ -400,6 +407,8 @@ FindReturn MySQLBackend::find_next_and_checkout (const string & tablename,
     find_return.datatable = fpr->get_datatable ();
     
     find_return.connection = get_connection(fpr->get_host (), fpr->get_db ());
+
+    next_statement->free_result ();
 
     LOG4CXX_DEBUG (logger, 
                    string ("find_next_and_checkout: hostname=") + 

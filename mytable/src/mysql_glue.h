@@ -418,6 +418,8 @@ namespace mysql {
 
             int fetch ();
 
+            void free_result ();
+
         protected:
             const char * query;
             MYSQL_STMT * stmt;

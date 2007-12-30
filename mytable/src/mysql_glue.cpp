@@ -271,6 +271,20 @@ int PreparedStatement::fetch ()
     return ret;
 }
 
+void PreparedStatement::free_result ()
+{
+    LOG4CXX_DEBUG (logger, "free_result");
+    int ret = mysql_stmt_free_result (this->stmt);
+    if (ret != 0)
+    {
+        char buf[1024];
+        sprintf (buf, "mysql_stmt_free_result failed: %p - %d - %s",
+                 this->stmt, mysql_stmt_errno (this->stmt),
+                 mysql_stmt_error (this->stmt));
+        LOG4CXX_ERROR (logger,buf);
+    }
+}
+
 Connection::Connection (const char * hostname, const char * db,
                         const char * username, const char * password)
 {
