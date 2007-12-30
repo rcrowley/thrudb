@@ -1,0 +1,189 @@
+{
+   <insert a suppression name here>
+   Memcheck:Addr1
+   fun:__add_to_environ
+   fun:putenv
+   fun:_ZN7log4cxx7helpers8TimeZoneC1ERKSs
+   fun:_ZN7log4cxx7helpers8TimeZone11getTimeZoneERKSs
+   obj:/usr/lib/liblog4cxx.so.9.0.0
+   obj:/usr/lib/liblog4cxx.so.9.0.0
+   obj:/usr/lib/liblog4cxx.so.9.0.0
+   obj:*
+   obj:*
+   obj:*
+   obj:*
+}
+{
+   <insert a suppression name here>
+   Memcheck:Addr1
+   fun:strncmp
+   fun:__add_to_environ
+   fun:putenv
+   fun:_ZN7log4cxx7helpers8TimeZoneC1ERKSs
+   fun:_ZN7log4cxx7helpers8TimeZone11getTimeZoneERKSs
+   obj:/usr/lib/liblog4cxx.so.9.0.0
+   obj:/usr/lib/liblog4cxx.so.9.0.0
+   obj:/usr/lib/liblog4cxx.so.9.0.0
+   obj:*
+   obj:*
+   obj:*
+   obj:*
+}
+{
+   <insert a suppression name here>
+   Memcheck:Addr1
+   fun:strncmp
+   fun:__add_to_environ
+   fun:putenv
+   fun:_ZN7log4cxx7helpers8TimeZoneC1ERKSs
+   fun:_ZN7log4cxx7helpers8TimeZone11getTimeZoneERKSs
+   obj:/usr/lib/liblog4cxx.so.9.0.0
+   obj:/usr/lib/liblog4cxx.so.9.0.0
+   obj:/usr/lib/liblog4cxx.so.9.0.0
+   obj:*
+   obj:*
+   obj:*
+   obj:*
+}
+{
+   <insert a suppression name here>
+   Memcheck:Addr2
+   fun:getenv
+   fun:_ZN7log4cxx7helpers6System11getPropertyERKSs
+   fun:_ZN7log4cxx7helpers15OptionConverter17getSystemPropertyERKSsS3_
+   fun:_ZN7log4cxx10LogManager19getLoggerRepositoryEv
+   fun:_ZN7log4cxx10LogManager9getLoggerERKSs
+   fun:_ZN7log4cxx6Logger9getLoggerERKSs
+   fun:_Z41__static_initialization_and_destruction_0ii
+   fun:_GLOBAL__I_logger
+   obj:/home/rwmcfa1/lib/repos/trunk/mytable/mytable
+   obj:/home/rwmcfa1/lib/repos/trunk/mytable/mytable
+   obj:*
+   obj:*
+}
+{
+   <insert a suppression name here>
+   Memcheck:Free
+   fun:_ZdlPv
+   fun:_ZN7log4cxx7helpers15StringTokenizerD1Ev
+   fun:_ZN7log4cxx20PropertyConfigurator13parseCategoryERNS_7helpers10PropertiesERNS1_10ObjectPtrTINS_6LoggerEEERKSsS9_S9_
+   fun:_ZN7log4cxx20PropertyConfigurator21configureRootCategoryERNS_7helpers10PropertiesERNS1_10ObjectPtrTINS_3spi16LoggerRepositoryEEE
+   fun:_ZN7log4cxx20PropertyConfigurator11doConfigureERNS_7helpers10PropertiesERNS1_10ObjectPtrTINS_3spi16LoggerRepositoryEEE
+   fun:_ZN7log4cxx20PropertyConfigurator11doConfigureERKSsRNS_7helpers10ObjectPtrTINS_3spi16LoggerRepositoryEEE
+   fun:_ZN7log4cxx20PropertyConfigurator9configureERKSs
+   fun:main
+}
+{
+   <insert a suppression name here>
+   Memcheck:Addr2
+   fun:getenv
+   fun:epoll_init
+   fun:event_init
+   fun:_ZN8facebook6thrift6server18TNonblockingServer5serveEv
+   fun:main
+}
+{
+   <insert a suppression name here>
+   Memcheck:Addr2
+   fun:getenv
+   fun:event_init
+   fun:_ZN8facebook6thrift6server18TNonblockingServer5serveEv
+   fun:main
+}
+{
+   <insert a suppression name here>
+   Memcheck:Addr2
+   fun:getenv
+   fun:my_init
+   fun:mysql_server_init
+   fun:mysql_init
+   fun:_ZN5mysql10ConnectionC1EPKcS2_S2_S2_
+   fun:_ZN12MySQLBackend14get_connectionEPKcS1_
+   fun:_ZN12MySQLBackend15load_partitionsERKSs
+   fun:_ZN12MySQLBackend17find_and_checkoutERKSsS1_
+   fun:_ZN12MySQLBackend3getERKSsS1_
+   fun:_ZN14MyTableHandler3getERSsRKSsS2_
+   fun:_ZN7mytable16MyTableProcessor11process_getEiPN8facebook6thrift8protocol9TProtocolES5_
+   fun:_ZN7mytable16MyTableProcessor10process_fnEPN8facebook6thrift8protocol9TProtocolES5_RSsi
+}
+{
+   <insert a suppression name here>
+   Memcheck:Addr2
+   fun:getenv
+   fun:mysql_server_init
+   fun:mysql_init
+   fun:_ZN5mysql10ConnectionC1EPKcS2_S2_S2_
+   fun:_ZN12MySQLBackend14get_connectionEPKcS1_
+   fun:_ZN12MySQLBackend15load_partitionsERKSs
+   fun:_ZN12MySQLBackend17find_and_checkoutERKSsS1_
+   fun:_ZN12MySQLBackend3getERKSsS1_
+   fun:_ZN14MyTableHandler3getERSsRKSsS2_
+   fun:_ZN7mytable16MyTableProcessor11process_getEiPN8facebook6thrift8protocol9TProtocolES5_
+   fun:_ZN7mytable16MyTableProcessor10process_fnEPN8facebook6thrift8protocol9TProtocolES5_RSsi
+   fun:_ZN7mytable16MyTableProcessor7processEN5boost10shared_ptrIN8facebook6thrift8protocol9TProtocolEEES7_
+}
+{
+   <insert a suppression name here>
+   Memcheck:Addr2
+   fun:getenv
+   fun:mysql_server_init
+   fun:mysql_init
+   fun:_ZN5mysql10ConnectionC1EPKcS2_S2_S2_
+   fun:_ZN12MySQLBackend14get_connectionEPKcS1_
+   fun:_ZN12MySQLBackend15load_partitionsERKSs
+   fun:_ZN12MySQLBackend17find_and_checkoutERKSsS1_
+   fun:_ZN12MySQLBackend3getERKSsS1_
+   fun:_ZN14MyTableHandler3getERSsRKSsS2_
+   fun:_ZN7mytable16MyTableProcessor11process_getEiPN8facebook6thrift8protocol9TProtocolES5_
+   fun:_ZN7mytable16MyTableProcessor10process_fnEPN8facebook6thrift8protocol9TProtocolES5_RSsi
+   fun:_ZN7mytable16MyTableProcessor7processEN5boost10shared_ptrIN8facebook6thrift8protocol9TProtocolEEES7_
+}
+{
+   <insert a suppression name here>
+   Memcheck:Addr2
+   fun:getenv
+   fun:my_init
+   fun:mysql_server_init
+   fun:mysql_init
+   fun:_ZN5mysql10ConnectionC1EPKcS2_S2_S2_
+   fun:_ZN12MySQLBackend14get_connectionEPKcS1_
+   fun:_ZN12MySQLBackend15load_partitionsERKSs
+   fun:_ZN12MySQLBackend17find_and_checkoutERKSsS1_
+   fun:_ZN12MySQLBackend3putERKSsS1_S1_
+   fun:_ZN14MyTableHandler3putERKSsS1_S1_
+   fun:_ZN7mytable16MyTableProcessor11process_putEiPN8facebook6thrift8protocol9TProtocolES5_
+   fun:_ZN7mytable16MyTableProcessor10process_fnEPN8facebook6thrift8protocol9TProtocolES5_RSsi
+}
+{
+   <insert a suppression name here>
+   Memcheck:Addr2
+   fun:getenv
+   fun:mysql_server_init
+   fun:mysql_init
+   fun:_ZN5mysql10ConnectionC1EPKcS2_S2_S2_
+   fun:_ZN12MySQLBackend14get_connectionEPKcS1_
+   fun:_ZN12MySQLBackend15load_partitionsERKSs
+   fun:_ZN12MySQLBackend17find_and_checkoutERKSsS1_
+   fun:_ZN12MySQLBackend3putERKSsS1_S1_
+   fun:_ZN14MyTableHandler3putERKSsS1_S1_
+   fun:_ZN7mytable16MyTableProcessor11process_putEiPN8facebook6thrift8protocol9TProtocolES5_
+   fun:_ZN7mytable16MyTableProcessor10process_fnEPN8facebook6thrift8protocol9TProtocolES5_RSsi
+   fun:_ZN7mytable16MyTableProcessor7processEN5boost10shared_ptrIN8facebook6thrift8protocol9TProtocolEEES7_
+}
+{
+   <insert a suppression name here>
+   Memcheck:Addr2
+   fun:getenv
+   fun:mysql_server_init
+   fun:mysql_init
+   fun:_ZN5mysql10ConnectionC1EPKcS2_S2_S2_
+   fun:_ZN12MySQLBackend14get_connectionEPKcS1_
+   fun:_ZN12MySQLBackend15load_partitionsERKSs
+   fun:_ZN12MySQLBackend17find_and_checkoutERKSsS1_
+   fun:_ZN12MySQLBackend3putERKSsS1_S1_
+   fun:_ZN14MyTableHandler3putERKSsS1_S1_
+   fun:_ZN7mytable16MyTableProcessor11process_putEiPN8facebook6thrift8protocol9TProtocolES5_
+   fun:_ZN7mytable16MyTableProcessor10process_fnEPN8facebook6thrift8protocol9TProtocolES5_RSsi
+   fun:_ZN7mytable16MyTableProcessor7processEN5boost10shared_ptrIN8facebook6thrift8protocol9TProtocolEEES7_
+}
+
