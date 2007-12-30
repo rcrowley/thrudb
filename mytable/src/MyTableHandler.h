@@ -34,6 +34,9 @@ class MyTableHandler : virtual public MyTableIf {
     protected:
         memcached_st * get_cache ();
 
+        void cache_put (const string & tablename, const string & key, 
+                        const string & value);
+
     private:
         static log4cxx::LoggerPtr logger;
         static pthread_key_t memcache_key;

@@ -55,14 +55,7 @@ void MyTableHandler::put (const string & tablename, const string & key,
     this->backend->put (tablename, key, value);
     if (memcached_enabled)
     {
-        memcached_st * cache = get_cache ();
-        string _key = (tablename + ":" + key);
-        memcached_return rc;
-        uint16_t opt_flags= 0;
-        time_t opt_expires= 0;
-        rc = memcached_set (cache, (char*)_key.c_str (), _key.length (),
-                            (char*)value.c_str (), value.length (),
-                            opt_expires, opt_flags);
+        cache_put (tablename, key, value);
     }
 }
 
@@ -85,9 +78,17 @@ void MyTableHandler::get (string & _return, const string & tablename,
             _return = string (str, str_length);
             LOG4CXX_DEBUG (logger, string ("get hit: key=") + key);
         }
-        else
+        else if (rc == MEMCACHED_NOTFOUND)
         {
             LOG4CXX_DEBUG (logger, string ("get miss: key=") + key);
+        }
+        else
+        {
+            char buf[256];
+            sprintf(buf, "memcache get error: tablename=%s, key=%s, strerror=%s", 
+                    tablename.c_str (), key.c_str (), 
+                    memcached_strerror(cache, rc));
+            LOG4CXX_WARN (logger, buf);
         }
     }
 
@@ -96,16 +97,31 @@ void MyTableHandler::get (string & _return, const string & tablename,
         _return = this->backend->get (tablename, key);
         if (memcached_enabled)
         {
-            memcached_st * cache = get_cache ();
-            string _key = (tablename + ":" + key);
-            memcached_return rc;
-            uint16_t opt_flags= 0;
-            time_t opt_expires= 0;
-            rc = memcached_set (cache, (char*)_key.c_str (), _key.length (), 
-                                (char*)_return.c_str (), _return.length (), 
-                                opt_expires, opt_flags);
+            cache_put (tablename, key, _return);
         }
     }
+}
+
+void MyTableHandler::cache_put (const string & tablename, const string & key,
+                                const string & value)
+{
+    memcached_st * cache = get_cache ();
+    string _key = (tablename + ":" + key);
+    memcached_return rc;
+    uint16_t opt_flags= 0;
+    time_t opt_expires= 0;
+    rc = memcached_set (cache, (char*)_key.c_str (), _key.length (),
+                        (char*)value.c_str (), value.length (),
+                        opt_expires, opt_flags);
+    if (rc != MEMCACHED_SUCCESS)
+    {
+        char buf[256];
+        sprintf(buf, "memcache put error: tablename=%s, key=%s, strerror=%s", 
+                tablename.c_str (), key.c_str (), 
+                memcached_strerror(cache, rc));
+        LOG4CXX_WARN (logger, buf);
+    }
+
 }
 
 void MyTableHandler::remove (const string & tablename, const string & key)
@@ -120,6 +136,14 @@ void MyTableHandler::remove (const string & tablename, const string & key)
         time_t opt_expires= 0;
         rc = memcached_delete (cache, (char*)_key.c_str (), _key.length (), 
                                opt_expires);
+        if (rc != MEMCACHED_SUCCESS)
+        {
+            char buf[256];
+            sprintf(buf, "memcache remove error: tablename=%s, key=%s, strerror=%s", 
+                    tablename.c_str (), key.c_str (), 
+                    memcached_strerror(cache, rc));
+            LOG4CXX_WARN (logger, buf);
+        }
     }
 }
 
