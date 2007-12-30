@@ -46,6 +46,8 @@ MySQLBackend::MySQLBackend ()
 
 void MySQLBackend::load_partitions (const string & tablename)
 {
+    LOG4CXX_INFO (logger, string ("load_partitions: tablename=") + tablename);
+
     set<Partition*, bool(*)(Partition*, Partition*)> *
         new_partitions = new set<Partition*, bool(*)(Partition*, Partition*)>
         (Partition::greater);
@@ -66,7 +68,7 @@ void MySQLBackend::load_partitions (const string & tablename)
 
     while (partitions_statement->fetch () != MYSQL_NO_DATA)
     {
-        LOG4CXX_INFO (logger, string ("load_partitions inserting: datatable=") +
+        LOG4CXX_INFO (logger, string ("  load_partitions inserting: datatable=") +
                       pr->get_datatable () + string (", end=") + 
                       pr->get_end ());
         new_partitions->insert (new Partition (pr));
@@ -74,9 +76,12 @@ void MySQLBackend::load_partitions (const string & tablename)
 
     if (new_partitions->size () > 0)
     {
-        LOG4CXX_WARN (logger, string ("load_partitions: request to load ") + 
-                      tablename + string (" with now partitions"));
         partitions[tablename] = new_partitions;
+    }
+    else
+    {
+        LOG4CXX_WARN (logger, string ("load_partitions: request to load ") + 
+                      tablename + string (" with no partitions"));
     }
 }
 
