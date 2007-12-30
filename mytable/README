@@ -1,0 +1,11 @@
+Dependancies
+
+Make sure you have libevent-dev installed before building thrift so that you'll
+get the non-blocking libraries.
+  libevent (dev)
+
+If you have thrift compiled, installed, and working you should at most need the
+following to get this package going.
+  OpenSSL (libssl-dev)
+  log4cxx (dev)
+  libmemcached (<url here>)
