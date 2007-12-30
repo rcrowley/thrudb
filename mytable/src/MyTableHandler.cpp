@@ -22,6 +22,7 @@ MyTableHandler::MyTableHandler (boost::shared_ptr<MyTableBackend> backend)
     if (!memcached_servers.empty ())
     {
         memcached_enabled = true;
+        pthread_key_create (&memcache_key, NULL);
     }
 }
 
@@ -62,7 +63,6 @@ void MyTableHandler::put (const string & tablename, const string & key,
         rc = memcached_set (cache, (char*)_key.c_str (), _key.length (),
                             (char*)value.c_str (), value.length (),
                             opt_expires, opt_flags);
-        LOG4CXX_DEBUG (logger, string ("put store: key=") + key);
     }
 }
 

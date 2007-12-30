@@ -40,6 +40,8 @@ MySQLBackend::MySQLBackend ()
     master_username = ConfigManager->read<string> ("MYSQL_USERNAME", "mytable");
     LOG4CXX_INFO (logger, string ("master_username=") + master_username);
     master_password = ConfigManager->read<string> ("MYSQL_PASSWORD", "mytable");
+        
+    pthread_key_create (&connections_key, NULL);
 }
 
 void MySQLBackend::load_partitions (const string & tablename)
@@ -165,7 +167,8 @@ string MySQLBackend::scan_helper (ScanResponse & scan_response,
         e->value = kvr->get_value ();
         scan_response.elements.push_back (*e);
     }
-    return string (kvr->get_key ());
+    return scan_response.elements.size() > 0 ? 
+        scan_response.elements.back ().key : "";
 }
 
 /*
@@ -337,8 +340,8 @@ FindReturn MySQLBackend::find_next_and_checkout (const string & tablename,
 Connection * MySQLBackend::get_connection(const char * hostname, 
                                           const char * db)
 {
-    map<string, Connection*> * connections = (map<string, Connection*>*)
-        pthread_getspecific(connections_key);
+    map<string, Connection*> * connections = 
+        (map<string, Connection*>*) pthread_getspecific(connections_key);
 
     if (connections == NULL)
     {
