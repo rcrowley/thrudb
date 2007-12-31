@@ -22,7 +22,6 @@ class DistStoreHandler : virtual public DistStoreIf {
         DistStoreHandler (shared_ptr<DistStoreBackend> backend);
 
         void getTablenames (vector<string> & _return);
-
         void put (const string & tablename, const string & key,
                   const string & value);
         void get (string & _return, const string & tablename,
@@ -30,15 +29,12 @@ class DistStoreHandler : virtual public DistStoreIf {
         void remove (const string & tablename, const string & key);
         void scan (ScanResponse & _return, const string & tablename,
                    const string & seed, int32_t count);
-
         void admin (string & _return, const string & op, const string & data);
 
     private:
         static log4cxx::LoggerPtr logger;
 
         shared_ptr<DistStoreBackend> backend;
-
-        DistStoreHandler (){};
 };
 
 #endif
