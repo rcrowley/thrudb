@@ -27,6 +27,7 @@
 #include "ConfigFile.h"
 #include "utils.h"
 #include "MyTableBackend.h"
+#include "MemcachedBackend.h"
 #include "MySQLBackend.h"
 #include "MyTableHandler.h"
 
@@ -74,7 +75,6 @@ int main (int argc, char **argv) {
         ConfigManager->readFile ( conf_file );
     }
 
-
     try{
         //Init logger
         PropertyConfigurator::configure (conf_file);
@@ -91,7 +91,28 @@ int main (int argc, char **argv) {
         shared_ptr<MyTableBackend> backend;
 
         // MySQL backend
-        backend = boost::shared_ptr<MyTableBackend> (new MySQLBackend ());
+        string master_hostname =
+            ConfigManager->read<string>("MYSQL_MASTER_HOST", "localhost");
+        short master_port = ConfigManager->read<short>("MYSQL_MASTER_PORT",
+                                                       3306);
+        string master_db = ConfigManager->read<string>("MYSQL_MASTER_DB",
+                                                       "mytable");
+        string username = ConfigManager->read<string>("MYSQL_USERNAME",
+                                                       "mytable");
+        string password = ConfigManager->read<string>("MYSQL_PASSWORD",
+                                                       "mytable");
+        backend = shared_ptr<MyTableBackend> (new MySQLBackend (master_hostname,
+                                                                master_port,
+                                                                master_db,
+                                                                username,
+                                                                password));
+
+        // Memcached cache
+        string memcached_servers =
+            ConfigManager->read<string>("MEMCACHED_SERVERS", "");
+        if (!memcached_servers.empty ())
+            backend = shared_ptr<MyTableBackend>
+                (new MemcachedBackend (memcached_servers, backend));
 
         shared_ptr<MyTableHandler>   handler (new MyTableHandler (backend));
         shared_ptr<MyTableProcessor> processor (new MyTableProcessor (handler));

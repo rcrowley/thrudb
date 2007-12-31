@@ -8,7 +8,7 @@ CREATE TABLE `directory` (
   `host` varchar(128) NOT NULL,
   `db` char(14) NOT NULL,
   `datatable` char(14) NOT NULL,
-  `est_size` int(10) unsigned default NULL,
+  `port` smallint NOT NULL,
   `created_at` timestamp NOT NULL default CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP,
   `retired_at` datetime default NULL,
   PRIMARY KEY  (`id`),

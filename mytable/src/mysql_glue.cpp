@@ -58,8 +58,8 @@ void StringStringParams::init (const char * str1, const char * str2)
 
 PartitionsResults::PartitionsResults ()
 {
-    this->results = new MYSQL_BIND[9];
-    memset (this->results, 0, sizeof (MYSQL_BIND) * 9);
+    this->results = new MYSQL_BIND[10];
+    memset (this->results, 0, sizeof (MYSQL_BIND) * 10);
     this->results[0].buffer_type = MYSQL_TYPE_LONG;
     this->results[0].buffer = &this->id;
     this->results[0].is_null = &this->id_is_null;
@@ -89,28 +89,33 @@ PartitionsResults::PartitionsResults ()
     this->results[4].is_null = &this->host_is_null;
     this->results[4].length = &this->host_length;
     this->results[4].error = &this->host_error;
-    this->results[5].buffer_type = MYSQL_TYPE_STRING;
-    this->results[5].buffer = &this->db;
-    this->results[5].buffer_length = sizeof (this->db);
-    this->results[5].is_null = &this->db_is_null;
-    this->results[5].length = &this->db_length;
-    this->results[5].error = &this->db_error;
+    this->results[5].buffer_type = MYSQL_TYPE_SHORT;
+    this->results[5].buffer = &this->port;
+    this->results[5].is_null = &this->port_is_null;
+    this->results[5].length = &this->port_length;
+    this->results[5].error = &this->port_error;
     this->results[6].buffer_type = MYSQL_TYPE_STRING;
-    this->results[6].buffer = &this->datatable;
-    this->results[6].buffer_length = sizeof (this->datatable);
-    this->results[6].is_null = &this->datatable_is_null;
-    this->results[6].length = &this->datatable_length;
-    this->results[6].error = &this->datatable_error;
-    this->results[7].buffer_type = MYSQL_TYPE_TIMESTAMP;
-    this->results[7].buffer = &this->created_at;
-    this->results[7].is_null = &this->created_at_is_null;
-    this->results[7].length = &this->created_at_length;
-    this->results[7].error = &this->created_at_error;
-    this->results[8].buffer_type = MYSQL_TYPE_DATETIME;
-    this->results[8].buffer = &this->retired_at;
-    this->results[8].is_null = &this->retired_at_is_null;
-    this->results[8].length = &this->retired_at_length;
-    this->results[8].error = &this->retired_at_error;
+    this->results[6].buffer = &this->db;
+    this->results[6].buffer_length = sizeof (this->db);
+    this->results[6].is_null = &this->db_is_null;
+    this->results[6].length = &this->db_length;
+    this->results[6].error = &this->db_error;
+    this->results[7].buffer_type = MYSQL_TYPE_STRING;
+    this->results[7].buffer = &this->datatable;
+    this->results[7].buffer_length = sizeof (this->datatable);
+    this->results[7].is_null = &this->datatable_is_null;
+    this->results[7].length = &this->datatable_length;
+    this->results[7].error = &this->datatable_error;
+    this->results[8].buffer_type = MYSQL_TYPE_TIMESTAMP;
+    this->results[8].buffer = &this->created_at;
+    this->results[8].is_null = &this->created_at_is_null;
+    this->results[8].length = &this->created_at_length;
+    this->results[8].error = &this->created_at_error;
+    this->results[9].buffer_type = MYSQL_TYPE_DATETIME;
+    this->results[9].buffer = &this->retired_at;
+    this->results[9].is_null = &this->retired_at_is_null;
+    this->results[9].length = &this->retired_at_length;
+    this->results[9].error = &this->retired_at_error;
 }
 
 KeyValueResults::KeyValueResults ()
@@ -285,10 +290,11 @@ void PreparedStatement::free_result ()
     }
 }
 
-Connection::Connection (const char * hostname, const char * db,
+Connection::Connection (const char * hostname, const char * db, const int port,
                         const char * username, const char * password)
 {
     this->hostname = hostname;
+    this->port = port;
     this->db = db;
 
     if (!mysql_init (&this->mysql))
@@ -298,7 +304,7 @@ Connection::Connection (const char * hostname, const char * db,
     mysql_options (&this->mysql, MYSQL_OPT_RECONNECT, &val);
 
     if (!mysql_real_connect (&this->mysql, hostname, username, password, db,
-                             3306, NULL, 0))
+                             port, NULL, 0))
         LOG4CXX_ERROR (logger, string ("mysql_real_connect failed: host=") +
                        string (hostname) + string (", db=") + string (db) +
                        string (", username=") + string (username));
@@ -343,7 +349,7 @@ PreparedStatement * Connection::find_partitions_statement (const char * tablenam
         BindParams * bind_params = new StringParams ();
         BindResults * bind_results = new PartitionsResults ();
         char query[256];
-        sprintf (query, "select id, tablename, start, end, host, db, datatable, created_at, retired_at from %s where tablename = ? and retired_at is null order by end asc",
+        sprintf (query, "select id, tablename, start, end, host, port, db, datatable, created_at, retired_at from %s where tablename = ? and retired_at is null order by end asc",
                  tablename);
         stmt = new PreparedStatement (&this->mysql, query, bind_params, bind_results);
         this->partitions_statements[key] = stmt;
@@ -360,7 +366,7 @@ PreparedStatement * Connection::find_next_statement (const char * tablename)
         BindParams * bind_params = new StringStringParams ();
         BindResults * bind_results = new PartitionsResults ();
         char query[256];
-        sprintf (query, "select id, tablename, start, end, host, db, datatable, created_at, retired_at from %s where tablename = ? and datatable > ? and retired_at is null order by end asc limit 1",
+        sprintf (query, "select id, tablename, start, end, host, port, db, datatable, created_at, retired_at from %s where tablename = ? and datatable > ? and retired_at is null order by end asc limit 1",
                  tablename);
         stmt = new PreparedStatement (&this->mysql, query, bind_params,
                                       bind_results);

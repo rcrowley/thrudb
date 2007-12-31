@@ -244,6 +244,11 @@ namespace mysql {
                 return this->host;
             }
 
+            const int get_port ()
+            {
+                return this->port;
+            }
+
             const char * get_db ()
             {
                 return this->db;
@@ -301,27 +306,34 @@ namespace mysql {
             my_bool host_error;
 
             /* 5 */
+            unsigned short port;
+            //MYSQL_TYPE id_type = MYSQL_TYPE_SHORT;
+            unsigned long port_length;
+            my_bool port_is_null;
+            my_bool port_error;
+
+            /* 6 */
             char db[MYSQL_BACKEND_MAX_DB_SIZE];
             //MYSQL_TYPE db_type = MYSQL_TYPE_STRING;
             unsigned long db_length;
             my_bool db_is_null;
             my_bool db_error;
 
-            /* 6 */
+            /* 7 */
             char datatable[MYSQL_BACKEND_MAX_DATATABLE_SIZE];
             //MYSQL_TYPE datatable_type = MYSQL_TYPE_STRING;
             unsigned long datatable_length;
             my_bool datatable_is_null;
             my_bool datatable_error;
 
-            /* 7 */
+            /* 8 */
             MYSQL_TIME created_at;
             //MYSQL_TYPE created_at_type = MYSQL_TYPE_TIMESTAMP;
             unsigned long created_at_length;
             my_bool created_at_is_null;
             my_bool created_at_error;
 
-            /* 8 */
+            /* 9 */
             MYSQL_TIME retired_at;
             //MYSQL_TYPE retired_at_type = MYSQL_TYPE_DATETIME;
             unsigned long retired_at_length;
@@ -438,7 +450,7 @@ namespace mysql {
     class Connection
     {
         public:
-            Connection (const char * host, const char * db,
+            Connection (const char * host, const char * db, const int port,
                         const char * username, const char * password);
             ~Connection ();
 
@@ -463,6 +475,7 @@ namespace mysql {
             static log4cxx::LoggerPtr logger;
 
             string hostname;
+            int port;
             string db;
             MYSQL mysql;
             map<string, PreparedStatement *> partitions_statements;

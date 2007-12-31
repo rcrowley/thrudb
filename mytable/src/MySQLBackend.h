@@ -44,6 +44,7 @@ class Partition
                      sizeof (this->end));
             strncpy (this->host, partition_results->get_host (),
                      sizeof (this->host));
+            this->port = partition_results->get_port ();
             strncpy (this->db, partition_results->get_db (),
                      sizeof (this->db));
             strncpy (this->datatable, partition_results->get_datatable (),
@@ -60,6 +61,11 @@ class Partition
             return this->host;
         }
 
+        const int get_port ()
+        {
+            return this->port;
+        }
+
         const char * get_db ()
         {
             return this->db;
@@ -73,6 +79,7 @@ class Partition
     protected:
         char end[MYSQL_BACKEND_MAX_KEY_SIZE];
         char host[MYSQL_BACKEND_MAX_HOST_SIZE];
+        short port;
         char db[MYSQL_BACKEND_MAX_DB_SIZE];
         char datatable[MYSQL_BACKEND_MAX_DATATABLE_SIZE];
 };
@@ -80,7 +87,9 @@ class Partition
 class MySQLBackend : public MyTableBackend
 {
     public:
-        MySQLBackend ();
+        MySQLBackend (const string & master_hostname, const short master_port,
+                      const string & master_db, const string & username,
+                      const string & password);
 
         vector<string> getTablenames ();
         string get (const string & tablename, const string & key );
@@ -94,24 +103,25 @@ class MySQLBackend : public MyTableBackend
 
     protected:
 
-        static map<string, set<Partition*, bool(*)(Partition*, Partition*)>* > 
-            partitions;
-        static string master_hostname;
-        static int master_port;
-        static string master_db;
-        static string master_username;
-        static string master_password;
-
         FindReturn find_and_checkout (const string & tablename,
                                       const string & key );
         FindReturn find_next_and_checkout (const string & tablename,
                                            const string & current_datatablename);
-        Connection * get_connection(const char * hostname, const char * db);
+        Connection * get_connection(const char * hostname, const short port, 
+                                    const char * db);
         void destroy_connection(Connection * connection);
 
     private:
         static log4cxx::LoggerPtr logger;
-        static pthread_key_t connections_key;
+
+        pthread_key_t connections_key;
+        map<string, set<Partition*, bool(*)(Partition*, Partition*)>* > 
+            partitions;
+        string master_hostname;
+        short master_port;
+        string master_db;
+        string username;
+        string password;
 
         set<Partition*, bool(*)(Partition*, Partition*)> * 
             load_partitions (const string & tablename);

@@ -19,7 +19,7 @@ using namespace std;
 
 class MyTableHandler : virtual public MyTableIf {
     public:
-        MyTableHandler (boost::shared_ptr<MyTableBackend> backend);
+        MyTableHandler (shared_ptr<MyTableBackend> backend);
 
         void getTablenames (vector<string> & _return);
 
@@ -33,17 +33,8 @@ class MyTableHandler : virtual public MyTableIf {
 
         void admin (string & _return, const string & op, const string & data);
 
-    protected:
-        memcached_st * get_cache ();
-
-        void cache_put (const string & tablename, const string & key, 
-                        const string & value);
-
     private:
         static log4cxx::LoggerPtr logger;
-        static pthread_key_t memcache_key;
-        static bool memcached_enabled;
-        static string memcached_servers;
 
         shared_ptr<MyTableBackend> backend;
 

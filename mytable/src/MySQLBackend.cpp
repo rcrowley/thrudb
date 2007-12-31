@@ -1,6 +1,5 @@
 #include <openssl/md5.h>
 #include "MySQLBackend.h"
-#include "ConfigFile.h"
 
 /*
  * TODO:
@@ -10,35 +9,26 @@
  * - think about straight key parititioning to allow in order scans etc...
  */
 
-// protected
-map<string, set<Partition*, bool(*)(Partition*, Partition*)>* > MySQLBackend::partitions;
-string MySQLBackend::master_hostname;
-int MySQLBackend::master_port;
-string MySQLBackend::master_db;
-string MySQLBackend::master_username;
-string MySQLBackend::master_password;
-
 // private
 LoggerPtr MySQLBackend::logger (Logger::getLogger ("MySQLBackend"));
-pthread_key_t MySQLBackend::connections_key;
 
-MySQLBackend::MySQLBackend ()
+MySQLBackend::MySQLBackend (const string & master_hostname, 
+                            const short master_port,
+                            const string & master_db, const string & username,
+                            const string & password)
 {
-    LOG4CXX_INFO (logger, "MySQLBackend ()");
-    master_hostname = ConfigManager->read<string> ("MYSQL_MASTER_HOSTNAME",
-                                                   "localhost");
-    LOG4CXX_INFO (logger, string ("master_hostname=") + master_hostname);
-    master_port = ConfigManager->read<int> ("MYSQL_MASTER_PORT", 3306);
     {
-        char buf[64];
-        sprintf (buf, "master_port=%d\n", master_port);
+        char buf[256];
+        sprintf (buf, "MySQLBackend: master_hostname=%s, master_port=%d, master_db=%s, username=%s, password=****\n", 
+                 master_hostname.c_str (), master_port, master_db.c_str (),
+                 username.c_str ());
         LOG4CXX_INFO (logger, buf);
     }
-    master_db = ConfigManager->read<string> ("MYSQL_MASTER_DB", "mytable");
-    LOG4CXX_INFO (logger, string ("master_db=") + master_db);
-    master_username = ConfigManager->read<string> ("MYSQL_USERNAME", "mytable");
-    LOG4CXX_INFO (logger, string ("master_username=") + master_username);
-    master_password = ConfigManager->read<string> ("MYSQL_PASSWORD", "mytable");
+    this->master_hostname = master_hostname;
+    this->master_port = master_port;
+    this->master_db = master_db;
+    this->username = username;
+    this->password = password;
         
     pthread_key_create (&connections_key, NULL);
 }
@@ -53,7 +43,8 @@ MySQLBackend::load_partitions (const string & tablename)
         (Partition::greater);
 
     Connection * connection = get_connection
-        (this->master_hostname.c_str (), this->master_db.c_str ());
+        (this->master_hostname.c_str (), this->master_port, 
+         this->master_db.c_str ());
 
     PreparedStatement * partitions_statement =
         connection->find_partitions_statement ("directory");
@@ -346,7 +337,8 @@ FindReturn MySQLBackend::find_and_checkout (const string & tablename,
             LOG4CXX_DEBUG (logger, string ("found container, end=") +
                            (*partition)->get_end ());
             find_return.connection = get_connection
-                ((*partition)->get_host (), (*partition)->get_db ());
+                ((*partition)->get_host (), (*partition)->get_port (),
+                 (*partition)->get_db ());
             find_return.datatable = (*partition)->get_datatable ();
             return find_return;
         }
@@ -375,7 +367,8 @@ FindReturn MySQLBackend::find_next_and_checkout (const string & tablename,
                                                  const string & current_datatable)
 {
     Connection * connection = get_connection 
-        (this->master_hostname.c_str (), this->master_db.c_str ());
+        (this->master_hostname.c_str (), this->master_port, 
+         this->master_db.c_str ());
 
     PreparedStatement * next_statement =
         connection->find_next_statement ("directory");
@@ -406,7 +399,8 @@ FindReturn MySQLBackend::find_next_and_checkout (const string & tablename,
 
     find_return.datatable = fpr->get_datatable ();
     
-    find_return.connection = get_connection(fpr->get_host (), fpr->get_db ());
+    find_return.connection = get_connection(fpr->get_host (), fpr->get_port (),
+                                            fpr->get_db ());
 
     next_statement->free_result ();
 
@@ -420,6 +414,7 @@ FindReturn MySQLBackend::find_next_and_checkout (const string & tablename,
 }
 
 Connection * MySQLBackend::get_connection(const char * hostname, 
+                                          const short port,
                                           const char * db)
 {
     map<string, Connection*> * connections = 
@@ -436,9 +431,9 @@ Connection * MySQLBackend::get_connection(const char * hostname,
 
     if (!connection)
     {
-        connection = new Connection (hostname, db, 
-                                     this->master_username.c_str (),
-                                     this->master_password.c_str ());
+        connection = new Connection (hostname, db, port,
+                                     this->username.c_str (),
+                                     this->password.c_str ());
         (*connections)[key] = connection;
     }
 

@@ -1,7 +1,5 @@
 bin_PROGRAMS = mytable
 
-mytable_OBJDIR = obj
-
 mytable_SOURCES = \
 		  gen-cpp/MyTable.cpp		\
 		  gen-cpp/MyTable_types.cpp	\
@@ -9,6 +7,7 @@ mytable_SOURCES = \
 		  src/ConfigFile.cpp		\
 		  src/MyTableHandler.cpp	\
 		  src/MySQLBackend.cpp		\
+		  src/MemcachedBackend.cpp	\
 		  src/mysql_glue.cpp		\
 		  src/main.cpp
 

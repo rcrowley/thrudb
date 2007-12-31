@@ -7,44 +7,14 @@
  * - input validation, tablenames, key length, value size, etc.
  */
 
+using namespace boost;
 using namespace log4cxx;
 
 LoggerPtr MyTableHandler::logger (Logger::getLogger ("MyTableHandler"));
-pthread_key_t MyTableHandler::memcache_key;
-bool MyTableHandler::memcached_enabled = false;
-string MyTableHandler::memcached_servers;
 
-MyTableHandler::MyTableHandler (boost::shared_ptr<MyTableBackend> backend)
+MyTableHandler::MyTableHandler (shared_ptr<MyTableBackend> backend)
 {
     this->backend = backend;
-    memcached_servers = ConfigManager->read<string>("MEMCACHED_SERVERS", "");
-    LOG4CXX_INFO (logger, string ("MEMCACHED_SERVERS=") + memcached_servers);
-    if (!memcached_servers.empty ())
-    {
-        memcached_enabled = true;
-        pthread_key_create (&memcache_key, NULL);
-    }
-}
-
-memcached_st * MyTableHandler::get_cache ()
-{
-    memcached_st * cache = (memcached_st*)pthread_getspecific(memcache_key);
-
-    if (cache == NULL)
-    {
-        LOG4CXX_INFO (logger, "creating memcached_create for thread");
-
-        cache = memcached_create(NULL);
-
-        memcached_server_st * servers =
-            memcached_servers_parse((char*)memcached_servers.c_str ());
-        memcached_server_push(cache, servers);
-        memcached_server_list_free(servers);
-
-        pthread_setspecific(memcache_key, cache);
-    }
-
-    return cache;
 }
 
 void MyTableHandler::getTablenames (vector<string> & _return)
@@ -59,98 +29,19 @@ void MyTableHandler::put (const string & tablename, const string & key,
     LOG4CXX_DEBUG (logger, "put: tablename=" + tablename + ", key=" + key +
                    ", value=" + value);
     this->backend->put (tablename, key, value);
-    if (memcached_enabled)
-    {
-        cache_put (tablename, key, value);
-    }
 }
 
 void MyTableHandler::get (string & _return, const string & tablename,
                           const string & key)
 {
     LOG4CXX_DEBUG (logger, "get: tablename=" + tablename + ", key=" + key);
-    if (memcached_enabled)
-    {
-        memcached_st * cache = get_cache ();
-        string _key = (tablename + ":" + key);
-        memcached_return rc;
-        uint16_t opt_flags = 0;
-        size_t str_length;
-        const char * str = memcached_get(cache, (char*)_key.c_str (),
-                                         _key.length (), &str_length,
-                                         &opt_flags, &rc);
-        if (rc == MEMCACHED_SUCCESS)
-        {
-            _return = string (str, str_length);
-            LOG4CXX_DEBUG (logger, string ("get hit: key=") + key);
-        }
-        else if (rc == MEMCACHED_NOTFOUND)
-        {
-            LOG4CXX_DEBUG (logger, string ("get miss: key=") + key);
-        }
-        else
-        {
-            char buf[256];
-            sprintf(buf, "memcache get error: tablename=%s, key=%s, strerror=%s", 
-                    tablename.c_str (), key.c_str (), 
-                    memcached_strerror(cache, rc));
-            LOG4CXX_WARN (logger, buf);
-        }
-    }
-
-    if (_return.empty ())
-    {
-        _return = this->backend->get (tablename, key);
-        if (memcached_enabled)
-        {
-            cache_put (tablename, key, _return);
-        }
-    }
-}
-
-void MyTableHandler::cache_put (const string & tablename, const string & key,
-                                const string & value)
-{
-    memcached_st * cache = get_cache ();
-    string _key = (tablename + ":" + key);
-    memcached_return rc;
-    uint16_t opt_flags= 0;
-    time_t opt_expires= 0;
-    rc = memcached_set (cache, (char*)_key.c_str (), _key.length (),
-                        (char*)value.c_str (), value.length (),
-                        opt_expires, opt_flags);
-    if (rc != MEMCACHED_SUCCESS)
-    {
-        char buf[256];
-        sprintf(buf, "memcache put error: tablename=%s, key=%s, strerror=%s", 
-                tablename.c_str (), key.c_str (), 
-                memcached_strerror(cache, rc));
-        LOG4CXX_WARN (logger, buf);
-    }
-
+    _return = this->backend->get (tablename, key);
 }
 
 void MyTableHandler::remove (const string & tablename, const string & key)
 {
     LOG4CXX_DEBUG (logger, "remove: tablename=" + tablename + ", key=" + key);
     this->backend->remove (tablename, key);
-    if (memcached_enabled)
-    {
-        memcached_st * cache = get_cache ();
-        string _key = (tablename + ":" + key);
-        memcached_return rc;
-        time_t opt_expires= 0;
-        rc = memcached_delete (cache, (char*)_key.c_str (), _key.length (), 
-                               opt_expires);
-        if (rc != MEMCACHED_SUCCESS)
-        {
-            char buf[256];
-            sprintf(buf, "memcache remove error: tablename=%s, key=%s, strerror=%s", 
-                    tablename.c_str (), key.c_str (), 
-                    memcached_strerror(cache, rc));
-            LOG4CXX_WARN (logger, buf);
-        }
-    }
 }
 
 void MyTableHandler::scan (ScanResponse & _return, const string & tablename,
