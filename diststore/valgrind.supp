@@ -56,8 +56,8 @@
    fun:_ZN7log4cxx6Logger9getLoggerERKSs
    fun:_Z41__static_initialization_and_destruction_0ii
    fun:_GLOBAL__I_logger
-   obj:/home/rwmcfa1/lib/repos/trunk/mytable/mytable
-   obj:/home/rwmcfa1/lib/repos/trunk/mytable/mytable
+   obj:/home/rwmcfa1/lib/repos/trunk/diststore/diststore
+   obj:/home/rwmcfa1/lib/repos/trunk/diststore/diststore
    obj:*
    obj:*
 }
@@ -102,9 +102,9 @@
    fun:_ZN12MySQLBackend15load_partitionsERKSs
    fun:_ZN12MySQLBackend17find_and_checkoutERKSsS1_
    fun:_ZN12MySQLBackend3getERKSsS1_
-   fun:_ZN14MyTableHandler3getERSsRKSsS2_
-   fun:_ZN7mytable16MyTableProcessor11process_getEiPN8facebook6thrift8protocol9TProtocolES5_
-   fun:_ZN7mytable16MyTableProcessor10process_fnEPN8facebook6thrift8protocol9TProtocolES5_RSsi
+   fun:_ZN14DistStoreHandler3getERSsRKSsS2_
+   fun:_ZN7diststore16DistStoreProcessor11process_getEiPN8facebook6thrift8protocol9TProtocolES5_
+   fun:_ZN7diststore16DistStoreProcessor10process_fnEPN8facebook6thrift8protocol9TProtocolES5_RSsi
 }
 {
    <insert a suppression name here>
@@ -117,10 +117,10 @@
    fun:_ZN12MySQLBackend15load_partitionsERKSs
    fun:_ZN12MySQLBackend17find_and_checkoutERKSsS1_
    fun:_ZN12MySQLBackend3getERKSsS1_
-   fun:_ZN14MyTableHandler3getERSsRKSsS2_
-   fun:_ZN7mytable16MyTableProcessor11process_getEiPN8facebook6thrift8protocol9TProtocolES5_
-   fun:_ZN7mytable16MyTableProcessor10process_fnEPN8facebook6thrift8protocol9TProtocolES5_RSsi
-   fun:_ZN7mytable16MyTableProcessor7processEN5boost10shared_ptrIN8facebook6thrift8protocol9TProtocolEEES7_
+   fun:_ZN14DistStoreHandler3getERSsRKSsS2_
+   fun:_ZN7diststore16DistStoreProcessor11process_getEiPN8facebook6thrift8protocol9TProtocolES5_
+   fun:_ZN7diststore16DistStoreProcessor10process_fnEPN8facebook6thrift8protocol9TProtocolES5_RSsi
+   fun:_ZN7diststore16DistStoreProcessor7processEN5boost10shared_ptrIN8facebook6thrift8protocol9TProtocolEEES7_
 }
 {
    <insert a suppression name here>
@@ -133,10 +133,10 @@
    fun:_ZN12MySQLBackend15load_partitionsERKSs
    fun:_ZN12MySQLBackend17find_and_checkoutERKSsS1_
    fun:_ZN12MySQLBackend3getERKSsS1_
-   fun:_ZN14MyTableHandler3getERSsRKSsS2_
-   fun:_ZN7mytable16MyTableProcessor11process_getEiPN8facebook6thrift8protocol9TProtocolES5_
-   fun:_ZN7mytable16MyTableProcessor10process_fnEPN8facebook6thrift8protocol9TProtocolES5_RSsi
-   fun:_ZN7mytable16MyTableProcessor7processEN5boost10shared_ptrIN8facebook6thrift8protocol9TProtocolEEES7_
+   fun:_ZN14DistStoreHandler3getERSsRKSsS2_
+   fun:_ZN7diststore16DistStoreProcessor11process_getEiPN8facebook6thrift8protocol9TProtocolES5_
+   fun:_ZN7diststore16DistStoreProcessor10process_fnEPN8facebook6thrift8protocol9TProtocolES5_RSsi
+   fun:_ZN7diststore16DistStoreProcessor7processEN5boost10shared_ptrIN8facebook6thrift8protocol9TProtocolEEES7_
 }
 {
    <insert a suppression name here>
@@ -150,9 +150,9 @@
    fun:_ZN12MySQLBackend15load_partitionsERKSs
    fun:_ZN12MySQLBackend17find_and_checkoutERKSsS1_
    fun:_ZN12MySQLBackend3putERKSsS1_S1_
-   fun:_ZN14MyTableHandler3putERKSsS1_S1_
-   fun:_ZN7mytable16MyTableProcessor11process_putEiPN8facebook6thrift8protocol9TProtocolES5_
-   fun:_ZN7mytable16MyTableProcessor10process_fnEPN8facebook6thrift8protocol9TProtocolES5_RSsi
+   fun:_ZN14DistStoreHandler3putERKSsS1_S1_
+   fun:_ZN7diststore16DistStoreProcessor11process_putEiPN8facebook6thrift8protocol9TProtocolES5_
+   fun:_ZN7diststore16DistStoreProcessor10process_fnEPN8facebook6thrift8protocol9TProtocolES5_RSsi
 }
 {
    <insert a suppression name here>
@@ -165,10 +165,10 @@
    fun:_ZN12MySQLBackend15load_partitionsERKSs
    fun:_ZN12MySQLBackend17find_and_checkoutERKSsS1_
    fun:_ZN12MySQLBackend3putERKSsS1_S1_
-   fun:_ZN14MyTableHandler3putERKSsS1_S1_
-   fun:_ZN7mytable16MyTableProcessor11process_putEiPN8facebook6thrift8protocol9TProtocolES5_
-   fun:_ZN7mytable16MyTableProcessor10process_fnEPN8facebook6thrift8protocol9TProtocolES5_RSsi
-   fun:_ZN7mytable16MyTableProcessor7processEN5boost10shared_ptrIN8facebook6thrift8protocol9TProtocolEEES7_
+   fun:_ZN14DistStoreHandler3putERKSsS1_S1_
+   fun:_ZN7diststore16DistStoreProcessor11process_putEiPN8facebook6thrift8protocol9TProtocolES5_
+   fun:_ZN7diststore16DistStoreProcessor10process_fnEPN8facebook6thrift8protocol9TProtocolES5_RSsi
+   fun:_ZN7diststore16DistStoreProcessor7processEN5boost10shared_ptrIN8facebook6thrift8protocol9TProtocolEEES7_
 }
 {
    <insert a suppression name here>
@@ -181,9 +181,9 @@
    fun:_ZN12MySQLBackend15load_partitionsERKSs
    fun:_ZN12MySQLBackend17find_and_checkoutERKSsS1_
    fun:_ZN12MySQLBackend3putERKSsS1_S1_
-   fun:_ZN14MyTableHandler3putERKSsS1_S1_
-   fun:_ZN7mytable16MyTableProcessor11process_putEiPN8facebook6thrift8protocol9TProtocolES5_
-   fun:_ZN7mytable16MyTableProcessor10process_fnEPN8facebook6thrift8protocol9TProtocolES5_RSsi
-   fun:_ZN7mytable16MyTableProcessor7processEN5boost10shared_ptrIN8facebook6thrift8protocol9TProtocolEEES7_
+   fun:_ZN14DistStoreHandler3putERKSsS1_S1_
+   fun:_ZN7diststore16DistStoreProcessor11process_putEiPN8facebook6thrift8protocol9TProtocolES5_
+   fun:_ZN7diststore16DistStoreProcessor10process_fnEPN8facebook6thrift8protocol9TProtocolES5_RSsi
+   fun:_ZN7diststore16DistStoreProcessor7processEN5boost10shared_ptrIN8facebook6thrift8protocol9TProtocolEEES7_
 }
 

@@ -56,7 +56,7 @@ MySQLBackend::load_partitions (const string & tablename)
     {
         partitions_statement->execute ();
     }
-    catch (MyTableException e)
+    catch (DistStoreException e)
     {
         destroy_connection (connection);
         throw e;
@@ -116,7 +116,7 @@ string MySQLBackend::get (const string & tablename, const string & key )
     {
         get_statement->execute ();
     }
-    catch (MyTableException e)
+    catch (DistStoreException e)
     {
         destroy_connection (find_return.connection);
         throw e;
@@ -125,7 +125,7 @@ string MySQLBackend::get (const string & tablename, const string & key )
     string value;
     if (get_statement->fetch () == MYSQL_NO_DATA)
     {
-        MyTableException e;
+        DistStoreException e;
         e.what = key + " not found in " + tablename;
         LOG4CXX_WARN (logger, string ("get: ") + e.what);
         throw e;
@@ -158,7 +158,7 @@ void MySQLBackend::put (const string & tablename, const string & key, const stri
     {
         put_statement->execute ();
     }
-    catch (MyTableException e)
+    catch (DistStoreException e)
     {
         destroy_connection (find_return.connection);
         throw e;
@@ -180,7 +180,7 @@ void MySQLBackend::remove (const string & tablename, const string & key )
     {
         delete_statement->execute ();
     }
-    catch (MyTableException e)
+    catch (DistStoreException e)
     {
         destroy_connection (find_return.connection);
         throw e;
@@ -205,7 +205,7 @@ string MySQLBackend::scan_helper (ScanResponse & scan_response,
     {
         scan_statement->execute ();
     }
-    catch (MyTableException e)
+    catch (DistStoreException e)
     {
         destroy_connection (find_return.connection);
         throw e;
@@ -347,14 +347,14 @@ FindReturn MySQLBackend::find_and_checkout (const string & tablename,
             LOG4CXX_ERROR (logger, string ("table ") + tablename + 
                            string (" has a partitioning problem for key ") + 
                            key);
-            MyTableException e;
+            DistStoreException e;
             e.what = "MySQLBackend error";
             throw e;
         }
     }
     else
     {
-        MyTableException e;
+        DistStoreException e;
         e.what = tablename + " not found in directory";
         LOG4CXX_WARN (logger, string ("find_and_checkout: ") + e.what);
         throw e;
@@ -382,7 +382,7 @@ FindReturn MySQLBackend::find_next_and_checkout (const string & tablename,
     {
         next_statement->execute ();
     }
-    catch (MyTableException e)
+    catch (DistStoreException e)
     {
         destroy_connection (connection);
         throw e;

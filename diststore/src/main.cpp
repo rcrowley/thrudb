@@ -26,10 +26,10 @@
 
 #include "ConfigFile.h"
 #include "utils.h"
-#include "MyTableBackend.h"
+#include "DistStoreBackend.h"
 #include "MemcachedBackend.h"
 #include "MySQLBackend.h"
-#include "MyTableHandler.h"
+#include "DistStoreHandler.h"
 
 using namespace log4cxx;
 using namespace log4cxx::helpers;
@@ -43,12 +43,12 @@ using namespace facebook::thrift::server;
 
 using namespace boost;
 
-LoggerPtr logger (Logger::getLogger ("MyTable"));
+LoggerPtr logger (Logger::getLogger ("DistStore"));
 
 //print usage and die
 inline void usage ()
 {
-    cerr<<"thrudoc -f /path/to/mytable.conf"<<endl;
+    cerr<<"thrudoc -f /path/to/diststore.conf"<<endl;
     cerr<<"\tor create ~/.thrudoc"<<endl;
     cerr<<"\t-nb creates non-blocking server"<<endl;
     exit (-1);
@@ -88,7 +88,7 @@ int main (int argc, char **argv) {
         shared_ptr<TProtocolFactory>
             protocolFactory (new TBinaryProtocolFactory ());
 
-        shared_ptr<MyTableBackend> backend;
+        shared_ptr<DistStoreBackend> backend;
 
         // MySQL backend
         string master_hostname =
@@ -96,26 +96,24 @@ int main (int argc, char **argv) {
         short master_port = ConfigManager->read<short>("MYSQL_MASTER_PORT",
                                                        3306);
         string master_db = ConfigManager->read<string>("MYSQL_MASTER_DB",
-                                                       "mytable");
+                                                       "diststore");
         string username = ConfigManager->read<string>("MYSQL_USERNAME",
-                                                       "mytable");
+                                                       "diststore");
         string password = ConfigManager->read<string>("MYSQL_PASSWORD",
-                                                       "mytable");
-        backend = shared_ptr<MyTableBackend> (new MySQLBackend (master_hostname,
-                                                                master_port,
-                                                                master_db,
-                                                                username,
-                                                                password));
+                                                       "diststore");
+        backend = shared_ptr<DistStoreBackend>
+            (new MySQLBackend (master_hostname, master_port, master_db,
+                               username, password));
 
         // Memcached cache
         string memcached_servers =
             ConfigManager->read<string>("MEMCACHED_SERVERS", "");
         if (!memcached_servers.empty ())
-            backend = shared_ptr<MyTableBackend>
+            backend = shared_ptr<DistStoreBackend>
                 (new MemcachedBackend (memcached_servers, backend));
 
-        shared_ptr<MyTableHandler>   handler (new MyTableHandler (backend));
-        shared_ptr<MyTableProcessor> processor (new MyTableProcessor (handler));
+        shared_ptr<DistStoreHandler>   handler (new DistStoreHandler (backend));
+        shared_ptr<DistStoreProcessor> processor (new DistStoreProcessor (handler));
 
 
         shared_ptr<ThreadManager> threadManager =

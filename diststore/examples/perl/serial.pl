@@ -11,18 +11,18 @@ use Thrift::BinaryProtocol;
 use Thrift::Socket;
 use Thrift::FramedTransport;
 
-use MyTable;
+use DistStore;
 
 #Config
-use constant MYTABLE_PORT    => 9091;
+use constant DISTSTORE_PORT    => 9091;
 
-my $mytable;
+my $diststore;
 eval{
-    my $socket    = new Thrift::Socket("localhost",MYTABLE_PORT());
+    my $socket    = new Thrift::Socket("localhost",DISTSTORE_PORT());
     my $transport = new Thrift::FramedTransport($socket);
     my $protocol  = new Thrift::BinaryProtocol($transport);
 
-    $mytable  = new MyTableClient($protocol);
+    $diststore  = new DistStoreClient($protocol);
 
     $transport->open();
 }; if($@) {
@@ -42,9 +42,9 @@ eval {
     my $rev = Obj::load ($ser);
     print Dumper ($rev, $rev->get ('foo'), $rev->get ('baz'));
 
-    # now through mytable
-    $mytable->put ("partitions", "obj", $ser);
-    $rev = Obj::load ($mytable->get ("partitions", "obj"));
+    # now through diststore
+    $diststore->put ("partitions", "obj", $ser);
+    $rev = Obj::load ($diststore->get ("partitions", "obj"));
     print Dumper ($rev, $rev->get ('foo'), $rev->get ('baz'));
 };
 if($@) {

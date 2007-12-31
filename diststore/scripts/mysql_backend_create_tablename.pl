@@ -7,7 +7,7 @@ use DBI;
 
 my $hostname = "localhost";
 my $port = 3306;
-my $database = "mytable2";
+my $database = "diststore";
 
 my $tablename = shift @ARGV || 'data';
 my $part_per = shift @ARGV || 5;

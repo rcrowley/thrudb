@@ -1,10 +1,10 @@
 AC_PREREQ(2.59)
 
-AC_INIT(mytable, 0.1)
+AC_INIT(diststore, 0.1)
 
 AM_INIT_AUTOMAKE
 
-AC_PREFIX_DEFAULT(/usr/local/mytable)
+AC_PREFIX_DEFAULT(/usr/local/diststore)
 
 # Checks for programs.
 AC_PROG_CXX

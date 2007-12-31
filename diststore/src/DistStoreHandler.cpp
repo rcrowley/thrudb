@@ -1,5 +1,5 @@
 
-#include "MyTableHandler.h"
+#include "DistStoreHandler.h"
 #include "ConfigFile.h"
 
 /*
@@ -10,42 +10,42 @@
 using namespace boost;
 using namespace log4cxx;
 
-LoggerPtr MyTableHandler::logger (Logger::getLogger ("MyTableHandler"));
+LoggerPtr DistStoreHandler::logger (Logger::getLogger ("DistStoreHandler"));
 
-MyTableHandler::MyTableHandler (shared_ptr<MyTableBackend> backend)
+DistStoreHandler::DistStoreHandler (shared_ptr<DistStoreBackend> backend)
 {
     this->backend = backend;
 }
 
-void MyTableHandler::getTablenames (vector<string> & _return)
+void DistStoreHandler::getTablenames (vector<string> & _return)
 {
     LOG4CXX_DEBUG (logger, "getTablenames: ");
     _return = this->backend->getTablenames ();
 }
 
-void MyTableHandler::put (const string & tablename, const string & key,
-                          const string & value)
+void DistStoreHandler::put (const string & tablename, const string & key,
+                            const string & value)
 {
     LOG4CXX_DEBUG (logger, "put: tablename=" + tablename + ", key=" + key +
                    ", value=" + value);
     this->backend->put (tablename, key, value);
 }
 
-void MyTableHandler::get (string & _return, const string & tablename,
-                          const string & key)
+void DistStoreHandler::get (string & _return, const string & tablename,
+                            const string & key)
 {
     LOG4CXX_DEBUG (logger, "get: tablename=" + tablename + ", key=" + key);
     _return = this->backend->get (tablename, key);
 }
 
-void MyTableHandler::remove (const string & tablename, const string & key)
+void DistStoreHandler::remove (const string & tablename, const string & key)
 {
     LOG4CXX_DEBUG (logger, "remove: tablename=" + tablename + ", key=" + key);
     this->backend->remove (tablename, key);
 }
 
-void MyTableHandler::scan (ScanResponse & _return, const string & tablename,
-                           const string & seed, int32_t count)
+void DistStoreHandler::scan (ScanResponse & _return, const string & tablename,
+                             const string & seed, int32_t count)
 {
     {
         char buf[256];
@@ -56,7 +56,7 @@ void MyTableHandler::scan (ScanResponse & _return, const string & tablename,
     _return = this->backend->scan (tablename, seed, count);
 }
 
-void MyTableHandler::admin (string & _return, const string & op, const string & data)
+void DistStoreHandler::admin (string & _return, const string & op, const string & data)
 {
     LOG4CXX_DEBUG (logger, "admin: op=" + op + ", data=" + data);
     if (op == "echo")

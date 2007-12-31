@@ -10,13 +10,13 @@
 #include <log4cxx/logger.h>
 #include <thrift/transport/TTransportUtils.h>
 #include <thrift/protocol/TBinaryProtocol.h>
-#include "MyTable.h"
-#include "MyTableBackend.h"
+#include "DistStore.h"
+#include "DistStoreBackend.h"
 #include "mysql_glue.h"
 
 using namespace log4cxx;
 using namespace mysql;
-using namespace mytable;
+using namespace diststore;
 using namespace std;
 
 struct FindReturn
@@ -84,7 +84,7 @@ class Partition
         char datatable[MYSQL_BACKEND_MAX_DATATABLE_SIZE];
 };
 
-class MySQLBackend : public MyTableBackend
+class MySQLBackend : public DistStoreBackend
 {
     public:
         MySQLBackend (const string & master_hostname, const short master_port,

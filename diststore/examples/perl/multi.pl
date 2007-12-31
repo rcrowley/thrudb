@@ -12,9 +12,9 @@ use Thrift::BinaryProtocol;
 use Thrift::Socket;
 use Thrift::FramedTransport;
 
-use MyTable;
+use DistStore;
 
-use constant MYTABLE_PORT    => 9091;
+use constant DISTSTORE_PORT    => 9091;
 
 use threads;
 
@@ -23,17 +23,17 @@ my $num_calls = 100;
 
 # load up data
 eval{
-    my $socket    = new Thrift::Socket("localhost",MYTABLE_PORT());
+    my $socket    = new Thrift::Socket("localhost",DISTSTORE_PORT());
     my $transport = new Thrift::FramedTransport($socket);
     my $protocol  = new Thrift::BinaryProtocol($transport);
 
-    my $mytable  = new MyTableClient($protocol);
+    my $diststore  = new DistStoreClient($protocol);
 
     $transport->open();
 
     foreach (0..($num_calls - 1))
     {
-        $mytable->put ("data", "key.$_", "value_$_");
+        $diststore->put ("data", "key.$_", "value_$_");
     }
 };
 if($@) {
@@ -63,17 +63,17 @@ printf "%d / %f = %f\n", $total_calls, $dur, $tps;
 sub make_calls
 {
     eval{
-        my $socket    = new Thrift::Socket("localhost",MYTABLE_PORT());
+        my $socket    = new Thrift::Socket("localhost",DISTSTORE_PORT());
         my $transport = new Thrift::FramedTransport($socket);
         my $protocol  = new Thrift::BinaryProtocol($transport);
 
-        my $mytable  = new MyTableClient($protocol);
+        my $diststore  = new DistStoreClient($protocol);
 
         $transport->open();
 
         foreach (0..(($num_calls - 1) * 10))
         {
-            $mytable->get ("data", 'key.'.int (rand ($num_calls)));
+            $diststore->get ("data", 'key.'.int (rand ($num_calls)));
         }
     };
     if($@) {

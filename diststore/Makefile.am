@@ -1,22 +1,22 @@
-bin_PROGRAMS = mytable
+bin_PROGRAMS = diststore
 
-mytable_SOURCES = \
-		  gen-cpp/MyTable.cpp		\
-		  gen-cpp/MyTable_types.cpp	\
-		  gen-cpp/MyTable_constants.cpp	\
-		  src/ConfigFile.cpp		\
-		  src/MyTableHandler.cpp	\
-		  src/MySQLBackend.cpp		\
-		  src/MemcachedBackend.cpp	\
-		  src/mysql_glue.cpp		\
+diststore_SOURCES = \
+		  gen-cpp/DistStore.cpp			\
+		  gen-cpp/DistStore_types.cpp		\
+		  gen-cpp/DistStore_constants.cpp	\
+		  src/ConfigFile.cpp			\
+		  src/DistStoreHandler.cpp		\
+		  src/MySQLBackend.cpp			\
+		  src/MemcachedBackend.cpp		\
+		  src/mysql_glue.cpp			\
 		  src/main.cpp
 
-mytable_CXXFLAGS = -Wall -I$(SANDBOX)/include -I$(SANDBOX)/include/thrift -I/usr/local/include/thrift -I/usr/include/thrift -I/usr/include/mysql -Igen-cpp 
+diststore_CXXFLAGS = -Wall -I$(SANDBOX)/include -I$(SANDBOX)/include/thrift -I/usr/local/include/thrift -I/usr/include/thrift -I/usr/include/mysql -Igen-cpp 
 
-mytable_LDFLAGS = -Wall -L$(SANDBOX)/lib -L/usr/local/lib -lthrift -lthriftnb -levent -llog4cxx -lmysqlclient_r -lmemcached
+diststore_LDFLAGS = -Wall -L$(SANDBOX)/lib -L/usr/local/lib -lthrift -lthriftnb -levent -llog4cxx -lmysqlclient_r -lmemcached
 
-gen-cpp/MyTable.cpp: MyTable.thrift
-	${THRIFT} -cpp MyTable.thrift
+gen-cpp/DistStore.cpp: DistStore.thrift
+	${THRIFT} -cpp DistStore.thrift
 
 # test section taken from a Makefile.PL run...
 FULLPERL      = /usr/bin/perl

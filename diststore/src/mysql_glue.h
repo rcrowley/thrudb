@@ -8,10 +8,10 @@
 #include <map>
 #include <stack>
 #include <thrift/concurrency/Mutex.h>
-#include "MyTable.h"
+#include "DistStore.h"
 
 using namespace std;
-using namespace mytable;
+using namespace diststore;
 
 namespace mysql {
 

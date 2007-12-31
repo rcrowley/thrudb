@@ -177,7 +177,7 @@ void PreparedStatement::init (MYSQL * mysql, const char * query,
         sprintf (buf, "mysql_stmt_init failed: %p - %d - %s - %s", this->stmt,
                  mysql_errno (mysql), mysql_error (mysql), query);
         LOG4CXX_ERROR (logger, buf);
-        MyTableException e;
+        DistStoreException e;
         e.what = "MySQLBackend error";
         throw e;
     }
@@ -188,7 +188,7 @@ void PreparedStatement::init (MYSQL * mysql, const char * query,
         sprintf (buf, "mysql_stmt_prepare failed: %p - %d - %s - %s",
                  this->stmt, mysql_errno (mysql), mysql_error (mysql), query);
         LOG4CXX_ERROR (logger, buf);
-        MyTableException e;
+        DistStoreException e;
         e.what = "MySQLBackend error";
         throw e;
     }
@@ -199,7 +199,7 @@ void PreparedStatement::init (MYSQL * mysql, const char * query,
                                    this->bind_params->get_params ()))
         {
             LOG4CXX_ERROR (logger, "mysql_stmt_bind_param failed");
-            MyTableException e;
+            DistStoreException e;
             e.what = "MySQLBackend error";
             throw e;
         }
@@ -215,7 +215,7 @@ void PreparedStatement::init (MYSQL * mysql, const char * query,
                      this->stmt, mysql_stmt_errno (this->stmt),
                      mysql_stmt_error (this->stmt));
             LOG4CXX_ERROR (logger, buf);
-            MyTableException e;
+            DistStoreException e;
             e.what = "MySQLBackend error";
             throw e;
         }
@@ -232,7 +232,7 @@ void PreparedStatement::execute ()
         sprintf (buf, "mysql_stmt_execute failed: %p - %d - %s", this->stmt,
                  mysql_stmt_errno (this->stmt), mysql_stmt_error (this->stmt));
         LOG4CXX_ERROR (logger, buf);
-        MyTableException e;
+        DistStoreException e;
         e.what = "MySQLBackend error";
         throw e;
     }
@@ -244,7 +244,7 @@ void PreparedStatement::execute ()
         sprintf (buf, "mysql_stmt_execute failed: %p - %d - %s", this->stmt,
                  mysql_stmt_errno (this->stmt), mysql_stmt_error (this->stmt));
         LOG4CXX_ERROR (logger, buf);
-        MyTableException e;
+        DistStoreException e;
         e.what = "MySQLBackend error";
         throw e;
     }
@@ -269,7 +269,7 @@ int PreparedStatement::fetch ()
                  this->stmt, mysql_stmt_errno (this->stmt),
                  mysql_stmt_error (this->stmt));
         LOG4CXX_ERROR (logger,buf);
-        MyTableException e;
+        DistStoreException e;
         e.what = "MySQLBackend error";
         throw e;
     }

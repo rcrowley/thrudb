@@ -11,19 +11,19 @@
 #include <string>
 #include <thrift/protocol/TBinaryProtocol.h>
 #include <thrift/transport/TTransportUtils.h>
-#include "MyTable.h"
-#include "MyTableBackend.h"
+#include "DistStore.h"
+#include "DistStoreBackend.h"
 
 using namespace boost;
 using namespace log4cxx;
-using namespace mytable;
+using namespace diststore;
 using namespace std;
 
-class MemcachedBackend : public MyTableBackend
+class MemcachedBackend : public DistStoreBackend
 {
     public:
         MemcachedBackend (string memcached_servers, 
-                          shared_ptr<MyTableBackend> backend);
+                          shared_ptr<DistStoreBackend> backend);
         ~MemcachedBackend ();
 
         vector<string> getTablenames ();
@@ -46,7 +46,7 @@ class MemcachedBackend : public MyTableBackend
         static pthread_key_t memcached_key;
         static string memcached_servers;
 
-        shared_ptr<MyTableBackend> backend;
+        shared_ptr<DistStoreBackend> backend;
 };
 
 #endif

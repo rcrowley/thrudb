@@ -11,18 +11,18 @@ use Thrift::BinaryProtocol;
 use Thrift::Socket;
 use Thrift::FramedTransport;
 
-use MyTable;
+use DistStore;
 
 #Config
-use constant MYTABLE_PORT    => 9091;
+use constant DISTSTORE_PORT    => 9091;
 
-my $mytable;
+my $diststore;
 eval{
-    my $socket    = new Thrift::Socket("localhost",MYTABLE_PORT());
+    my $socket    = new Thrift::Socket("localhost",DISTSTORE_PORT());
     my $transport = new Thrift::FramedTransport($socket);
     my $protocol  = new Thrift::BinaryProtocol($transport);
 
-    $mytable  = new MyTableClient($protocol);
+    $diststore  = new DistStoreClient($protocol);
 
     $transport->open();
 }; if($@) {
@@ -32,26 +32,26 @@ eval{
 
 eval {
 
-    my $id = $mytable->put ("data", "key3", "val-key4");
+    my $id = $diststore->put ("data", "key3", "val-key4");
     my $key = "key.".rand;
-    $mytable->put ("data", $key, "val.$key");
+    $diststore->put ("data", $key, "val.$key");
 
-    print Dumper ($mytable->get ("data", "key3"));
-    print Dumper ($mytable->get ("data", $key));
+    print Dumper ($diststore->get ("data", "key3"));
+    print Dumper ($diststore->get ("data", $key));
 
     if (rand (100) > 50)
     {
-        $mytable->remove ("data", $key);
+        $diststore->remove ("data", $key);
     }
     else
     {
-        print Dumper ($mytable->get ("data", $key));
+        print Dumper ($diststore->get ("data", $key));
     }
 
-    print Dumper ($mytable->get ("data", "key3"));
+    print Dumper ($diststore->get ("data", "key3"));
 
     my $batch_size = 13;
-    my $ret = $mytable->scan ("data", undef, $batch_size);
+    my $ret = $diststore->scan ("data", undef, $batch_size);
     my $count = 0;
     while (scalar (@{$ret->{elements}}) > 0)
     {
@@ -61,7 +61,7 @@ eval {
             printf "\t%s => %s\n", $_->{key}, $_->{value};
         }
         $count += scalar (@{$ret->{elements}});
-        $ret = $mytable->scan ("data", $ret->{seed}, $batch_size);
+        $ret = $diststore->scan ("data", $ret->{seed}, $batch_size);
     }
     printf "count: %d\n", $count;
 };

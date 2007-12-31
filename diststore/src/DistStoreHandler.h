@@ -2,11 +2,11 @@
  *
  **/
 
-#ifndef __MYTABLE_HANDLER__
-#define __MYTABLE_HANDLER__
+#ifndef __DISTSTORE_HANDLER__
+#define __DISTSTORE_HANDLER__
 
-#include "MyTable.h"
-#include "MyTableBackend.h"
+#include "DistStore.h"
+#include "DistStoreBackend.h"
 
 #include <string>
 #include <log4cxx/logger.h>
@@ -14,12 +14,12 @@
 
 using namespace boost;
 using namespace facebook::thrift;
-using namespace mytable;
+using namespace diststore;
 using namespace std;
 
-class MyTableHandler : virtual public MyTableIf {
+class DistStoreHandler : virtual public DistStoreIf {
     public:
-        MyTableHandler (shared_ptr<MyTableBackend> backend);
+        DistStoreHandler (shared_ptr<DistStoreBackend> backend);
 
         void getTablenames (vector<string> & _return);
 
@@ -36,9 +36,9 @@ class MyTableHandler : virtual public MyTableIf {
     private:
         static log4cxx::LoggerPtr logger;
 
-        shared_ptr<MyTableBackend> backend;
+        shared_ptr<DistStoreBackend> backend;
 
-        MyTableHandler (){};
+        DistStoreHandler (){};
 };
 
 #endif

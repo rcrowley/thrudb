@@ -2,23 +2,23 @@
  *
  **/
 
-#ifndef _MYTABLE_BACKEND_H_
-#define _MYTABLE_BACKEND_H_
+#ifndef _DISTSTORE_BACKEND_H_
+#define _DISTSTORE_BACKEND_H_
 
 #include <string>
-#include "MyTable.h"
+#include "DistStore.h"
 
 using namespace std;
-using namespace mytable;
+using namespace diststore;
 
 /**
  *
  **/
 
-class MyTableBackend
+class DistStoreBackend
 {
     public:
-        virtual ~MyTableBackend () {};
+        virtual ~DistStoreBackend () {};
 
         virtual vector<string> getTablenames () = 0;
         virtual string get (const string & tablename, const string & key ) = 0;

@@ -6,7 +6,7 @@ pthread_key_t MemcachedBackend::memcached_key;
 string MemcachedBackend::memcached_servers;
 
 MemcachedBackend::MemcachedBackend (string _memcached_servers, 
-                                    shared_ptr<MyTableBackend> backend)
+                                    shared_ptr<DistStoreBackend> backend)
 {
     LOG4CXX_INFO (logger, string ("MemcachedBackend: memcached_servers=") + 
                   _memcached_servers);

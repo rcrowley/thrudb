@@ -18,7 +18,7 @@ BEGIN {
     $tests_left--;
     use_ok ('Thrift::BinaryProtocol');
     $tests_left--;
-    use_ok ('MyTable');
+    use_ok ('DistStore');
     $tests_left--;
 }
 
@@ -30,7 +30,7 @@ eval
     $tests_left--;
     ok (my $protocol = new Thrift::BinaryProtocol ($transport), 'protocol');
     $tests_left--;
-    ok (my $client = new MyTableClient ($protocol), 'client');
+    ok (my $client = new DistStoreClient ($protocol), 'client');
     $tests_left--;
     ok ($transport->open, 'transport->open');
     $tests_left--;
