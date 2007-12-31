@@ -19,7 +19,7 @@ using namespace log4cxx;
 using namespace log4cxx::helpers;
 
 
-static log4cxx::LoggerPtr logger(log4cxx::Logger::getLogger(log4cxx::String("ThruceneHandler")));
+static log4cxx::LoggerPtr logger(log4cxx::Logger::getLogger("ThruceneHandler"));
 
 
 void LOG4CXX::configure( std::string file){
