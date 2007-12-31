@@ -19,7 +19,7 @@ my $transport = new Thrift::FramedTransport($socket);
 my $protocol  = new Thrift::BinaryProtocol($transport);
 my $client    = new ThruqueueClient($protocol);
 
-my $count = shift;
+my $count = shift || 100;
 
 my $t0 = gettimeofday();
 
