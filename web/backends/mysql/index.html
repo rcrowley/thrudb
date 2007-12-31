@@ -1,0 +1,50 @@
+<html>
+    <head>
+        <title>DistStore - MySQL Backend - Distrubuted Document Store</title>
+    </head>
+    <body>
+        <h1>DistStore - MySQL Backend</h1>
+
+        <p>The <a href="http://mysql.com/">MySQL</a> backend provides 
+
+        <h2>Features</h2>
+        <ul>
+            <li>Massively Scalable</li>
+            <ul>
+                <li>&gt;4000 TPS mixed read/write with a single modest desktop box running both the MySQL and DistStore servers</li>
+                <li>Partitioned data storage to allow near-infinite dataset size</li>
+                <li>Simple setup, just install MySQL and DistStore, run the tablename create script, and set a couple of configuration values</li>
+            </ul>
+            <li>Straightforward in DB storage, so you can easily write your own apps/scripts to work with the data</li>
+            <li>Works with any MySQL setup: replication, backup, ...</li>
+        </ul>
+
+        <h2>Future Direction &amp; Development</h2>
+        <ul>
+            <li>Directory Manager</li>
+            <ul>
+                <li>Split and combine tables to grow/shrink the backend and balance load</li>
+            </ul>
+            <li>Multi-master (ring replication) fail-over support</li>
+        </ul>
+
+
+        <h2>Use &amp; Configuration</h2>
+
+<pre>
+    mysql_backend_create_tablename.pl --master_hostname=&lt;host&gt; --master_port=&lt;port&gt; --master_db=&lt;db&gt;
+        --username=&lt;username&gt; --password=&lt;password&gt; --tablename=&lt;tablename&gt; --partitions_per_host=&lt;2&gt; 
+        --hosts=&lt;host1,host2,...&gt;
+</pre>
+
+        To use the MySQL backend add the following lines to your diststore.conf replacing the right hand sides with values appropriate for your environment.
+<pre>
+    MYSQL_MASTER_HOST = &lt;host&gt;
+    MYSQL_MASTER_PORT = &lt;port&gt;
+    MYSQL_MASTER_DB = &lt;db&gt;
+    MYSQL_USERNAME = &lt;username&gt;
+    MYSQL_PASSWORD = &lt;password&gt;
+</pre>
+
+    </body>
+</html>

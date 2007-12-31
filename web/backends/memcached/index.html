@@ -1,0 +1,31 @@
+<html>
+    <head>
+        <title>DistStore - Memcached Caching Backend - Distrubuted Document Store</title>
+    </head>
+    <body>
+        <h1>DistStore - Memcached Caching Backend</h1>
+
+        <p>The <a href="http://www.danga.com/memcached/">Memcached</a> caching backend provides a caching layer on top of a persistent backend. It operates transparently intercepting calls to the primary backend and sets and gets data from a Memcached pool of servers lowering the load on the primary and increasing performance.</p>
+
+        <p>The memcached caching backend is powered by <a href="http://tangent.org/552/libmemcached.html">libmemcached</a> a full featured C memcached client library.</a>
+
+        <h2>Features</h2>
+        <ul>
+            <li>Transparent and simple caching of any persistent backend</li>
+            <li>Single configuration value setup.</li>
+        </ul>
+
+        <h2>Future Direction &amp; Development</h2>
+        <ul>
+            <li>Expose as much of the underlying libmemcached features as possible/makes sense</li>
+        </ul>
+
+        <h2>Use &amp; Configuration</h2>
+
+        To use the memcached caching backend add the following line to your diststore.conf replacing the server names and ports with the list of hosts in your memcached pool.
+<pre>
+    MEMCACHED_SERVERS = &lt;server.one:port,server.two:port,...&gt;
+</pre>
+
+        </body>
+    </html>
