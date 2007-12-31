@@ -30,6 +30,7 @@ MySQLBackend::MySQLBackend (const string & master_hostname,
     this->username = username;
     this->password = password;
         
+    // init the per-thread connections key
     pthread_key_create (&connections_key, NULL);
 }
 
@@ -413,20 +414,33 @@ FindReturn MySQLBackend::find_next_and_checkout (const string & tablename,
     return find_return;
 }
 
+#define HOST_PORT_DB_KEY(key, hostname, port, db)       \
+    {                                                   \
+        char buf[200];                                  \
+        sprintf (buf, "%s:%d:%s", hostname, port, db);  \
+        key = string (buf);                             \
+    }
+
 Connection * MySQLBackend::get_connection(const char * hostname, 
                                           const short port,
                                           const char * db)
 {
+    // get our per-thread connections map
     map<string, Connection*> * connections = 
         (map<string, Connection*>*) pthread_getspecific(connections_key);
 
     if (connections == NULL)
     {
+        // set up it if it doesn't yet exist
         connections = new map<string, Connection*>();
+        // store it
         pthread_setspecific(connections_key, connections);
     }
 
-    string key = string (hostname) + ":" + string (db);
+    string key;
+    HOST_PORT_DB_KEY (key, hostname, port, db);
+    LOG4CXX_DEBUG (logger, string ("get_connection: key=") + key);
+    // get the connection for this host/db
     Connection * connection = (*connections)[key];
 
     if (!connection)
@@ -442,8 +456,9 @@ Connection * MySQLBackend::get_connection(const char * hostname,
 
 void MySQLBackend::destroy_connection (Connection * connection)
 {
-    string key = string (connection->get_hostname ()) + ":" + 
-        string (connection->get_db ());
+    string key;
+    HOST_PORT_DB_KEY (key, connection->get_hostname ().c_str (),
+                      connection->get_port (), connection->get_db ().c_str ());
     LOG4CXX_ERROR (logger, string ("destroy_connection: key=") + key);
     map<string, Connection*> * connections = 
         (map<string, Connection*>*) pthread_getspecific(connections_key);

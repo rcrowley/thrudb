@@ -466,6 +466,11 @@ namespace mysql {
                 return this->hostname;
             }
 
+            short get_port ()
+            {
+                return this->port;
+            }
+
             string get_db ()
             {
                 return this->db;
