@@ -16,6 +16,7 @@
 #include <thrift/concurrency/Monitor.h>
 #include <thrift/concurrency/PosixThreadFactory.h>
 
+#include <sys/types.h>
 #include <sp.h>
 #include <event.h>
 

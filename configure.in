@@ -20,6 +20,8 @@ AC_LANG(C++)
 #	AC_MSG_ERROR([You must install thrift; please install libraries and development files])
 #)
 
+
+#CLucene
 AC_CHECK_LIB(clucene, [open], [], 
 	AC_MSG_ERROR([You must install clucene; please install libraries and development files])
 )
@@ -28,12 +30,24 @@ AC_CHECK_HEADERS([CLucene.h],,
 	AC_MSG_ERROR([CLucene.h missing; please add clucene development files])
 )
 
+
+#libmemcached
 AC_CHECK_LIB(memcached, [open], [], 
 	AC_MSG_ERROR([You must install libmemcached; please install libraries and development files])
 )
 
 AC_CHECK_HEADERS([libmemcached/memcached.h],,
 	AC_MSG_ERROR([memcached.h missing; please add libmemecached development files])
+)
+
+
+#log4cxx
+AC_CHECK_LIB(log4cxx, [open], [], 
+	AC_MSG_ERROR([You must install log4cxx; please install libraries and development files])
+)
+
+AC_CHECK_HEADERS([log4cxx/logger.h],,
+	AC_MSG_ERROR([log4cxx/logger.h missing; please add log4cxx development files])
 )
 
 

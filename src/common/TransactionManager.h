@@ -17,8 +17,6 @@
 
 #include "Transaction.h"
 #include "ConfigFile.h"
-#include "sp.h"
-#include "event.h"
 
 #include <map>
 
