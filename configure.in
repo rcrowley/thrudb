@@ -16,8 +16,8 @@ AC_PROG_INSTALL
 AC_PATH_PROG(THRIFT, thrift, thrift, $PATH:/usr/local/bin:/usr/bin)
 AC_LANG(C++)
 
-#AC_CHECK_LIB(thriftnb, [], [], 
-#	AC_MSG_ERROR([You must install thrift; please install libraries and development files])
+#AC_CHECK_LIB(thriftnb, [exit], [], 
+#	AC_MSG_ERROR([You must install thrift; please install libraries and development files with libevent support])
 #)
 
 
@@ -50,7 +50,14 @@ AC_CHECK_HEADERS([log4cxx/logger.h],,
 	AC_MSG_ERROR([log4cxx/logger.h missing; please add log4cxx development files])
 )
 
+#libuuid
+AC_CHECK_LIB(uuid, [open], [], 
+	AC_MSG_ERROR([You must install uuid; please install libraries and development files])
+)
 
+AC_CHECK_HEADERS([uuid/uuid.h],,
+	AC_MSG_ERROR([uuid.h missing; please add uuid development files])
+)
 
 ################################################################
 ## Crypto
