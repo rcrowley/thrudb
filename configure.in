@@ -28,7 +28,15 @@ AC_CHECK_HEADERS([CLucene.h],,
 	AC_MSG_ERROR([CLucene.h missing; please add clucene development files])
 )
 
-PKG_CHECK_MODULES(DEPS, libmemcached >= 0.8.0) AC_SUBST(DEPS_CFLAGS) AC_SUBST(DEPS_LIBS)
+AC_CHECK_LIB(memcached, [open], [], 
+	AC_MSG_ERROR([You must install libmemcached; please install libraries and development files])
+)
+
+AC_CHECK_HEADERS([libmemcached/memcached.h],,
+	AC_MSG_ERROR([memcached.h missing; please add libmemecached development files])
+)
+
+
 
 ################################################################
 ## Crypto
