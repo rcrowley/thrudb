@@ -29,7 +29,6 @@ vector<string> MemcachedBackend::getTablenames ()
 
 string MemcachedBackend::get (const string & tablename, const string & key )
 {
-    LOG4CXX_DEBUG (logger, "get: tablename=" + tablename + ", key=" + key);
     memcached_st * cache = get_cache ();
     string cache_key = (tablename + ":" + key);
     memcached_return rc;
@@ -69,8 +68,6 @@ string MemcachedBackend::get (const string & tablename, const string & key )
 void MemcachedBackend::put (const string & tablename, const string & key, 
                             const string & value)
 {
-    LOG4CXX_DEBUG (logger, "put: tablename=" + tablename + ", key=" + key +
-                   ", value=" + value);
     this->backend->put (tablename, key, value);
     string cache_key = (tablename + ":" + key);
     cache_put (cache_key, value);
@@ -78,7 +75,6 @@ void MemcachedBackend::put (const string & tablename, const string & key,
 
 void MemcachedBackend::remove (const string & tablename, const string & key )
 {
-    LOG4CXX_DEBUG (logger, "remove: tablename=" + tablename + ", key=" + key);
     this->backend->remove (tablename, key);
 
     memcached_st * cache = get_cache ();
@@ -100,12 +96,6 @@ void MemcachedBackend::remove (const string & tablename, const string & key )
 ScanResponse MemcachedBackend::scan (const string & tablename,
                                      const string & seed, int32_t count)
 {
-    {
-        char buf[256];
-        sprintf (buf, "scan: tablename=%s, seed=%s, count=%d",
-                 tablename.c_str (), seed.c_str (), count);
-        LOG4CXX_DEBUG (logger, buf);
-    }
     return this->backend->scan (tablename, seed, count);
 }
 
