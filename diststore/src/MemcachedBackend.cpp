@@ -125,6 +125,15 @@ memcached_st * MemcachedBackend::get_cache ()
         memcached_server_push(cache, servers);
         memcached_server_list_free(servers);
 
+        memcached_behavior_set (cache,MEMCACHED_BEHAVIOR_NO_BLOCK,0);
+        memcached_behavior_set (cache,MEMCACHED_BEHAVIOR_TCP_NODELAY,0);
+
+        memcached_hash hash_value= MEMCACHED_HASH_KETAMA;
+        memcached_behavior_set (cache,MEMCACHED_BEHAVIOR_HASH,&hash_value);
+
+        memcached_server_distribution dist_value= MEMCACHED_DISTRIBUTION_CONSISTENT;
+        memcached_behavior_set (cache,MEMCACHED_BEHAVIOR_DISTRIBUTION,&dist_value);
+
         pthread_setspecific(memcached_key, cache);
     }
 
