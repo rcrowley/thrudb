@@ -43,7 +43,7 @@ foreach my $host (@hosts)
         $master_dbh->do ($cmd);
 
         $cmd = sprintf "CREATE TABLE `%s` (
-    `k` char(37) NOT NULL,
+    `k` char(32) NOT NULL,
     `v` blob,
     `modified_at` timestamp NOT NULL default CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP,
     `created_at` timestamp NOT NULL default '0000-00-00 00:00:00',

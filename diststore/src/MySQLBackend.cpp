@@ -257,7 +257,7 @@ ScanResponse MySQLBackend::scan (const string & tablename, const string & seed,
     ScanResponse scan_response;
 
     int size = 0;
-    string offset = seed == "" ? string ("0") : seed;
+    string offset = seed;
 
 more:
     // get data from our current find_return (parition) starting with values
@@ -474,4 +474,27 @@ string MySQLBackend::admin (const string & op, const string & data)
         return "done";
     }
     return "";
+}
+
+void MySQLBackend::validate (const string * tablename, const string * key, 
+                             const string * value)
+{
+    if (tablename && (*tablename).length () >= MYSQL_BACKEND_MAX_TABLENAME_SIZE)
+    {
+        DistStoreException e;
+        e.what = "tablename too long";
+        throw e;
+    }
+    if (key && (*key).length () >= MYSQL_BACKEND_MAX_KEY_SIZE)
+    {
+        DistStoreException e;
+        e.what = "key too long";
+        throw e;
+    }
+    if (value && (*value).length () >= MYSQL_BACKEND_MAX_VALUE_SIZE)
+    {
+        DistStoreException e;
+        e.what = "value too long";
+        throw e;
+    }
 }

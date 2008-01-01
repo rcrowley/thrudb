@@ -104,6 +104,12 @@ string MemcachedBackend::admin (const string & op, const string & data)
     return this->backend->admin (op, data);
 }
 
+void MemcachedBackend::validate (const string * tablename, const string * key, 
+                                 const string * value)
+{
+    this->backend->validate (tablename, key, value);
+}
+
 memcached_st * MemcachedBackend::get_cache ()
 {
     memcached_st * cache = (memcached_st*)pthread_getspecific(memcached_key);

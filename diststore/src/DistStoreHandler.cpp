@@ -4,7 +4,6 @@
 
 /*
  * TODO:
- * - input validation, tablenames, key length, value size, etc.
  */
 
 using namespace boost;
@@ -28,6 +27,7 @@ void DistStoreHandler::put (const string & tablename, const string & key,
 {
     LOG4CXX_DEBUG (logger, "put: tablename=" + tablename + ", key=" + key +
                    ", value=" + value);
+    this->backend->validate (&tablename, &key, &value);
     this->backend->put (tablename, key, value);
 }
 
@@ -35,12 +35,14 @@ void DistStoreHandler::get (string & _return, const string & tablename,
                             const string & key)
 {
     LOG4CXX_DEBUG (logger, "get: tablename=" + tablename + ", key=" + key);
+    this->backend->validate (&tablename, &key, NULL);
     _return = this->backend->get (tablename, key);
 }
 
 void DistStoreHandler::remove (const string & tablename, const string & key)
 {
     LOG4CXX_DEBUG (logger, "remove: tablename=" + tablename + ", key=" + key);
+    this->backend->validate (&tablename, &key, NULL);
     this->backend->remove (tablename, key);
 }
 
@@ -53,6 +55,7 @@ void DistStoreHandler::scan (ScanResponse & _return, const string & tablename,
                  tablename.c_str (), seed.c_str (), count);
         LOG4CXX_DEBUG (logger, buf);
     }
+    this->backend->validate (&tablename, NULL, NULL);
     _return = this->backend->scan (tablename, seed, count);
 }
 

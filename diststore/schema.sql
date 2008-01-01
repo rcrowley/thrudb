@@ -19,7 +19,7 @@ CREATE TABLE `directory` (
 drop table if exists `d_00000000000000`;
 
 CREATE TABLE `d_00000000000000` (
-  `k` char(37) NOT NULL,
+  `k` char(32) NOT NULL,
   `v` blob,
   `modified_at` timestamp NOT NULL default CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP,
   `created_at` timestamp NOT NULL default '0000-00-00 00:00:00',

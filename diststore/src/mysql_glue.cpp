@@ -182,11 +182,14 @@ void PreparedStatement::init (MYSQL * mysql, const char * query,
         throw e;
     }
 
-    if (mysql_stmt_prepare (this->stmt, this->query, strlen (this->query)))
+    int ret;
+    if ((ret = mysql_stmt_prepare (this->stmt, this->query, 
+                                   strlen (this->query))) != 0)
     {
         char buf[1024];
-        sprintf (buf, "mysql_stmt_prepare failed: %p - %d - %s - %s",
-                 this->stmt, mysql_errno (mysql), mysql_error (mysql), query);
+        sprintf (buf, "mysql_stmt_prepare failed: %d - %p - %d - %s - %s",
+                 ret, this->stmt, mysql_errno (mysql), mysql_error (mysql), 
+                 query);
         LOG4CXX_ERROR (logger, buf);
         DistStoreException e;
         e.what = "MySQLBackend error";
@@ -226,11 +229,13 @@ void PreparedStatement::execute ()
 {
     LOG4CXX_DEBUG (logger, "execute");
 
-    if (mysql_stmt_execute (this->stmt) != 0)
+    int ret;
+    if ((ret = mysql_stmt_execute (this->stmt)) != 0)
     {
         char buf[1024];
-        sprintf (buf, "mysql_stmt_execute failed: %p - %d - %s", this->stmt,
-                 mysql_stmt_errno (this->stmt), mysql_stmt_error (this->stmt));
+        sprintf (buf, "mysql_stmt_execute failed: %d - %p - %d - %s", ret, 
+                 this->stmt, mysql_stmt_errno (this->stmt), 
+                 mysql_stmt_error (this->stmt));
         LOG4CXX_ERROR (logger, buf);
         DistStoreException e;
         e.what = "MySQLBackend error";
@@ -238,11 +243,12 @@ void PreparedStatement::execute ()
     }
 
     // optional, buffer results to client
-    if (mysql_stmt_store_result (this->stmt) != 0)
+    if ((ret = mysql_stmt_store_result (this->stmt)) != 0)
     {
         char buf[1024];
-        sprintf (buf, "mysql_stmt_execute failed: %p - %d - %s", this->stmt,
-                 mysql_stmt_errno (this->stmt), mysql_stmt_error (this->stmt));
+        sprintf (buf, "mysql_stmt_store_result failed: %d - %p - %d - %s", ret, 
+                 this->stmt, mysql_stmt_errno (this->stmt), 
+                 mysql_stmt_error (this->stmt));
         LOG4CXX_ERROR (logger, buf);
         DistStoreException e;
         e.what = "MySQLBackend error";
@@ -265,8 +271,8 @@ int PreparedStatement::fetch ()
     if (ret != 0 && ret != MYSQL_NO_DATA)
     {
         char buf[1024];
-        sprintf (buf, "mysql_stmt_fetch failed: %p - %d - %s",
-                 this->stmt, mysql_stmt_errno (this->stmt),
+        sprintf (buf, "mysql_stmt_fetch failed: %d - %p - %d - %s",
+                 ret, this->stmt, mysql_stmt_errno (this->stmt),
                  mysql_stmt_error (this->stmt));
         LOG4CXX_ERROR (logger,buf);
         DistStoreException e;
@@ -283,8 +289,8 @@ void PreparedStatement::free_result ()
     if (ret != 0)
     {
         char buf[1024];
-        sprintf (buf, "mysql_stmt_free_result failed: %p - %d - %s",
-                 this->stmt, mysql_stmt_errno (this->stmt),
+        sprintf (buf, "mysql_stmt_free_result failed: %d - %p - %d - %s",
+                 ret, this->stmt, mysql_stmt_errno (this->stmt),
                  mysql_stmt_error (this->stmt));
         LOG4CXX_ERROR (logger,buf);
     }

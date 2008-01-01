@@ -11,7 +11,7 @@ use Thrift::FramedTransport;
 use Thrift::BinaryProtocol;
 use DistStore;
 
-my $tests_left = 8;
+my $tests_left = 11;
 plan tests => $tests_left;
 
 eval 
@@ -39,6 +39,28 @@ eval
         $client->get ($table, 'nonexistent key');
     };
     ok ($@->{what} =~ /not found/, 'nonexistent key');
+    $tests_left--;
+
+    eval
+    {
+        $client->get ('this_table_name_is_way_too_long_and_should_err_out',
+            'key');
+    };
+    ok ($@->{what} =~ /tablename too long/, 'tablename length');
+    $tests_left--;
+
+    eval
+    {
+        $client->get ($table, 'key is way to long and will cause an exception to be thrown');
+    };
+    ok ($@->{what} =~ /key too long/, 'key length');
+    $tests_left--;
+
+    eval
+    {
+        $client->put ($table, 'key', <DATA>);
+    };
+    ok ($@->{what} =~ /value too long/, 'value length');
     $tests_left--;
 
     $client->put ($table, $key, $value);
@@ -93,3 +115,6 @@ if ($@)
         UNIVERSAL::isa($@,"Thrift::TException") ? Dumper ($@) : $@
     );
 }
+
+__DATA__
+value is way to long and will cause an exception to be thrown value is way to long and will cause an exception to be thrown value is way to long and will cause an exception to be thrown value is way to long and will cause an exception to be thrown value is way to long and will cause an exception to be thrown value is way to long and will cause an exception to be thrown value is way to long and will cause an exception to be thrown value is way to long and will cause an exception to be thrown value is way to long and will cause an exception to be thrown value is way to long and will cause an exception to be thrown value is way to long and will cause an exception to be thrown value is way to long and will cause an exception to be thrown value is way to long and will cause an exception to be thrown value is way to long and will cause an exception to be thrown value is way to long and will cause an exception to be thrown value is way to long and will cause an exception to be thrown value is way to long and will cause an exception to be thrown value is way to long and will cause an exception to be thrown value is way to long and will cause an exception to be thrown value is way to long and will cause an exception to be thrown value is way to long and will cause an exception to be thrown value is way to long and will cause an exception to be thrown value is way to long and will cause an exception to be thrown value is way to long and will cause an exception to be thrown value is way to long and will cause an exception to be thrown value is way to long and will cause an exception to be thrown value is way to long and will cause an exception to be thrown value is way to long and will cause an exception to be thrown value is way to long and will cause an exception to be thrown value is way to long and will cause an exception to be thrown value is way to long and will cause an exception to be thrown value is way to long and will cause an exception to be thrown value is way to long and will cause an exception to be thrown value is way to long and will cause an exception to be thrown value is way to long and will cause an exception to be thrown value is way to long and will cause an exception to be thrown value is way to long and will cause an exception to be thrown value is way to long and will cause an exception to be thrown value is way to long and will cause an exception to be thrown value is way to long and will cause an exception to be thrown value is way to long and will cause an exception to be thrown value is way to long and will cause an exception to be thrown value is way to long and will cause an exception to be thrown value is way to long and will cause an exception to be thrown value is way to long and will cause an exception to be thrown value is way to long and will cause an exception to be thrown value is way to long and will cause an exception to be thrown value is way to long and will cause an exception to be thrown value is way to long and will cause an exception to be thrown value is way to long and will cause an exception to be thrown value is way to long and will cause an exception to be thrown value is way to long and will cause an exception to be thrown value is way to long and will cause an exception to be thrown value is way to long and will cause an exception to be thrown value is way to long and will cause an exception to be thrown value is way to long and will cause an exception to be thrown value is way to long and will cause an exception to be thrown value is way to long and will cause an exception to be thrown value is way to long and will cause an exception to be thrown value is way to long and will cause an exception to be thrown value is way to long and will cause an exception to be thrown value is way to long and will cause an exception to be thrown value is way to long and will cause an exception to be thrown value is way to long and will cause an exception to be thrown value is way to long and will cause an exception to be thrown value is way to long and will cause an exception to be thrown value is way to long and will cause an exception to be thrown

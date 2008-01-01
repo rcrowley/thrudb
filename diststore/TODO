@@ -6,3 +6,6 @@ probably a lot better, see MySQLBackend todo's
 * MySQLBackend manager
 ** will require introduction of a read-only mode
 ** put parition in to read only, wait for master info cache timeouts, then rework
+* look at bloom filters
+** not sure i really see them as useful with mysql
+** they would need to be presisted through invocations and updated locally by all writes (if multiple svc boxes) to be useful, just sounds complicated

@@ -98,8 +98,9 @@ class MySQLBackend : public DistStoreBackend
         void remove (const string & tablename, const string & key );
         ScanResponse scan (const string & tablename, const string & seed,
                            int32_t count);
-
         string admin (const string & op, const string & data);
+        void validate (const string * tablename, const string * key,
+                       const string * value);
 
     protected:
 
