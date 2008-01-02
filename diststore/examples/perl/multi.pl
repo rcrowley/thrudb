@@ -18,8 +18,8 @@ use constant DISTSTORE_PORT    => 9091;
 
 use threads;
 
-my $num_threads = 15;
-my $num_calls = 100;
+my $num_threads = 2;
+my $num_calls = 500;
 
 # load up data
 eval{
