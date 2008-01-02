@@ -186,18 +186,15 @@ void DiskBackend::remove (const string & tablename, const string & key)
     }
 }
 
-string DiskBackend::find_next_file (const string & tablename, 
-                                    const string & key)
+ScanResponse DiskBackend::scan (const string & tablename, const string & seed,
+                                int32_t count)
 {
-    LOG4CXX_DEBUG (logger, "find_next_file: tablename=" + tablename + 
-                   ", key=" + key);
-
     stack<directory_iterator *> dir_stack;
     directory_iterator * i;
     directory_iterator end;
 
     string base = doc_root + "/" + tablename + "/";
-    if (key.empty ())
+    if (seed.empty ())
     {
         LOG4CXX_DEBUG (logger, "firsts");
         i = new directory_iterator (base);
@@ -222,9 +219,9 @@ string DiskBackend::find_next_file (const string & tablename,
     {
         LOG4CXX_DEBUG (logger, "pieces");
         string d1, d2, d3;
-        get_dir_pieces (d1, d2, d3, tablename, key);
+        get_dir_pieces (d1, d2, d3, tablename, seed);
 
-        // TODO: fix this if key doesn't exist
+        // TODO: fix this if seed doesn't exist
 
         i = new directory_iterator (base);
         dir_stack.push (i);
@@ -258,21 +255,22 @@ string DiskBackend::find_next_file (const string & tablename,
 
         i = new directory_iterator (base + d1 + "/" + d2 + "/" + d3);
         dir_stack.push (i);
-        // pre-wind to key
-        while ((*i) != end && (*i)->path ().leaf () != key)
+        // pre-wind to seed 
+        while ((*i) != end && (*i)->path ().leaf () != seed)
         {
-            LOG4CXX_DEBUG (logger, "key wind=" + 
+            LOG4CXX_DEBUG (logger, "seed wind=" + 
                            (*i)->path ().native_file_string ());
             ++(*i);
         }
 
         LOG4CXX_DEBUG (logger, "winding complete");
 
-        // move past key
+        // move past seed 
         ++(*i);
     }
 
     // we're in our initial state now
+    ScanResponse scan_response;
 
     {
         char buf[128];
@@ -302,13 +300,11 @@ string DiskBackend::find_next_file (const string & tablename,
             LOG4CXX_DEBUG (logger, "stack.top(f)=" + 
                            (*i)->path ().native_file_string ());
             string ret = (*i)->path ().leaf ();
-            while (!dir_stack.empty ())
-            {
-                delete dir_stack.top ();
-                dir_stack.pop ();
-            }
-            // ret
-            return ret;
+            Element e;
+            e.key = ret;
+            e.value = get (tablename, ret);
+            scan_response.elements.push_back (e);
+            ++(*i);
         }
         else if (is_directory ((*i)->status ()))
         {
@@ -322,31 +318,19 @@ string DiskBackend::find_next_file (const string & tablename,
         {
             LOG4CXX_DEBUG (logger, "stack.top(?)");
         }
-    } while (!dir_stack.empty ());
+    } while (!dir_stack.empty () && 
+             scan_response.elements.size () < (unsigned int)count);
 
-    LOG4CXX_DEBUG (logger, "ret(Y)=");
-    return "";
-}
-
-ScanResponse DiskBackend::scan (const string & tablename, const string & seed,
-                                int32_t count)
-{
-    ScanResponse scan_response;
-
-    string ret = find_next_file (tablename, seed);
-    while (!ret.empty() && 
-           scan_response.elements.size () < (unsigned int)count)
+    while (!dir_stack.empty ())
     {
-        Element e;
-        e.key = ret;
-        e.value = get (tablename, ret);
-        scan_response.elements.push_back (e);
-        ret = find_next_file (tablename, ret);
-    } 
+        delete dir_stack.top ();
+        dir_stack.pop ();
+    }
 
     scan_response.seed = scan_response.elements.size () > 0 ?
         scan_response.elements.back ().key : "";
-    
+
+    LOG4CXX_DEBUG (logger, "outtie");
     return scan_response;
 }
 
@@ -354,9 +338,6 @@ string DiskBackend::admin (const string & op, const string & data)
 {
     return "";
 }
-
-#define DISK_BACKEND_MAX_TABLENAME_SIZE 33
-#define DISK_BACKEND_MAX_KEY_SIZE 33
 
 void DiskBackend::validate (const string * tablename, const string * key,
                             const string * value)

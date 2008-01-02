@@ -21,6 +21,9 @@
 
 using namespace std;
 
+#define DISK_BACKEND_MAX_TABLENAME_SIZE 33
+#define DISK_BACKEND_MAX_KEY_SIZE 33
+
 class DiskBackend : public DistStoreBackend
 {
     public:
@@ -45,7 +48,6 @@ class DiskBackend : public DistStoreBackend
         void get_dir_pieces (string & d1, string & d2, string & d3, 
                              const string & tablename, const string & key);
         string build_filename(const string & tablename, const string & key);
-        string find_next_file (const string & tablename, const string & key);
 };
         
 #endif
