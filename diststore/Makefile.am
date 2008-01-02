@@ -1,4 +1,5 @@
-bin_PROGRAMS = diststore diststore_bench
+bin_PROGRAMS = diststore
+noinst_PROGRAMS = diststore_bench
 
 diststore_SOURCES = \
 		  gen-cpp/DistStore.cpp			\
@@ -6,18 +7,19 @@ diststore_SOURCES = \
 		  gen-cpp/DistStore_constants.cpp	\
 		  src/ConfigFile.cpp			\
 		  src/DistStoreHandler.cpp		\
+		  src/DiskBackend.cpp			\
 		  src/MySQLBackend.cpp			\
 		  src/MemcachedBackend.cpp		\
 		  src/mysql_glue.cpp			\
 		  src/main.cpp
 
 diststore_CXXFLAGS = -Wall -I$(SANDBOX)/include -I$(SANDBOX)/include/thrift -I/usr/local/include/thrift -I/usr/include/thrift -I/usr/include/mysql -Igen-cpp 
+diststore_LDFLAGS = -Wall -L$(SANDBOX)/lib -L/usr/local/lib -lthrift -lthriftnb -levent -llog4cxx -lmysqlclient_r -lmemcached -lboost_filesystem
 
-diststore_LDFLAGS = -Wall -L$(SANDBOX)/lib -L/usr/local/lib -lthrift -lthriftnb -levent -llog4cxx -lmysqlclient_r -lmemcached
-
-diststore_bench_SOURCES=  gen-cpp/DistStore.cpp \
-			gen-cpp/DistStore_types.cpp \
-			gen-cpp/DistStore_constants.cpp \
+diststore_bench_SOURCES = \
+			gen-cpp/DistStore.cpp		\
+			gen-cpp/DistStore_types.cpp	\
+			gen-cpp/DistStore_constants.cpp	\
 			src/bench.cpp
 
 diststore_bench_CXXFLAGS = -Wall -I$(SANDBOX)/include -I$(SANDBOX)/include/thrift -I/usr/local/include/thrift -I/usr/include/thrift -Isrc -Igen-cpp -Isrc/common -Isrc/diststore

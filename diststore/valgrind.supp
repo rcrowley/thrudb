@@ -186,4 +186,35 @@
    fun:_ZN7diststore16DistStoreProcessor10process_fnEPN8facebook6thrift8protocol9TProtocolES5_RSsi
    fun:_ZN7diststore16DistStoreProcessor7processEN5boost10shared_ptrIN8facebook6thrift8protocol9TProtocolEEES7_
 }
-
+{
+   <insert a suppression name here>
+   Memcheck:Addr2
+   fun:getenv
+   fun:_ZN7log4cxx7helpers6System11getPropertyERKSs
+   fun:_ZN7log4cxx7helpers15OptionConverter17getSystemPropertyERKSsS3_
+   fun:_ZN7log4cxx10LogManager19getLoggerRepositoryEv
+   fun:_ZN7log4cxx10LogManager9getLoggerERKSs
+   fun:_ZN7log4cxx6Logger9getLoggerERKSs
+   fun:_Z41__static_initialization_and_destruction_0ii
+   obj:/home/rwmcfa1/lib/diststore/trunk/diststore/diststore
+   obj:/home/rwmcfa1/lib/diststore/trunk/diststore/diststore
+   obj:*
+   obj:*
+   obj:*
+}
+{
+   <insert a suppression name here>
+   Memcheck:Addr2
+   fun:getenv
+   fun:_ZN7log4cxx7helpers6System11getPropertyERKSs
+   fun:_ZN7log4cxx7helpers15OptionConverter17getSystemPropertyERKSsS3_
+   fun:_ZN7log4cxx10LogManager19getLoggerRepositoryEv
+   fun:_ZN7log4cxx10LogManager9getLoggerERKSs
+   fun:_ZN7log4cxx6Logger9getLoggerERKSs
+   fun:_Z41__static_initialization_and_destruction_0ii
+   obj:/home/rwmcfa1/lib/diststore/trunk/diststore/diststore
+   obj:/home/rwmcfa1/lib/diststore/trunk/diststore/diststore
+   obj:*
+   obj:*
+   obj:*
+}
