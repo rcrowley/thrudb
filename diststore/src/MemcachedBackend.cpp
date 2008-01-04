@@ -3,16 +3,15 @@
 // private
 LoggerPtr MemcachedBackend::logger (Logger::getLogger ("MemcachedBackend"));
 pthread_key_t MemcachedBackend::memcached_key;
-string MemcachedBackend::memcached_servers;
 
-MemcachedBackend::MemcachedBackend (string _memcached_servers, 
+MemcachedBackend::MemcachedBackend (const string & memcached_servers, 
                                     shared_ptr<DistStoreBackend> backend)
 {
     LOG4CXX_INFO (logger, string ("MemcachedBackend: memcached_servers=") + 
-                  _memcached_servers);
+                  memcached_servers);
 
     this->backend = backend;
-    memcached_servers = _memcached_servers;
+    this->memcached_servers = memcached_servers;
 
     pthread_key_create (&memcached_key, NULL);
 }

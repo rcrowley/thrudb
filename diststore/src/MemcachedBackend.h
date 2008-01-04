@@ -22,7 +22,7 @@ using namespace std;
 class MemcachedBackend : public DistStoreBackend
 {
     public:
-        MemcachedBackend (string memcached_servers, 
+        MemcachedBackend (const string & memcached_servers, 
                           shared_ptr<DistStoreBackend> backend);
         ~MemcachedBackend ();
 
@@ -45,8 +45,8 @@ class MemcachedBackend : public DistStoreBackend
     private:
         static log4cxx::LoggerPtr logger;
         static pthread_key_t memcached_key;
-        static string memcached_servers;
-
+        
+        string memcached_servers;
         shared_ptr<DistStoreBackend> backend;
 };
 
