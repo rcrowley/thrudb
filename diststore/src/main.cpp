@@ -32,8 +32,10 @@
 #include "ConfigFile.h"
 #include "utils.h"
 #include "DistStoreBackend.h"
+#include "DiskBackend.h"
 #include "MemcachedBackend.h"
 #include "MySQLBackend.h"
+#include "SpreadBackend.h"
 #include "DistStoreHandler.h"
 
 using namespace log4cxx;
@@ -95,20 +97,31 @@ int main (int argc, char **argv) {
 
         shared_ptr<DistStoreBackend> backend;
 
-        // MySQL backend
-        string master_hostname =
-            ConfigManager->read<string>("MYSQL_MASTER_HOST", "localhost");
-        short master_port = ConfigManager->read<short>("MYSQL_MASTER_PORT",
-                                                       3306);
-        string master_db = ConfigManager->read<string>("MYSQL_MASTER_DB",
-                                                       "diststore");
-        string username = ConfigManager->read<string>("MYSQL_USERNAME",
-                                                       "diststore");
-        string password = ConfigManager->read<string>("MYSQL_PASSWORD",
-                                                       "diststore");
-        backend = shared_ptr<DistStoreBackend>
-            (new MySQLBackend (master_hostname, master_port, master_db,
-                               username, password));
+        string which = ConfigManager->read<string> ("BACKEND", "mysql");
+        if (which == "disk")
+        {
+            // Disk backend
+            string doc_root =
+                ConfigManager->read<string>("DISK_DOC_ROOT", "/tmp/docs");
+            backend = shared_ptr<DistStoreBackend>(new DiskBackend (doc_root));
+        }
+        else
+        {
+            // MySQL backend
+            string master_hostname =
+                ConfigManager->read<string>("MYSQL_MASTER_HOST", "localhost");
+            short master_port = ConfigManager->read<short>("MYSQL_MASTER_PORT",
+                                                           3306);
+            string master_db = ConfigManager->read<string>("MYSQL_MASTER_DB",
+                                                           "diststore");
+            string username = ConfigManager->read<string>("MYSQL_USERNAME",
+                                                          "diststore");
+            string password = ConfigManager->read<string>("MYSQL_PASSWORD",
+                                                          "diststore");
+            backend = shared_ptr<DistStoreBackend>
+                (new MySQLBackend (master_hostname, master_port, master_db,
+                                   username, password));
+        }
 
         // Memcached cache
         string memcached_servers =
@@ -116,6 +129,19 @@ int main (int argc, char **argv) {
         if (!memcached_servers.empty ())
             backend = shared_ptr<DistStoreBackend>
                 (new MemcachedBackend (memcached_servers, backend));
+
+        // Spread passthrough
+        string spread_name =
+            ConfigManager->read<string>("SPREAD_NAME", "4803");
+        string spread_private_name =
+            ConfigManager->read<string>("SPREAD_PRIVATE_NAME", "");
+        string spread_group =
+            ConfigManager->read<string>("SPREAD_GROUP", "diststore");
+
+        if (!spread_private_name.empty ())
+            backend = shared_ptr<DistStoreBackend>
+                (new SpreadBackend (spread_name, spread_private_name, 
+                                    spread_group, backend));
 
         shared_ptr<DistStoreHandler>   handler (new DistStoreHandler (backend));
         shared_ptr<DistStoreProcessor> processor (new DistStoreProcessor (handler));
