@@ -32,36 +32,39 @@ eval{
 
 eval {
 
-    my $id = $diststore->put ("data", "key3", "val-key4");
-    my $key = "key.".rand;
-    $diststore->put ("data", $key, "val.$key");
+    my $tablename = 'data';
 
-    print Dumper ($diststore->get ("data", "key3"));
-    print Dumper ($diststore->get ("data", $key));
+    my $id = $diststore->put ($tablename, "key3", "val-key4");
+    my $key = "key.".rand;
+    $diststore->put ($tablename, $key, "val.$key");
+
+    print Dumper ($diststore->get ($tablename, "key3"));
+    print Dumper ($diststore->get ($tablename, $key));
 
     if (rand (100) > 50)
     {
-        $diststore->remove ("data", $key);
+        $diststore->remove ($tablename, $key);
     }
     else
     {
-        print Dumper ($diststore->get ("data", $key));
+        print Dumper ($diststore->get ($tablename, $key));
     }
 
-    print Dumper ($diststore->get ("data", "key3"));
+    print Dumper ($diststore->get ($tablename, "key3"));
 
     my $batch_size = 13;
-    my $ret = $diststore->scan ("data", undef, $batch_size);
+    my $ret = $diststore->scan ($tablename, undef, $batch_size);
     my $count = 0;
     while (scalar (@{$ret->{elements}}) > 0)
     {
-        printf "seed: %s\n", $ret->{seed};
+        printf "seed: %s - %d\n", $ret->{seed}, scalar (@{$ret->{elements}});
         foreach (@{$ret->{elements}})
         {
             printf "\t%s => %s\n", $_->{key}, $_->{value};
         }
         $count += scalar (@{$ret->{elements}});
-        $ret = $diststore->scan ("data", $ret->{seed}, $batch_size);
+        $ret = $diststore->scan ($tablename, $ret->{seed}, $batch_size);
+        $diststore->remove ($tablename, $ret->{seed});
     }
     printf "count: %d\n", $count;
 };
