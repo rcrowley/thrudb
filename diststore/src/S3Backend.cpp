@@ -125,6 +125,10 @@ ScanResponse S3Backend::scan (const string & tablename, const string & seed,
     {
         Element e;
         e.key = (*i)->Key;
+        // TODO: this isn't going to use the full get stack, that might be a
+        // problem in some set ups (that aren't currently possible,) but it's
+        // also a benefit in that it won't fill up the cache with stuff that's
+        // only going to be fetched a single time for the scan.
         e.value = get (tablename, e.key);
         scan_response.elements.push_back (e);
     }
