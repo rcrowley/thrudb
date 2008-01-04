@@ -35,6 +35,8 @@
 #include "DiskBackend.h"
 #include "MemcachedBackend.h"
 #include "MySQLBackend.h"
+#include "S3Backend.h"
+#include "s3_glue.h"
 #include "SpreadBackend.h"
 #include "DistStoreHandler.h"
 
@@ -104,6 +106,19 @@ int main (int argc, char **argv) {
             string doc_root =
                 ConfigManager->read<string>("DISK_DOC_ROOT", "/tmp/docs");
             backend = shared_ptr<DistStoreBackend>(new DiskBackend (doc_root));
+        }
+        else if (which == "s3")
+        {
+            curl_global_init(CURL_GLOBAL_ALL);
+
+            // TODO: make these part of the backend, so that they're not global
+
+            //s3_debug = 4;
+            aws_access_key_id     = ConfigManager->read<string>("AWS_ACCESS_KEY").c_str();
+            aws_secret_access_key = ConfigManager->read<string>("AWS_SECRET_ACCESS_KEY").c_str();
+
+            // Disk backend
+            backend = shared_ptr<DistStoreBackend>(new S3Backend ());
         }
         else
         {
