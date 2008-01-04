@@ -1,0 +1,32 @@
+<html>
+    <head>
+        <title>DistStore - Spread Backend - Distrubuted Document Store</title>
+    </head>
+    <body>
+        <h1>DistStore - Spread Backend</h1>
+
+        <p>The <a href="http://spread.org/">Spread</a> backend acts as a
+        passthrough backend sending all requests down through the backend chain
+        and after sucessfully doing so sending a spread message for others to
+        listen/watch for the put/remove.</p>
+
+        <h2>Features</h2>
+        <ul>
+            <li>Simple set-up, single/couple lines of config</li>
+        </ul>
+
+        <h2>Future Direction &amp; Development</h2>
+        <ul>
+        </ul>
+
+        <h2>Use &amp; Configuration</h2>
+
+        To use the Spread backend add the following line to your diststore.conf replacing the right hand sides with an appropriate value for your environment.
+<pre>
+    SPREAD_NAME = &lt;name&gt;
+    SPREAD_PRIVATE_NAME = &lt;private_name&gt;
+    SPREAD_GROUP = &lt;group&gt;
+</pre>
+
+    </body>
+</html>
