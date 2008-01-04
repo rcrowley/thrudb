@@ -93,7 +93,7 @@ public:
 
     void testWrite() {
         for (size_t ix = 0; ix < _loopCount; ix++) {
-            string result,id;
+            string result, id = "sample";
             _client->put("data",id,sample);
 
         }
@@ -101,17 +101,17 @@ public:
 
     void testRead() {
         for (size_t ix = 0; ix < _loopCount; ix++) {
-            string result,id;
-            _client->get(result,"data","sample");
+            string result, id = "sample";
+            _client->get(result,"data",id);
         }
     }
 
     void testBoth() {
 
         for (size_t ix = 0; ix < _loopCount/2; ix++) {
-            string result,id;
+            string result,id = "sample";
             _client->put("data",id,sample);
-            _client->get(result,"data","sample");
+            _client->get(result,"data",id);
         }
     }
 
