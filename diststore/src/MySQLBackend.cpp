@@ -219,10 +219,10 @@ string MySQLBackend::scan_helper (ScanResponse & scan_response,
     while ((ret = scan_statement->fetch ()) == 0)
     {
         // we gots results
-        Element * e = new Element ();
-        e->key = kvr->get_key ();
-        e->value = kvr->get_value ();
-        scan_response.elements.push_back (*e);
+        Element e;
+        e.key = kvr->get_key ();
+        e.value = kvr->get_value ();
+        scan_response.elements.push_back (e);
     }
 
     scan_statement->free_result ();
