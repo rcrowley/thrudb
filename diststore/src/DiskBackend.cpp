@@ -39,28 +39,13 @@ static Mutex global_mutex = Mutex ();
 static int safe_mkdir (const string & path, long mode)
 {
     Guard g (global_mutex);
-
     return mkdir (path.c_str (), mode);
 }
-
-static map<string, bool> global_directories = map<string, bool>();
 
 static bool safe_directory_exists (string path)
 {
     Guard g (global_mutex);
-
-    if (global_directories.count (path) > 0)
-    {
-        return true;
-    }
-
-    if (directory_exists (path))
-    {
-        global_directories[path] = true;
-        return true;
-    }
-
-    return false;
+    return directory_exists (path);
 }
 
 DiskBackend::DiskBackend (const string & doc_root)
@@ -196,7 +181,6 @@ ScanResponse DiskBackend::scan (const string & tablename, const string & seed,
     string base = doc_root + "/" + tablename + "/";
     if (seed.empty ())
     {
-        LOG4CXX_DEBUG (logger, "firsts");
         i = new directory_iterator (base);
         dir_stack.push (i);
         if ((*i) != end && is_directory ((*i)->status ()))
@@ -217,7 +201,6 @@ ScanResponse DiskBackend::scan (const string & tablename, const string & seed,
     }
     else
     {
-        LOG4CXX_DEBUG (logger, "pieces");
         string d1, d2, d3;
         get_dir_pieces (d1, d2, d3, tablename, seed);
 
@@ -227,43 +210,25 @@ ScanResponse DiskBackend::scan (const string & tablename, const string & seed,
         dir_stack.push (i);
         // pre-wind to d1
         while ((*i) != end && (*i)->path ().leaf () != d1)
-        {
-            LOG4CXX_DEBUG (logger, "d1 wind=" + 
-                           (*i)->path ().native_file_string ());
             ++(*i);
-        }
 
         i  = new directory_iterator (base + d1);
         dir_stack.push (i);
         // pre-wind to d2
         while ((*i) != end && (*i)->path ().leaf () != d2)
-        {
-            LOG4CXX_DEBUG (logger, "d2 wind=" + 
-                           (*i)->path ().native_file_string ());
             ++(*i);
-        }
 
         i = new directory_iterator (base + d1 + "/" + d2);
         dir_stack.push (i);
         // pre-wind to d3
         while ((*i) != end && (*i)->path ().leaf () != d3)
-        {
-            LOG4CXX_DEBUG (logger, "d3 wind=" + 
-                           (*i)->path ().native_file_string ());
             ++(*i);
-        }
 
         i = new directory_iterator (base + d1 + "/" + d2 + "/" + d3);
         dir_stack.push (i);
         // pre-wind to seed 
         while ((*i) != end && (*i)->path ().leaf () != seed)
-        {
-            LOG4CXX_DEBUG (logger, "seed wind=" + 
-                           (*i)->path ().native_file_string ());
             ++(*i);
-        }
-
-        LOG4CXX_DEBUG (logger, "winding complete");
 
         // move past seed 
         ++(*i);
@@ -272,11 +237,6 @@ ScanResponse DiskBackend::scan (const string & tablename, const string & seed,
     // we're in our initial state now
     ScanResponse scan_response;
 
-    {
-        char buf[128];
-        sprintf (buf, "stack dump size=%d", (int)dir_stack.size ());
-        LOG4CXX_DEBUG (logger, buf);
-    }
     // inital
     i = dir_stack.top ();
     do 
@@ -284,7 +244,6 @@ ScanResponse DiskBackend::scan (const string & tablename, const string & seed,
 
         if ((*i) == end)
         {
-            LOG4CXX_DEBUG (logger, "stack.top=(n)");
             // pop
             dir_stack.pop ();
             delete i;
@@ -297,8 +256,6 @@ ScanResponse DiskBackend::scan (const string & tablename, const string & seed,
         }
         else if (is_regular ((*i)->status ()))
         {
-            LOG4CXX_DEBUG (logger, "stack.top(f)=" + 
-                           (*i)->path ().native_file_string ());
             string ret = (*i)->path ().leaf ();
             Element e;
             e.key = ret;
@@ -308,19 +265,21 @@ ScanResponse DiskBackend::scan (const string & tablename, const string & seed,
         }
         else if (is_directory ((*i)->status ()))
         {
-            LOG4CXX_DEBUG (logger, "stack.top(d)=" + 
-                           (*i)->path ().native_directory_string ());
             // push
             i = new directory_iterator ((*i)->path ());
             dir_stack.push (i);
         }
         else
         {
-            LOG4CXX_DEBUG (logger, "stack.top(?)");
+            // unknown, uh-oh
+            LOG4CXX_WARN (logger, "stack.top(?)=" + (*i)->path ().leaf ());
         }
+
+        // while we still have dirs on the stack and don't have enough elements
     } while (!dir_stack.empty () && 
              scan_response.elements.size () < (unsigned int)count);
 
+    // clean up after ourselves
     while (!dir_stack.empty ())
     {
         delete dir_stack.top ();
@@ -346,6 +305,12 @@ void DiskBackend::validate (const string * tablename, const string * key,
     {
         DistStoreException e;
         e.what = "tablename too long";
+        throw e;
+    }
+    if (key && (*key) == "")
+    {
+        DistStoreException e;
+        e.what = "invalid key";
         throw e;
     }
     if (key && (*key).length () >= DISK_BACKEND_MAX_KEY_SIZE)

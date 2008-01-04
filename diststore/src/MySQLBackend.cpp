@@ -4,9 +4,10 @@
 /*
  * TODO:
  * - timeout the directory info at some interval
- * - cleanly recover from lost/broken connections
- * - look at libmemcached for it's partitioning algoritms
+ * - cleanly recover from lost/broken connections (partially done)
  * - think about straight key parititioning to allow in order scans etc...
+ * - look at libmemcached for it's partitioning algoritms
+ * - convert to consistent hashing for key dist and pref increases
  */
 
 // private
@@ -483,6 +484,12 @@ void MySQLBackend::validate (const string * tablename, const string * key,
     {
         DistStoreException e;
         e.what = "tablename too long";
+        throw e;
+    }
+    if (key && (*key) == "")
+    {
+        DistStoreException e;
+        e.what = "invalid key";
         throw e;
     }
     if (key && (*key).length () >= MYSQL_BACKEND_MAX_KEY_SIZE)
