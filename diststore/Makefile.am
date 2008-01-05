@@ -7,6 +7,7 @@ diststore_SOURCES = \
 		  gen-cpp/DistStore_constants.cpp	\
 		  src/ConfigFile.cpp			\
 		  src/DistStoreHandler.cpp		\
+		  src/BDBBackend.cpp			\
 		  src/DiskBackend.cpp			\
 		  src/MySQLBackend.cpp			\
 		  src/MemcachedBackend.cpp		\
@@ -18,7 +19,7 @@ diststore_SOURCES = \
 		  src/main.cpp
 
 diststore_CXXFLAGS = -Wall -I$(SANDBOX)/include -I$(SANDBOX)/include/thrift -I/usr/local/include/thrift -I/usr/include/thrift -I/usr/include/mysql -Igen-cpp 
-diststore_LDFLAGS = -Wall -L$(SANDBOX)/lib -L/usr/local/lib -lthrift -lthriftnb -levent -llog4cxx -lmysqlclient_r -lmemcached -lboost_filesystem -lspread -lexpat -lcurl
+diststore_LDFLAGS = -Wall -L$(SANDBOX)/lib -L/usr/local/lib -lthrift -lthriftnb -levent -llog4cxx -lmysqlclient_r -lmemcached -lboost_filesystem -lspread -lexpat -lcurl -ldb_cxx
 
 diststore_bench_SOURCES = \
 			gen-cpp/DistStore.cpp		\

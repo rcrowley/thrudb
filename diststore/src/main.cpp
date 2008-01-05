@@ -32,6 +32,7 @@
 #include "ConfigFile.h"
 #include "utils.h"
 #include "DistStoreBackend.h"
+#include "BDBBackend.h"
 #include "DiskBackend.h"
 #include "MemcachedBackend.h"
 #include "MySQLBackend.h"
@@ -100,7 +101,16 @@ int main (int argc, char **argv) {
         shared_ptr<DistStoreBackend> backend;
 
         string which = ConfigManager->read<string> ("BACKEND", "mysql");
-        if (which == "disk")
+        if (which == "bdb")
+        {
+            // BDB backend
+            string bdb_root =
+                ConfigManager->read<string>("BDB_ROOT", "/tmp/bdbs");
+            backend = 
+                shared_ptr<DistStoreBackend>(new BDBBackend (bdb_root, 
+                                                             thread_count));
+        }
+        else if (which == "disk")
         {
             // Disk backend
             string doc_root =
@@ -109,6 +119,7 @@ int main (int argc, char **argv) {
         }
         else if (which == "s3")
         {
+            // S3 backend
             curl_global_init(CURL_GLOBAL_ALL);
 
             // TODO: make these part of the backend, so that they're not global
@@ -117,7 +128,6 @@ int main (int argc, char **argv) {
             aws_access_key_id     = ConfigManager->read<string>("AWS_ACCESS_KEY").c_str();
             aws_secret_access_key = ConfigManager->read<string>("AWS_SECRET_ACCESS_KEY").c_str();
 
-            // Disk backend
             backend = shared_ptr<DistStoreBackend>(new S3Backend ());
         }
         else
