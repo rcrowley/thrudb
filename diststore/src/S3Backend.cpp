@@ -23,11 +23,9 @@ using namespace facebook::thrift::transport;
 using namespace facebook::thrift::protocol;
 using namespace facebook::thrift::concurrency;
 
-#define memd MemcacheHandle::instance()
+LoggerPtr S3Backend::logger (Logger::getLogger ("S3Backend"));
 
-LoggerPtr S3Backend::logger(Logger::getLogger("S3Backend"));
-
-S3Backend::S3Backend()
+S3Backend::S3Backend ()
 {
     LOG4CXX_INFO (logger, "S3Backend");
 }

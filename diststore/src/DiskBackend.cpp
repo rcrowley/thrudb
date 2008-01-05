@@ -56,17 +56,17 @@ DiskBackend::DiskBackend (const string & doc_root)
 
 vector<string> DiskBackend::getTablenames ()
 {
-    vector<string> v;
+    vector<string> tablenames;
     directory_iterator end_iter;
     for (directory_iterator dir_itr (doc_root); dir_itr != end_iter;
          ++dir_itr)
     {
         if (is_directory (dir_itr->status()))
         {
-            v.push_back (dir_itr->path ().leaf ());
+            tablenames.push_back (dir_itr->path ().leaf ());
         }
     }
-    return v;
+    return tablenames;
 }
 
 string DiskBackend::get (const string & tablename, const string & key)

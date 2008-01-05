@@ -104,10 +104,10 @@ int main (int argc, char **argv) {
         if (which == "bdb")
         {
             // BDB backend
-            string bdb_root =
-                ConfigManager->read<string>("BDB_ROOT", "/tmp/bdbs");
-            backend = 
-                shared_ptr<DistStoreBackend>(new BDBBackend (bdb_root, 
+            string bdb_home =
+                ConfigManager->read<string>("BDB_HOME", "/tmp/bdbs");
+            backend =
+                shared_ptr<DistStoreBackend>(new BDBBackend (bdb_home,
                                                              thread_count));
         }
         else if (which == "disk")
@@ -165,7 +165,7 @@ int main (int argc, char **argv) {
 
         if (!spread_private_name.empty ())
             backend = shared_ptr<DistStoreBackend>
-                (new SpreadBackend (spread_name, spread_private_name, 
+                (new SpreadBackend (spread_name, spread_private_name,
                                     spread_group, backend));
 
         shared_ptr<DistStoreHandler>   handler (new DistStoreHandler (backend));

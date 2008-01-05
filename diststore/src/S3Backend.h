@@ -12,10 +12,6 @@
 
 #include <string>
 #include <log4cxx/logger.h>
-#include <boost/shared_ptr.hpp>
-
-#include <thrift/transport/TTransportUtils.h>
-#include <thrift/protocol/TBinaryProtocol.h>
 
 #include "DistStore.h"
 #include "DistStoreBackend.h"

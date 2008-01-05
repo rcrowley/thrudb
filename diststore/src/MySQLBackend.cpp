@@ -129,7 +129,7 @@ string MySQLBackend::get (const string & tablename, const string & key )
     {
         DistStoreException e;
         e.what = key + " not found in " + tablename;
-        LOG4CXX_WARN (logger, string ("get: ") + e.what);
+        LOG4CXX_DEBUG (logger, string ("get: ") + e.what);
         throw e;
     }
 
