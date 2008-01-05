@@ -307,13 +307,13 @@ void DiskBackend::validate (const string * tablename, const string * key,
         e.what = "tablename too long";
         throw e;
     }
-    if (key && (*key) == "")
+    else if (key && (*key) == "")
     {
         DistStoreException e;
         e.what = "invalid key";
         throw e;
     }
-    if (key && (*key).length () >= DISK_BACKEND_MAX_KEY_SIZE)
+    else if (key && (*key).length () >= DISK_BACKEND_MAX_KEY_SIZE)
     {
         DistStoreException e;
         e.what = "key too long";

@@ -9,6 +9,5 @@ probably a lot better, see MySQLBackend todo's
 * look at bloom filters
 ** not sure i really see them as useful with mysql
 ** they would need to be presisted through invocations and updated locally by all writes (if multiple svc boxes) to be useful, just sounds complicated
-* BDB backend (http://www.ncbi.nlm.nih.gov/books/bv.fcgi?rid=toolkit.chapter.ch_bdb)
 * pair backend (writes to two engines, error behavior?)
-* spread backend (passthrough)
+* add "create_tablename" admin commands to all backends

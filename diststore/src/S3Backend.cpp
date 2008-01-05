@@ -145,4 +145,5 @@ string S3Backend::admin (const string & op, const string & data)
 void S3Backend::validate (const string * tablename, const string * key,
                           const string * value)
 {
+    // TODO:
 }

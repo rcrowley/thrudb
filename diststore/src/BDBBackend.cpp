@@ -39,10 +39,8 @@ BDBBackend::BDBBackend (const string & bdb_home, const int & thread_count)
             DB_INIT_LOG   |   // Initialize logging
             DB_INIT_MPOOL |   // Initialize the cache
             DB_INIT_TXN   |   // Initialize transactions
-            DB_PRIVATE; //    |   // single process
-        // TODO: need this next one to be thread-safe, but get breaks when
-        // i use it so???
-        //    DB_THREAD;        // free-threaded
+            DB_PRIVATE    |   // single process
+            DB_THREAD;        // free-threaded (thread-safe)
 
         // set a max timeout of 1 sec
         this->db_env->set_timeout (1000000, DB_SET_TXN_TIMEOUT);
@@ -97,10 +95,14 @@ vector<string> BDBBackend::getTablenames ()
 string BDBBackend::get (const string & tablename, const string & key)
 {
     Dbt db_key;
-    Dbt db_value;
-
     db_key.set_data ((char *)key.c_str ());
     db_key.set_size (key.length ());
+
+    Dbt db_value;
+    char value[BDB_BACKEND_MAX_VALUE_SIZE];
+    db_value.set_data (value);
+    db_value.set_ulen (BDB_BACKEND_MAX_VALUE_SIZE);
+    db_value.set_flags (DB_DBT_USERMEM);
 
     try
     {
@@ -130,10 +132,10 @@ void BDBBackend::put (const string & tablename, const string & key,
                       const string & value)
 {
     Dbt db_key;
-    Dbt db_value;
-
     db_key.set_data ((char *)key.c_str ());
     db_key.set_size (key.length ());
+
+    Dbt db_value;
     db_value.set_data ((char *)value.c_str ());
     db_value.set_size (value.length ());
 
@@ -156,7 +158,6 @@ void BDBBackend::put (const string & tablename, const string & key,
 void BDBBackend::remove (const string & tablename, const string & key)
 {
     Dbt db_key;
-
     db_key.set_data ((char *)key.c_str ());
     db_key.set_size (key.length ());
 
@@ -186,9 +187,15 @@ ScanResponse BDBBackend::scan (const string & tablename, const string & seed,
     try
     {
         Dbt db_key;
-        Dbt db_value;
         char key[BDB_BACKEND_MAX_KEY_SIZE];
+        db_key.set_data (key);
+        db_key.set_ulen (BDB_BACKEND_MAX_KEY_SIZE);
+        db_key.set_flags (DB_DBT_USERMEM);
+        Dbt db_value;
         char value[BDB_BACKEND_MAX_VALUE_SIZE];
+        db_value.set_data (value);
+        db_value.set_ulen (BDB_BACKEND_MAX_VALUE_SIZE);
+        db_value.set_flags (DB_DBT_USERMEM);
 
         get_db (tablename)->cursor (NULL, &dbc, 0);
         bool there = seed.empty ();
@@ -199,6 +206,7 @@ ScanResponse BDBBackend::scan (const string & tablename, const string & seed,
             // we're doing a N on everything below so that's ok
             strncpy (key, (const char *)db_key.get_data (), 
                      db_key.get_size ());
+            key[db_key.get_size ()] = '\0';
 
             // TODO: this can't be the best way to go about this
             if (there)
@@ -248,19 +256,19 @@ void BDBBackend::validate (const string * tablename, const string * key,
         e.what = "tablename too long";
         throw e;
     }
-    if (key && (*key) == "")
+    else if (key && (*key) == "")
     {
         DistStoreException e;
         e.what = "invalid key";
         throw e;
     }
-    if (key && (*key).length () >= BDB_BACKEND_MAX_KEY_SIZE)
+    else if (key && (*key).length () >= BDB_BACKEND_MAX_KEY_SIZE)
     {
         DistStoreException e;
         e.what = "key too long";
         throw e;
     }
-    if (value && (*value).length () >= BDB_BACKEND_MAX_VALUE_SIZE)
+    else if (value && (*value).length () >= BDB_BACKEND_MAX_VALUE_SIZE)
     {
         DistStoreException e;
         e.what = "value too long";
