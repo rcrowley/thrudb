@@ -66,7 +66,7 @@ PartitionsResults::PartitionsResults ()
     this->results[0].length = &this->id_length;
     this->results[0].error = &this->id_error;
     this->results[1].buffer_type = MYSQL_TYPE_STRING;
-    this->results[1].buffer = &this->tablename;
+    this->results[1].buffer = this->tablename;
     this->results[1].buffer_length = sizeof (this->tablename);
     this->results[1].is_null = &this->tablename_is_null;
     this->results[1].length = &this->tablename_length;
@@ -82,7 +82,7 @@ PartitionsResults::PartitionsResults ()
     this->results[3].length = &this->end_length;
     this->results[3].error = &this->end_error;
     this->results[4].buffer_type = MYSQL_TYPE_STRING;
-    this->results[4].buffer = &this->host;
+    this->results[4].buffer = this->host;
     this->results[4].buffer_length = sizeof (this->host);
     this->results[4].is_null = &this->host_is_null;
     this->results[4].length = &this->host_length;
@@ -93,13 +93,13 @@ PartitionsResults::PartitionsResults ()
     this->results[5].length = &this->port_length;
     this->results[5].error = &this->port_error;
     this->results[6].buffer_type = MYSQL_TYPE_STRING;
-    this->results[6].buffer = &this->db;
+    this->results[6].buffer = this->db;
     this->results[6].buffer_length = sizeof (this->db);
     this->results[6].is_null = &this->db_is_null;
     this->results[6].length = &this->db_length;
     this->results[6].error = &this->db_error;
     this->results[7].buffer_type = MYSQL_TYPE_STRING;
-    this->results[7].buffer = &this->datatable;
+    this->results[7].buffer = this->datatable;
     this->results[7].buffer_length = sizeof (this->datatable);
     this->results[7].is_null = &this->datatable_is_null;
     this->results[7].length = &this->datatable_length;
@@ -116,19 +116,23 @@ PartitionsResults::PartitionsResults ()
     this->results[9].error = &this->retired_at_error;
 }
 
-KeyValueResults::KeyValueResults ()
+KeyValueResults::KeyValueResults (int max_value_size)
 {
+    // for the null term char
+    max_value_size++;
+
     this->results = new MYSQL_BIND[4];
     memset (this->results, 0, sizeof (MYSQL_BIND) * 4);
     this->results[0].buffer_type = MYSQL_TYPE_STRING;
-    this->results[0].buffer = &this->key;
+    this->results[0].buffer = this->key;
     this->results[0].buffer_length = sizeof (this->key);
     this->results[0].is_null = &this->key_is_null;
     this->results[0].length = &this->key_length;
     this->results[0].error = &this->key_error;
     this->results[1].buffer_type = MYSQL_TYPE_STRING;
-    this->results[1].buffer = &this->value;
-    this->results[1].buffer_length = sizeof (this->value);
+    this->value = (char *)malloc (max_value_size * sizeof (char));
+    this->results[1].buffer = this->value;
+    this->results[1].buffer_length = max_value_size * sizeof (char);
     this->results[1].is_null = &this->value_is_null;
     this->results[1].length = &this->value_length;
     this->results[1].error = &this->value_error;
@@ -142,6 +146,11 @@ KeyValueResults::KeyValueResults ()
     this->results[3].is_null = &this->modified_at_is_null;
     this->results[3].length = &this->modified_at_length;
     this->results[3].error = &this->modified_at_error;
+}
+
+KeyValueResults::~KeyValueResults ()
+{
+    free (this->value);
 }
 
 PreparedStatement::PreparedStatement (MYSQL * mysql,
@@ -379,14 +388,15 @@ PreparedStatement * Connection::find_next_statement (const char * tablename)
     return stmt;
 }
 
-PreparedStatement * Connection::find_get_statement (const char * tablename)
+PreparedStatement * Connection::find_get_statement (const char * tablename,
+                                                    int max_value_size)
 {
     string key = string (tablename);
     PreparedStatement * stmt = this->get_statements[key];
     if (!stmt)
     {
         BindParams * bind_params = new StringParams ();
-        BindResults * bind_results = new KeyValueResults ();
+        BindResults * bind_results = new KeyValueResults (max_value_size);
         char query[256];
         sprintf (query, "select k, v, created_at, modified_at from %s where k = ?",
                  tablename);
@@ -428,14 +438,15 @@ PreparedStatement * Connection::find_delete_statement (const char * tablename)
     return stmt;
 }
 
-PreparedStatement * Connection::find_scan_statement (const char * tablename)
+PreparedStatement * Connection::find_scan_statement (const char * tablename,
+                                                     int max_value_size)
 {
     string key = string (tablename);
     PreparedStatement * stmt = this->scan_statements[key];
     if (!stmt)
     {
         BindParams * bind_params = new StringIntParams ();
-        BindResults * bind_results = new KeyValueResults ();
+        BindResults * bind_results = new KeyValueResults (max_value_size);
         char query[256];
         sprintf (query, "select k, v, created_at, modified_at from %s where k > ? order by k asc limit ?",
                  tablename);

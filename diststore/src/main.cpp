@@ -143,9 +143,11 @@ int main (int argc, char **argv) {
                                                           "diststore");
             string password = ConfigManager->read<string>("MYSQL_PASSWORD",
                                                           "diststore");
+            int max_value_size = 
+                ConfigManager->read<int>("MYSQL_MAX_VALUES_SIZE", 1024);
             backend = shared_ptr<DistStoreBackend>
                 (new MySQLBackend (master_hostname, master_port, master_db,
-                                   username, password));
+                                   username, password, max_value_size));
         }
 
         // Memcached cache

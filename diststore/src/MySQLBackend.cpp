@@ -16,13 +16,13 @@ LoggerPtr MySQLBackend::logger (Logger::getLogger ("MySQLBackend"));
 MySQLBackend::MySQLBackend (const string & master_hostname, 
                             const short master_port,
                             const string & master_db, const string & username,
-                            const string & password)
+                            const string & password, int max_value_size)
 {
     {
         char buf[256];
-        sprintf (buf, "MySQLBackend: master_hostname=%s, master_port=%d, master_db=%s, username=%s, password=****\n", 
+        sprintf (buf, "MySQLBackend: master_hostname=%s, master_port=%d, master_db=%s, username=%s, password=****, max_value_size=%d\n", 
                  master_hostname.c_str (), master_port, master_db.c_str (),
-                 username.c_str ());
+                 username.c_str (), max_value_size);
         LOG4CXX_INFO (logger, buf);
     }
     this->master_hostname = master_hostname;
@@ -30,6 +30,7 @@ MySQLBackend::MySQLBackend (const string & master_hostname,
     this->master_db = master_db;
     this->username = username;
     this->password = password;
+    this->max_value_size = max_value_size;
         
     // init the per-thread connections key
     pthread_key_create (&connections_key, NULL);
@@ -108,7 +109,7 @@ string MySQLBackend::get (const string & tablename, const string & key )
 
     PreparedStatement * get_statement =
         find_return.connection->find_get_statement
-        (find_return.datatable.c_str ());
+        (find_return.datatable.c_str (), this->max_value_size);
 
     StringParams * tkp = (StringParams*)get_statement->get_bind_params ();
     tkp->set_str (key.c_str ());
@@ -195,7 +196,7 @@ string MySQLBackend::scan_helper (ScanResponse & scan_response,
 {
     PreparedStatement * scan_statement =
         find_return.connection->find_scan_statement
-        (find_return.datatable.c_str ());
+        (find_return.datatable.c_str (), this->max_value_size);
 
     StringIntParams * kcp =
         (StringIntParams*)scan_statement->get_bind_params ();
@@ -504,7 +505,7 @@ void MySQLBackend::validate (const string * tablename, const string * key,
         e.what = "key too long";
         throw e;
     }
-    else if (value && (*value).length () >= MYSQL_BACKEND_MAX_VALUE_SIZE)
+    else if (value && (*value).length () >= (unsigned int)this->max_value_size)
     {
         DistStoreException e;
         e.what = "value too long";

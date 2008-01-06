@@ -77,10 +77,10 @@ class Partition
 
     protected:
         double end;
-        char host[MYSQL_BACKEND_MAX_HOST_SIZE];
+        char host[MYSQL_BACKEND_MAX_HOST_SIZE + 1];
         short port;
-        char db[MYSQL_BACKEND_MAX_DB_SIZE];
-        char datatable[MYSQL_BACKEND_MAX_DATATABLE_SIZE];
+        char db[MYSQL_BACKEND_MAX_DB_SIZE + 1];
+        char datatable[MYSQL_BACKEND_MAX_DATATABLE_SIZE + 1];
 };
 
 class MySQLBackend : public DistStoreBackend
@@ -88,7 +88,7 @@ class MySQLBackend : public DistStoreBackend
     public:
         MySQLBackend (const string & master_hostname, const short master_port,
                       const string & master_db, const string & username,
-                      const string & password);
+                      const string & password, int max_value_size);
 
         vector<string> getTablenames ();
         string get (const string & tablename, const string & key );
@@ -122,6 +122,7 @@ class MySQLBackend : public DistStoreBackend
         string master_db;
         string username;
         string password;
+        int max_value_size;
 
         set<Partition*, bool(*)(Partition*, Partition*)> * 
             load_partitions (const string & tablename);

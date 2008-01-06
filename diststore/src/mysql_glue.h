@@ -17,15 +17,11 @@ namespace mysql {
 
     #define MYSQL_BACKEND_MAX_STRING_SIZE 64
 
-    #define MYSQL_BACKEND_MAX_TABLENAME_SIZE 33
-    #define MYSQL_BACKEND_MAX_HOST_SIZE 129
-    #define MYSQL_BACKEND_MAX_DB_SIZE 15
-    #define MYSQL_BACKEND_MAX_DATATABLE_SIZE 15
-    #define MYSQL_BACKEND_MAX_KEY_SIZE 33
-    /* TODO: any reason not to make this huge?, i guess it will eat up
-     * memory, but the number of these objects is limited by the number
-     * of connections and tables (pstmts) +1 for the null term */
-    #define MYSQL_BACKEND_MAX_VALUE_SIZE 4097
+    #define MYSQL_BACKEND_MAX_TABLENAME_SIZE 32
+    #define MYSQL_BACKEND_MAX_HOST_SIZE 128
+    #define MYSQL_BACKEND_MAX_DB_SIZE 14
+    #define MYSQL_BACKEND_MAX_DATATABLE_SIZE 14
+    #define MYSQL_BACKEND_MAX_KEY_SIZE 32
 
     class BindParams
     {
@@ -278,7 +274,7 @@ namespace mysql {
             my_bool id_error;
 
             /* 1 */
-            char tablename[MYSQL_BACKEND_MAX_TABLENAME_SIZE];
+            char tablename[MYSQL_BACKEND_MAX_TABLENAME_SIZE + 1];
             //MYSQL_TYPE tablename_type = MYSQL_TYPE_STRING;
             unsigned long tablename_length;
             my_bool tablename_is_null;
@@ -299,7 +295,7 @@ namespace mysql {
             my_bool end_error;
 
             /* 4 */
-            char host[MYSQL_BACKEND_MAX_HOST_SIZE];
+            char host[MYSQL_BACKEND_MAX_HOST_SIZE + 1];
             //MYSQL_TYPE host_type = MYSQL_TYPE_STRING;
             unsigned long host_length;
             my_bool host_is_null;
@@ -313,14 +309,14 @@ namespace mysql {
             my_bool port_error;
 
             /* 6 */
-            char db[MYSQL_BACKEND_MAX_DB_SIZE];
+            char db[MYSQL_BACKEND_MAX_DB_SIZE + 1];
             //MYSQL_TYPE db_type = MYSQL_TYPE_STRING;
             unsigned long db_length;
             my_bool db_is_null;
             my_bool db_error;
 
             /* 7 */
-            char datatable[MYSQL_BACKEND_MAX_DATATABLE_SIZE];
+            char datatable[MYSQL_BACKEND_MAX_DATATABLE_SIZE + 1];
             //MYSQL_TYPE datatable_type = MYSQL_TYPE_STRING;
             unsigned long datatable_length;
             my_bool datatable_is_null;
@@ -344,7 +340,9 @@ namespace mysql {
     class KeyValueResults : public BindResults
     {
         public:
-            KeyValueResults ();
+            KeyValueResults (int max_value_size);
+
+            ~KeyValueResults ();
 
             const char * get_key ()
             {
@@ -368,14 +366,14 @@ namespace mysql {
 
         protected:
             /* 0 */
-            char key[MYSQL_BACKEND_MAX_KEY_SIZE];
+            char key[MYSQL_BACKEND_MAX_KEY_SIZE + 1];
             //MYSQL_TYPE key_type = MYSQL_TYPE_STRING;
             unsigned long key_length;
             my_bool key_is_null;
             my_bool key_error;
 
             /* 1 */
-            char value[MYSQL_BACKEND_MAX_VALUE_SIZE];
+            char * value;
             //MYSQL_TYPE value_type = MYSQL_TYPE_STRING;
             unsigned long value_length;
             my_bool value_is_null;
@@ -456,10 +454,12 @@ namespace mysql {
 
             PreparedStatement * find_partitions_statement (const char * tablename);
             PreparedStatement * find_next_statement (const char * tablename);
-            PreparedStatement * find_get_statement (const char * tablename);
+            PreparedStatement * find_get_statement (const char * tablename,
+                                                    int max_value_size);
             PreparedStatement * find_put_statement (const char * tablename);
             PreparedStatement * find_delete_statement (const char * tablename);
-            PreparedStatement * find_scan_statement (const char * tablename);
+            PreparedStatement * find_scan_statement (const char * tablename,
+                                                     int max_value_size);
 
             string get_hostname ()
             {
