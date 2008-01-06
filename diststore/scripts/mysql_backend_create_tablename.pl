@@ -112,7 +112,9 @@ my $end = $range;
 foreach my $host (@$hosts)
 {
     printf "setting up $host\n";
-    my $port = (split (/:/, $host))[1];
+    $host =~ s/:(\d+)//;
+    my $port = $1 ? $1 : 3306;
+    print "DBI:mysql:database=$database;host=$host;port=$port\n";
     $dsn = "DBI:mysql:database=$database;host=$host;port=$port";
     my $dbh = DBI->connect($dsn, 'root', $root_pass);
 
@@ -128,8 +130,8 @@ foreach my $host (@$hosts)
 
         $end = $start + $range;
 
-        my $cmd = sprintf ("insert into directory (tablename, start, end, host, db, datatable) values ('%s', '%04x', '%s', '%s', '%s', '%s')",
-            $tablename, $start, $end, $host, $database, $datatable);
+        my $cmd = sprintf ("insert into directory (tablename, start, end, host, port, db, datatable) values ('%s', %f, %f, '%s', %d, '%s', '%s')",
+            $tablename, $start, $end, $host, $port, $database, $datatable);
         $master_dbh->do ($cmd);
 
         $cmd = sprintf ("CREATE TABLE `%s` (
