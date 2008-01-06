@@ -284,7 +284,6 @@ Db * BDBBackend::get_db (const string & tablename)
     {
         u_int32_t db_flags = 
             DB_CREATE           |   // allow uncommitted reads
-            DB_READ_UNCOMMITTED |   // allow uncommitted reads
             DB_AUTO_COMMIT;         // allow auto-commit   
 
         db = new Db (this->db_env, 0);
