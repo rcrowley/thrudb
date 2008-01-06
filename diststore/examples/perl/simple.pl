@@ -64,7 +64,6 @@ eval {
         }
         $count += scalar (@{$ret->{elements}});
         $ret = $diststore->scan ($tablename, $ret->{seed}, $batch_size);
-        $diststore->remove ($tablename, $ret->{seed});
     }
     printf "count: %d\n", $count;
 };

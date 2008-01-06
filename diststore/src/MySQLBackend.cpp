@@ -70,8 +70,7 @@ MySQLBackend::load_partitions (const string & tablename)
     while (partitions_statement->fetch () != MYSQL_NO_DATA)
     {
         LOG4CXX_INFO (logger, string ("  load_partitions inserting: datatable=") +
-                      pr->get_datatable () + string (", end=") + 
-                      pr->get_end ());
+                      pr->get_datatable ());
         new_partitions->insert (new Partition (pr));
     }
 
@@ -290,24 +289,31 @@ more:
     return scan_response;
 }
 
+// copied from libmemcached_hash until it's librarizied
+static uint64_t FNV_64_INIT= 0xcbf29ce484222325LL;
+static uint64_t FNV_64_PRIME= 0x100000001b3LL;
+
 FindReturn MySQLBackend::find_and_checkout (const string & tablename,
                                             const string & key)
 {
-    // we partition by the md5 of the key so that we'll get an even
-    // distrobution of keys across partitions, we still store with key tho
-    // TODO: is there a better way to do key -> md5 string
-    unsigned char md5[16];
-    memset (md5, 0, sizeof (md5));
-    MD5 ((const unsigned char *)key.c_str (), key.length (), md5);
-    string md5key;
-    char hex[3];
-    for (int i = 0; i < 16; i++)
+    double point;
     {
-        sprintf (hex, "%02x", md5[i]);
-        md5key += string (hex);
+        uint64_t hash;
+        /* Thanks to pierre@demartines.com for the pointer */
+        hash= FNV_64_INIT;
+        for (unsigned int x = 0; x < key.length (); x++) 
+        {
+            hash *= FNV_64_PRIME;
+            hash ^= key[x];
+        }
+        point = hash / (double)0xffffffffffffffffLL;
     }
-    LOG4CXX_DEBUG (logger, string ("key=") + key + string (" -> md5key=") +
-                   md5key);
+
+    {
+        char buf[128];
+        sprintf (buf, "key=%s -> point=%f", key.c_str (), point);
+        LOG4CXX_DEBUG (logger, buf);
+    }
 
     FindReturn find_return;
 
@@ -330,14 +336,14 @@ FindReturn MySQLBackend::find_and_checkout (const string & tablename,
     if (partitions_set != NULL)
     {
         // we now have the partitions set
-        Partition * part = new Partition (md5key);
+        Partition * part = new Partition (point);
         // look for the matching partition
         set<Partition*>::iterator partition = partitions_set->lower_bound (part);
         delete part;
         if (partition != partitions_set->end ())
         {
-            LOG4CXX_DEBUG (logger, string ("found container, end=") +
-                           (*partition)->get_end ());
+            LOG4CXX_DEBUG (logger, string ("found container, datatable=") +
+                           (*partition)->get_datatable ());
             find_return.connection = get_connection
                 ((*partition)->get_host (), (*partition)->get_port (),
                  (*partition)->get_db ());
@@ -400,7 +406,7 @@ FindReturn MySQLBackend::find_next_and_checkout (const string & tablename,
         (PartitionsResults*)next_statement->get_bind_results ();
 
     find_return.datatable = fpr->get_datatable ();
-    
+
     find_return.connection = get_connection(fpr->get_host (), fpr->get_port (),
                                             fpr->get_db ());
 
@@ -416,11 +422,11 @@ FindReturn MySQLBackend::find_next_and_checkout (const string & tablename,
 }
 
 #define HOST_PORT_DB_KEY(key, hostname, port, db)       \
-    {                                                   \
-        char buf[200];                                  \
-        sprintf (buf, "%s:%d:%s", hostname, port, db);  \
-        key = string (buf);                             \
-    }
+{                                                   \
+    char buf[200];                                  \
+    sprintf (buf, "%s:%d:%s", hostname, port, db);  \
+    key = string (buf);                             \
+}
 
 Connection * MySQLBackend::get_connection(const char * hostname, 
                                           const short port,

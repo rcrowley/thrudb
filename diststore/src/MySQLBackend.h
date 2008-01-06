@@ -30,18 +30,17 @@ class Partition
     public:
         static bool greater (Partition * a, Partition * b)
         {
-            return strcmp (a->get_end (), b->get_end ()) <= 0;
+            return a->get_end () < b->get_end ();
         }
 
-        Partition (const string & end)
+        Partition (const double & end)
         {
-            strncpy (this->end, end.c_str (), sizeof (this->end));
+            this->end = end;
         }
 
         Partition (PartitionsResults * partition_results)
         {
-            strncpy (this->end, partition_results->get_end (),
-                     sizeof (this->end));
+            this->end = partition_results->get_end ();
             strncpy (this->host, partition_results->get_host (),
                      sizeof (this->host));
             this->port = partition_results->get_port ();
@@ -51,7 +50,7 @@ class Partition
                      sizeof (this->datatable));
         }
 
-        const char * get_end ()
+        double get_end ()
         {
             return this->end;
         }
@@ -77,7 +76,7 @@ class Partition
         }
 
     protected:
-        char end[MYSQL_BACKEND_MAX_KEY_SIZE];
+        double end;
         char host[MYSQL_BACKEND_MAX_HOST_SIZE];
         short port;
         char db[MYSQL_BACKEND_MAX_DB_SIZE];

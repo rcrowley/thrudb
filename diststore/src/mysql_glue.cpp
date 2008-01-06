@@ -71,15 +71,13 @@ PartitionsResults::PartitionsResults ()
     this->results[1].is_null = &this->tablename_is_null;
     this->results[1].length = &this->tablename_length;
     this->results[1].error = &this->tablename_error;
-    this->results[2].buffer_type = MYSQL_TYPE_STRING;
+    this->results[2].buffer_type = MYSQL_TYPE_DOUBLE;
     this->results[2].buffer = &this->start;
-    this->results[2].buffer_length = sizeof (this->start);
     this->results[2].is_null = &this->start_is_null;
     this->results[2].length = &this->start_length;
     this->results[2].error = &this->start_error;
-    this->results[3].buffer_type = MYSQL_TYPE_STRING;
+    this->results[3].buffer_type = MYSQL_TYPE_DOUBLE;
     this->results[3].buffer = &this->end;
-    this->results[3].buffer_length = sizeof (this->end);
     this->results[3].is_null = &this->end_is_null;
     this->results[3].length = &this->end_length;
     this->results[3].error = &this->end_error;

@@ -229,12 +229,12 @@ namespace mysql {
                 return this->tablename;
             }
 
-            const char * get_start ()
+            double get_start ()
             {
                 return this->start;
             }
 
-            const char * get_end ()
+            double get_end ()
             {
                 return this->end;
             }
@@ -285,15 +285,15 @@ namespace mysql {
             my_bool tablename_error;
 
             /* 2 */
-            char start[MYSQL_BACKEND_MAX_KEY_SIZE];
-            //MYSQL_TYPE start_type = MYSQL_TYPE_STRING;
+            double start;
+            //MYSQL_TYPE start_type = MYSQL_TYPE_DOUBLE;
             unsigned long start_length;
             my_bool start_is_null;
             my_bool start_error;
 
             /* 3 */
-            char end[MYSQL_BACKEND_MAX_KEY_SIZE];
-            //MYSQL_TYPE end_type = MYSQL_TYPE_STRING;
+            double end;
+            //MYSQL_TYPE end_type = MYSQL_TYPE_DOUBLE;
             unsigned long end_length;
             my_bool end_is_null;
             my_bool end_error;
