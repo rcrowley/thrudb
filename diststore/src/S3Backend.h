@@ -10,6 +10,8 @@
 #ifndef _THRUDOC_S3_BACKEND_H_
 #define _THRUDOC_S3_BACKEND_H_
 
+#if HAVE_LIBEXPAT && HAVE_LIBCURL
+
 #include <string>
 #include <log4cxx/logger.h>
 
@@ -35,5 +37,7 @@ class S3Backend : public DistStoreBackend
     protected:
         static log4cxx::LoggerPtr logger;
 };
+
+#endif /* HAVE_LIBEXPAT && HAVE_LIBCURL */
 
 #endif

@@ -5,6 +5,8 @@
 #ifndef _MYSQL_BACKEND_H_
 #define _MYSQL_BACKEND_H_
 
+#if HAVE_LIBMYSQLCLIENT_R
+
 #include <string>
 #include <set>
 #include <log4cxx/logger.h>
@@ -133,5 +135,7 @@ class MySQLBackend : public DistStoreBackend
                             FindReturn & find_return, const string & offset,
                             int32_t count);
 };
+
+#endif /* HAVE_LIBMYSQLCLIENT_R */
 
 #endif

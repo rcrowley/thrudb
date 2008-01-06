@@ -1,6 +1,8 @@
 #ifndef _THRUDOC_MYSQL_GLUE_H_
 #define _THRUDOC_MYSQL_GLUE_H_
 
+#if HAVE_LIBMYSQLCLIENT_R
+
 #include <stdio.h>
 #include <string.h>
 #include <log4cxx/logger.h>
@@ -493,5 +495,6 @@ namespace mysql {
     };
 };
 
+#endif /* HAVE_LIBMYSQLCLIENT_R */
 
 #endif

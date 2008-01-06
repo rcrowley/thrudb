@@ -18,8 +18,8 @@ diststore_SOURCES = \
 		  src/mysql_glue.cpp			\
 		  src/main.cpp
 
-diststore_CXXFLAGS = -Wall -I$(SANDBOX)/include -I$(SANDBOX)/include/thrift -I/usr/local/include/thrift -I/usr/include/thrift -I/usr/include/mysql -Igen-cpp 
-diststore_LDFLAGS = -Wall -L$(SANDBOX)/lib -L/usr/local/lib -lthrift -lthriftnb -levent -llog4cxx -lmysqlclient_r -lmemcached -lboost_filesystem -lspread -lexpat -lcurl -ldb_cxx
+diststore_CXXFLAGS = -Wall -Igen-cpp
+diststore_LDFLAGS = -Wall 
 
 diststore_bench_SOURCES = \
 			gen-cpp/DistStore.cpp		\
@@ -27,8 +27,8 @@ diststore_bench_SOURCES = \
 			gen-cpp/DistStore_constants.cpp	\
 			src/bench.cpp
 
-diststore_bench_CXXFLAGS = -Wall -I$(SANDBOX)/include -I$(SANDBOX)/include/thrift -I/usr/local/include/thrift -I/usr/include/thrift -Isrc -Igen-cpp -Isrc/common -Isrc/diststore
-diststore_bench_LDFLAGS = -Wall -L$(SANDBOX)/lib -L/usr/local/lib -luuid -lthrift -levent -ltspread-core -llog4cxx
+diststore_bench_CXXFLAGS = -Wall -Igen-cpp
+diststore_bench_LDFLAGS = -Wall
 
 gen-cpp/DistStore.cpp: DistStore.thrift
 	${THRIFT} -cpp DistStore.thrift

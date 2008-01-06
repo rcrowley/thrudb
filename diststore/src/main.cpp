@@ -7,6 +7,12 @@
  *
  **/
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+/* hack to work around thrift and log4cxx installing config.h's */
+#undef HAVE_CONFIG_H 
+
 #include <thrift/concurrency/ThreadManager.h>
 #include <thrift/concurrency/PosixThreadFactory.h>
 #include <thrift/protocol/TBinaryProtocol.h>
@@ -101,7 +107,12 @@ int main (int argc, char **argv) {
         shared_ptr<DistStoreBackend> backend;
 
         string which = ConfigManager->read<string> ("BACKEND", "mysql");
-        if (which == "bdb")
+        if (0)
+        {
+            // just here to keep thing from blowing up
+        }
+#if HAVE_LIBDB_CXX
+        else if (which == "bdb")
         {
             // BDB backend
             string bdb_home =
@@ -110,6 +121,8 @@ int main (int argc, char **argv) {
                 shared_ptr<DistStoreBackend>(new BDBBackend (bdb_home,
                                                              thread_count));
         }
+#endif /* HAVE_LIBDB_CXX */
+#if HAVE_LIBBOOST_FILESYSTEM
         else if (which == "disk")
         {
             // Disk backend
@@ -117,6 +130,8 @@ int main (int argc, char **argv) {
                 ConfigManager->read<string>("DISK_DOC_ROOT", "/tmp/docs");
             backend = shared_ptr<DistStoreBackend>(new DiskBackend (doc_root));
         }
+#endif /* HAVE_LIBBOOST_FILESYSTEM */
+#if HAVE_LIBEXPAT && HAVE_LIBCURL
         else if (which == "s3")
         {
             // S3 backend
@@ -130,7 +145,9 @@ int main (int argc, char **argv) {
 
             backend = shared_ptr<DistStoreBackend>(new S3Backend ());
         }
-        else
+#endif /* HAVE_LIBEXPAT && HAVE_LIBCURL */
+#if HAVE_LIBMYSQLCLIENT_R
+        else if (which == "mysql")
         {
             // MySQL backend
             string master_hostname =
@@ -149,19 +166,38 @@ int main (int argc, char **argv) {
                 (new MySQLBackend (master_hostname, master_port, master_db,
                                    username, password, max_value_size));
         }
+#endif /* HAVE_LIBMYSQLCLIENT_R */
+        else
+        {
+            LOG4CXX_ERROR (logger, string ("unknown or unbuilt backend=") + 
+                           which);
+            fprintf (stderr, "unknown or unbuilt backend=%s\n", 
+                     which.c_str ());
+            exit (1);
+        }
 
         // Memcached cache
         string memcached_servers =
             ConfigManager->read<string>("MEMCACHED_SERVERS", "");
+#if HAVE_LIBMEMCACHED
         if (!memcached_servers.empty ())
             backend = shared_ptr<DistStoreBackend>
                 (new MemcachedBackend (memcached_servers, backend));
+#else
+        if (!memcached_servers.empty ())
+        {
+            LOG4CXX_ERROR (logger, "MEMCACHED_SERVERS supplied, but memcached support not complied in");
+            fprintf (stderr, "MEMCACHED_SERVERS supplied, but memcached support not complied in\n");
+            exit (1);
+        }
+#endif /* HAVE_LIBMEMCACHED */
 
         // Spread passthrough
-        string spread_name =
-            ConfigManager->read<string>("SPREAD_NAME", "4803");
         string spread_private_name =
             ConfigManager->read<string>("SPREAD_PRIVATE_NAME", "");
+#if HAVE_LIBSPREAD
+        string spread_name =
+            ConfigManager->read<string>("SPREAD_NAME", "4803");
         string spread_group =
             ConfigManager->read<string>("SPREAD_GROUP", "diststore");
 
@@ -169,10 +205,17 @@ int main (int argc, char **argv) {
             backend = shared_ptr<DistStoreBackend>
                 (new SpreadBackend (spread_name, spread_private_name,
                                     spread_group, backend));
+#else
+        if (!spread_private_name.empty ())
+        {
+            LOG4CXX_ERROR (logger, "SPREAD_PRIVATE_NAME supplied, but spread support not complied in");
+            fprintf (stderr, "SPREAD_PRIVATE_NAME supplied, but spread support not complied in\n");
+            exit (1);
+        }
+#endif /* HAVE_LIBSPREAD */
 
         shared_ptr<DistStoreHandler>   handler (new DistStoreHandler (backend));
         shared_ptr<DistStoreProcessor> processor (new DistStoreProcessor (handler));
-
 
         shared_ptr<ThreadManager> threadManager =
             ThreadManager::newSimpleThreadManager (thread_count);
@@ -182,7 +225,6 @@ int main (int argc, char **argv) {
 
         threadManager->threadFactory (threadFactory);
         threadManager->start ();
-
 
         if (nonblocking)
         {

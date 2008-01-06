@@ -1,4 +1,12 @@
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+/* hack to work around thrift and log4cxx installing config.h's */
+#undef HAVE_CONFIG_H 
+
 #include "MemcachedBackend.h"
+
+#if HAVE_LIBMEMCACHED
 
 // private
 LoggerPtr MemcachedBackend::logger (Logger::getLogger ("MemcachedBackend"));
@@ -148,3 +156,5 @@ void MemcachedBackend::cache_put (const string & cache_key,
         LOG4CXX_WARN (logger, buf);
     }
 }
+
+#endif /* HAVE_LIBMEMCACHED */

@@ -7,10 +7,15 @@
  *
  **/
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+/* hack to work around thrift and log4cxx installing config.h's */
+#undef HAVE_CONFIG_H 
+
 #include <concurrency/ThreadManager.h>
 #include <concurrency/PosixThreadFactory.h>
 #include <concurrency/Monitor.h>
-#include <concurrency/Util.h>
 #include <concurrency/Mutex.h>
 #include <protocol/TBinaryProtocol.h>
 #include <server/TSimpleServer.h>
@@ -37,7 +42,31 @@ using namespace facebook::thrift::concurrency;
 //Our "Document"
 static string sample;
 
-
+/**
+ * Get current time as milliseconds from epoch, formerly from thrift's Util.h
+ */
+static const int64_t NS_PER_S = 1000000000LL;
+static const int64_t MS_PER_S = 1000LL;
+static const int64_t NS_PER_MS = 1000000LL;
+static const int64_t currentTime() {
+#if defined(HAVE_CLOCK_GETTIME)
+    struct timespec now;
+    int ret = clock_gettime(CLOCK_REALTIME, &now);
+    assert(ret == 0);
+    return
+        (now.tv_sec * MS_PER_S) +
+        (now.tv_nsec / NS_PER_MS) +
+        (now.tv_nsec % NS_PER_MS >= 500000 ? 1 : 0) ;
+#elif defined(HAVE_GETTIMEOFDAY)
+    struct timeval now;
+    int ret = gettimeofday(&now, NULL);
+    assert(ret == 0);
+    return
+        (((int64_t)now.tv_sec) * MS_PER_S) +
+        (now.tv_usec / MS_PER_S) +
+        (now.tv_usec % MS_PER_S >= 500 ? 1 : 0);
+#endif // defined(HAVE_GETTIMEDAY)
+}
 
 class ClientThread: public Runnable {
 public:
@@ -60,7 +89,7 @@ public:
             }
         }
 
-        _startTime = Util::currentTime();
+        _startTime = currentTime();
 
         _transport->open();
 
@@ -71,7 +100,7 @@ public:
         else
             testBoth();
 
-        _endTime = Util::currentTime();
+        _endTime = currentTime();
 
         _transport->close();
 
@@ -260,7 +289,7 @@ int main(int argc, char **argv) {
             cerr << "Starting Benchmark...";
 
 
-            time00 =  Util::currentTime();
+            time00 =  currentTime();
 
             monitor.notifyAll();
 
@@ -268,7 +297,7 @@ int main(int argc, char **argv) {
                 monitor.wait();
             }
 
-            time01 =  Util::currentTime();
+            time01 =  currentTime();
         }
 
         long long firstTime = 9223372036854775807LL;

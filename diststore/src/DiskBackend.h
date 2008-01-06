@@ -9,6 +9,8 @@
 #ifndef _DISTSTORE_DISK_BACKEND_H_
 #define _DISTSTORE_DISK_BACKEND_H_
 
+#if HAVE_LIBBOOST_FILESYSTEM && HAVE_LIBCRYPTO
+
 #include <string>
 #include <log4cxx/logger.h>
 #include <boost/shared_ptr.hpp>
@@ -49,5 +51,7 @@ class DiskBackend : public DistStoreBackend
                              const string & tablename, const string & key);
         string build_filename(const string & tablename, const string & key);
 };
+
+#endif /* HAVE_LIBBOOST_FILESYSTEM && HAVE_LIBCRYPTO */
         
 #endif

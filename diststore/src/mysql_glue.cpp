@@ -1,3 +1,10 @@
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+/* hack to work around thrift and log4cxx installing config.h's */
+#undef HAVE_CONFIG_H 
+
+#if HAVE_LIBMYSQLCLIENT_R
 
 #include "mysql_glue.h"
 
@@ -456,3 +463,5 @@ PreparedStatement * Connection::find_scan_statement (const char * tablename,
     }
     return stmt;
 }
+
+#endif /* HAVE_LIBMYSQLCLIENT_R */

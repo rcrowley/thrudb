@@ -1,3 +1,11 @@
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+/* hack to work around thrift and log4cxx installing config.h's */
+#undef HAVE_CONFIG_H 
+
+#if HAVE_LIBEXPAT && HAVE_LIBCURL
+
 #include <stdio.h>
 #include <errno.h>
 #include <stdlib.h>
@@ -721,3 +729,5 @@ void s3_audit(int i)
         fprintf(stderr,"S3 bytes read: %qu\n",s3_bytes_read);
     }
 }
+
+#endif /* HAVE_LIBEXPAT && HAVE_LIBCURL */

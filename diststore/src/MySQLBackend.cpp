@@ -1,4 +1,11 @@
-#include <openssl/md5.h>
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+/* hack to work around thrift and log4cxx installing config.h's */
+#undef HAVE_CONFIG_H 
+
+#if HAVE_LIBMYSQLCLIENT_R
+
 #include "MySQLBackend.h"
 
 /*
@@ -512,3 +519,5 @@ void MySQLBackend::validate (const string * tablename, const string * key,
         throw e;
     }
 }
+
+#endif /* HAVE_LIBMYSQLCLIENT_R */

@@ -13,6 +13,14 @@
  * - convert everything to use boost filesystem libs
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+/* hack to work around thrift and log4cxx installing config.h's */
+#undef HAVE_CONFIG_H 
+
+#if HAVE_LIBBOOST_FILESYSTEM && HAVE_LIBCRYPTO
+
 #include "DiskBackend.h"
 
 #include <fstream>
@@ -355,3 +363,5 @@ string DiskBackend::build_filename(const string & tablename,
         d3 + "/" + 
         key;
 }
+
+#endif /* HAVE_LIBBOOST_FILESYSTEM && HAVE_LIBCRYPTO */

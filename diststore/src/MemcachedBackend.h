@@ -5,6 +5,8 @@
 #ifndef _MEMCACHED_BACKEND_H_
 #define _MEMCACHED_BACKEND_H_
 
+#if HAVE_LIBMEMCACHED
+
 #include <libmemcached/memcached.h>
 #include <log4cxx/logger.h>
 #include <set>
@@ -49,5 +51,7 @@ class MemcachedBackend : public DistStoreBackend
         string memcached_servers;
         shared_ptr<DistStoreBackend> backend;
 };
+
+#endif /* HAVE_LIBMEMCACHED */
 
 #endif

@@ -6,6 +6,15 @@
  * http://thrudb.googlecode.com
  *
  **/
+
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+/* hack to work around thrift and log4cxx installing config.h's */
+#undef HAVE_CONFIG_H 
+
+#if HAVE_LIBEXPAT && HAVE_LIBCURL
+
 #include "S3Backend.h"
 
 #include "DistStore.h"
@@ -147,3 +156,5 @@ void S3Backend::validate (const string * tablename, const string * key,
 {
     // TODO:
 }
+
+#endif /* HAVE_LIBEXPAT && HAVE_LIBCURL */

@@ -1,4 +1,12 @@
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+/* hack to work around thrift and log4cxx installing config.h's */
+#undef HAVE_CONFIG_H 
+
 #include "SpreadBackend.h"
+
+#if HAVE_LIBSPREAD
 
 // should be max expected key + max tablename + ~10. truncation will 
 // occur otherwise
@@ -97,3 +105,5 @@ void SpreadBackend::validate (const string * tablename, const string * key,
 {
     this->backend->validate (tablename, key, value);
 }
+
+#endif /* HAVE_LIBSPREAD */

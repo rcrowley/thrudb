@@ -5,6 +5,8 @@
 #ifndef _THRUDOC_BDB_BACKEND_H_
 #define _THRUDOC_BDB_BACKEND_H_
 
+#if HAVE_LIBDB_CXX && HAVE_LIBBOOST_FILESYSTEM
+
 #include <string>
 #include <log4cxx/logger.h>
 #include <db_cxx.h>
@@ -38,5 +40,7 @@ class BDBBackend : public DistStoreBackend
 
         Db * get_db (const string & tablename);
 };
+
+#endif /* HAVE_LIBDB_CXX && HAVE_LIBBOOST_FILESYSTEM */
 
 #endif

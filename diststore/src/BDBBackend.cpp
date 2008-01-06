@@ -1,6 +1,15 @@
 /**
  *
  **/
+
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+/* hack to work around thrift and log4cxx installing config.h's */
+#undef HAVE_CONFIG_H 
+
+#if HAVE_LIBDB_CXX && HAVE_LIBBOOST_FILESYSTEM
+
 #include "BDBBackend.h"
 
 #include "DistStore.h"
@@ -298,3 +307,4 @@ Db * BDBBackend::get_db (const string & tablename)
     return db;
 }
 
+#endif /* HAVE_LIBDB_CXX && HAVE_LIBBOOST_FILESYSTEM */

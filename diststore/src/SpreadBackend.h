@@ -5,6 +5,8 @@
 #ifndef _SPREAD_BACKEND_H_
 #define _SPREAD_BACKEND_H_
 
+#if HAVE_LIBSPREAD
+
 #include <log4cxx/logger.h>
 #include <set>
 #include <sp.h>
@@ -50,4 +52,6 @@ class SpreadBackend : public DistStoreBackend
         shared_ptr<DistStoreBackend> backend;
 };
 
-#endif
+#endif /* HAVE_LIBSPREAD */
+
+#endif /* _SPREAD_BACKEND_H_ */

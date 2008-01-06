@@ -11,6 +11,8 @@
 #ifndef S3_GLUE_H
 #define S3_GLUE_H
 
+#if HAVE_LIBEXPAT && HAVE_LIBCURL
+
 #include <stdlib.h>
 #include <sys/types.h>
 
@@ -148,5 +150,7 @@ namespace s3 {
                                  const s3headers *extra_headers);
     int object_rm(string bucket,string path);
 }
+
+#endif /* HAVE_LIBEXPAT && HAVE_LIBCURL */
 
 #endif
