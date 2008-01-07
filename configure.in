@@ -16,10 +16,17 @@ AC_PROG_INSTALL
 AC_PATH_PROG(THRIFT, thrift, thrift, $PATH:/usr/local/bin:/usr/bin)
 AC_LANG(C++)
 
-#AC_CHECK_LIB(thriftnb, [exit], [], 
-#	AC_MSG_ERROR([You must install thrift; please install libraries and development files with libevent support])
-#)
 
+# thrift(nb) and related requirements
+AC_PATH_PROG(THRIFT, thrift, thrift, $PATH:/usr/local/bin:/usr/bin)
+AC_CHECK_LIB(event, [exit], [],
+             AC_MSG_ERROR([You must install libevent; please install libraries and development files]))
+AC_CHECK_LIB(thrift, [exit], [],
+             AC_MSG_ERROR([You must install thrift; please install libraries and development files with libevent support]))
+AC_CHECK_LIB(thriftnb, [exit], [],
+             AC_MSG_ERROR([You must install thrift; please install libraries and development files with libevent support]))
+AC_CHECK_HEADERS([thrift/Thrift.h],,
+                 AC_MSG_ERROR([thrift/Thrift.h missing; please add thrift development files]))
 
 #CLucene
 AC_CHECK_LIB(clucene, [open], [], 
@@ -30,6 +37,11 @@ AC_CHECK_HEADERS([CLucene.h],,
 	AC_MSG_ERROR([CLucene.h missing; please add clucene development files])
 )
 
+#Spread
+AC_CHECK_LIB(spread, [open], [],
+                 AC_MSG_ERROR([You must install spread; please install libraries and development files]))
+AC_CHECK_HEADERS([sp.h],,
+                 AC_MSG_ERROR([sp.h missing; please add spread development files]))
 
 #libmemcached
 AC_CHECK_LIB(memcached, [open], [], 
