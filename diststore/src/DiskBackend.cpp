@@ -9,8 +9,7 @@
 
 /*
  * TODO:
- * - make error message generic and log the specifics
- * - convert everything to use boost filesystem libs
+ * - convert everything to use boost filesystem libs, is possible/makes sense
  */
 
 #ifdef HAVE_CONFIG_H
@@ -27,7 +26,6 @@
 #include <openssl/md5.h>
 #include <stdexcept>
 #include <stack>
-#include <thrift/concurrency/Mutex.h>
 #include <boost/filesystem/operations.hpp>
 #include <boost/filesystem/path.hpp>
 #include <boost/progress.hpp>
@@ -36,23 +34,30 @@
 
 using namespace boost::filesystem;
 using namespace diststore;
-using namespace facebook::thrift::concurrency;
 using namespace log4cxx;
 using namespace std;
 
 LoggerPtr DiskBackend::logger (Logger::getLogger ("DiskBackend"));
 
-static Mutex global_mutex = Mutex ();
+Mutex DiskBackend::dir_ops_mutex = Mutex ();
 
-static int safe_mkdir (const string & path, long mode)
+int DiskBackend::safe_mkdir (const string & path, long mode)
 {
-    Guard g (global_mutex);
+    Guard g (dir_ops_mutex);
     return mkdir (path.c_str (), mode);
 }
 
-static bool safe_directory_exists (string path)
+int DiskBackend::safe_rename (const string & old_path, 
+                                     const string & new_path)
 {
-    Guard g (global_mutex);
+    Guard g (dir_ops_mutex);
+    // NOTE: this is only sorta safe, but probably ok enough
+    return rename (old_path.c_str (), new_path.c_str ());
+}
+
+bool DiskBackend::safe_directory_exists (string path)
+{
+    Guard g (dir_ops_mutex);
     return directory_exists (path);
 }
 
@@ -60,6 +65,10 @@ DiskBackend::DiskBackend (const string & doc_root)
 {
     LOG4CXX_INFO (logger, "DiskBackend: doc_root=" + doc_root);
     this->doc_root = doc_root;
+    if (!safe_directory_exists (doc_root))
+    {
+        safe_mkdir (doc_root, 0777L);
+    }
 }
 
 vector<string> DiskBackend::getTablenames ()
@@ -69,7 +78,8 @@ vector<string> DiskBackend::getTablenames ()
     for (directory_iterator dir_itr (doc_root); dir_itr != end_iter;
          ++dir_itr)
     {
-        if (is_directory (dir_itr->status()))
+        if (is_directory (dir_itr->status()) &&
+            (dir_itr->path ().leaf ().find ("-del_") == string::npos))
         {
             tablenames.push_back (dir_itr->path ().leaf ());
         }
@@ -121,8 +131,9 @@ void DiskBackend::put (const string & tablename, const string & key,
         {
             if (0 != safe_mkdir (base + dir_p1, 0777L))
             {
+                LOG4CXX_ERROR (logger, "put: can't mkdir: " + base + dir_p1);
                 DistStoreException e;
-                e.what = "Could not mkdir: " + base + dir_p1;
+                e.what = "DiskBackend error";
                 throw e;
             }
         }
@@ -131,8 +142,10 @@ void DiskBackend::put (const string & tablename, const string & key,
         {
             if (0 != safe_mkdir (base + dir_p1 + "/" + dir_p2, 0777L))
             {
+                LOG4CXX_ERROR (logger, "put: can't mkdir: " + base + dir_p1 + 
+                               "/" + dir_p2);
                 DistStoreException e;
-                e.what = "Could not mkdir: " + base + dir_p1 + "/" + dir_p2;
+                e.what = "DiskBackend error";
                 throw e;
             }
         }
@@ -140,9 +153,10 @@ void DiskBackend::put (const string & tablename, const string & key,
         if (0 != safe_mkdir (base + dir_p1 + "/" + dir_p2 + "/" + dir_p3,
                              0777L))
         {
+            LOG4CXX_ERROR (logger, "put: can't mkdir: " + base + dir_p1 + "/" +
+                           dir_p2 + "/" + dir_p3);
             DistStoreException e;
-            e.what = "Could not mkdir: " + base + dir_p1 + "/" + dir_p2 + "/" +
-                dir_p3;
+            e.what = "DiskBackend error";
             throw e;
         }
     }
@@ -155,7 +169,7 @@ void DiskBackend::put (const string & tablename, const string & key,
     if (!outfile.is_open ())
     {
         DistStoreException e;
-        e.what = "Error: can't write " + key;
+        e.what = "Can't write " + tablename + "/" + key;
         throw e;
     }
 
@@ -297,19 +311,38 @@ ScanResponse DiskBackend::scan (const string & tablename, const string & seed,
     scan_response.seed = scan_response.elements.size () > 0 ?
         scan_response.elements.back ().key : "";
 
-    LOG4CXX_DEBUG (logger, "outtie");
     return scan_response;
 }
 
 string DiskBackend::admin (const string & op, const string & data)
 {
+    if (op == "create_tablename")
+    {
+        string base = doc_root + "/" + data;
+        if (safe_directory_exists (base))
+            return "done";
+        if (safe_mkdir (base, 0777L) == 0)
+            return "done";
+    }
+    else if (op == "delete_tablename")
+    {
+        string base = doc_root + "/" + data;
+        if (!safe_directory_exists (base))
+            return "done";
+        char buf[128];
+        sprintf (buf, "%s-del_%06d", base.c_str (), rand ());
+        string del_base(buf);
+        if (safe_rename (base, del_base) == 0)
+            return "done";
+    }
     return "";
 }
 
-void DiskBackend::validate (const string * tablename, const string * key,
+void DiskBackend::validate (const string & tablename, const string * key,
                             const string * value)
 {
-    if (tablename && (*tablename).length () > DISK_BACKEND_MAX_TABLENAME_SIZE)
+    DistStoreBackend::validate (tablename, key, value);
+    if (tablename.length () > DISK_BACKEND_MAX_TABLENAME_SIZE)
     {
         DistStoreException e;
         e.what = "tablename too long";
@@ -335,7 +368,6 @@ void DiskBackend::get_dir_pieces (string & d1, string & d2, string & d3,
 {
     // we partition by the md5 of the key so that we'll get an even
     // distrobution of keys across partitions, we still store with key tho
-    // TODO: is there a better way to do key -> md5 string
     unsigned char md5[16];
     memset (md5, 0, sizeof (md5));
     MD5 ((const unsigned char *)key.c_str (), key.length (), md5);
@@ -345,9 +377,9 @@ void DiskBackend::get_dir_pieces (string & d1, string & d2, string & d3,
     sprintf (d1_str, "%02x", md5[0]);
     sprintf (d2_str, "%02x", md5[1]);
     sprintf (d3_str, "%02x", md5[2]);
-    d1 = string (d1_str);
-    d2 = string (d2_str);
-    d3 = string (d3_str);
+    d1 = d1_str;
+    d2 = d2_str;
+    d3 = d3_str;
 }
 
 string DiskBackend::build_filename(const string & tablename, 

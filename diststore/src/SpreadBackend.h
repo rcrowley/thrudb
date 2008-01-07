@@ -38,7 +38,7 @@ class SpreadBackend : public DistStoreBackend
         ScanResponse scan (const string & tablename, const string & seed,
                            int32_t count);
         string admin (const string & op, const string & data);
-        void validate (const string * tablename, const string * key,
+        void validate (const string & tablename, const string * key,
                        const string * value);
 
     private:

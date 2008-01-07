@@ -14,6 +14,10 @@
 #include "DistStore.h"
 #include "DistStoreBackend.h"
 
+#include <thrift/concurrency/Mutex.h>
+
+using namespace facebook::thrift::concurrency;
+
 class BDBBackend : public DistStoreBackend
 {
     public:
@@ -28,11 +32,12 @@ class BDBBackend : public DistStoreBackend
         ScanResponse scan (const string & tablename, const string & seed,
                            int32_t count);
         string admin (const string & op, const string & data);
-        void validate (const string * tablename, const string * key,
+        void validate (const string & tablename, const string * key,
                        const string * value);
 
     protected:
         static log4cxx::LoggerPtr logger;
+        static Mutex db_ops_mutex;
 
         string bdb_home;
         DbEnv * db_env;

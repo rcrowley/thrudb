@@ -16,16 +16,23 @@ plan tests => $tests_left;
 
 eval 
 {
-    my $socket = new Thrift::Socket ("localhost", 9091);
+    my $socket = new Thrift::Socket ('localhost', 9091);
     my $transport = new Thrift::FramedTransport ($socket);
     my $protocol = new Thrift::BinaryProtocol ($transport);
     my $client = new DistStoreClient ($protocol);
     $transport->open;
 
-    my $table = 'test';
+    my $table = 'test.'.rand;
     my $rand = rand;
     my $key = "key.$rand";
     my $value = "value.$rand";
+
+    # this should be a no-op if the table already exists, not all engines will
+    # support this call, so it can't guarantee success
+    unless ($client->admin ('create_tablename', $table) eq 'done')
+    {
+        $table = 'test';
+    }
 
     eval
     {
@@ -113,6 +120,8 @@ eval
 
     ok (scalar (@{$client->getTablenames ()}) > 0, 'getTablenames');
     $tests_left--;
+
+    $client->admin ('delete_tablename', $table) if ($table ne 'test');
 };
 if ($@)
 {
@@ -120,7 +129,7 @@ if ($@)
         skip 'previous exception', --$tests_left;
     }
     fail ('exception thrown: '.
-        UNIVERSAL::isa($@,"Thrift::TException") ? Dumper ($@) : $@
+        UNIVERSAL::isa($@,'Thrift::TException') ? Dumper ($@) : $@
     );
 }
 

@@ -22,15 +22,17 @@
 #include <boost/progress.hpp>
 
 using namespace boost::filesystem;
-using namespace std;
 using namespace diststore;
 using namespace log4cxx;
+using namespace std;
 
 #define BDB_BACKEND_MAX_TABLENAME_SIZE 32
 #define BDB_BACKEND_MAX_KEY_SIZE 64
 #define BDB_BACKEND_MAX_VALUE_SIZE 4096
 
 LoggerPtr BDBBackend::logger (Logger::getLogger ("BDBBackend"));
+
+Mutex BDBBackend::db_ops_mutex = Mutex ();
 
 BDBBackend::BDBBackend (const string & bdb_home, const int & thread_count)
 {
@@ -55,7 +57,7 @@ BDBBackend::BDBBackend (const string & bdb_home, const int & thread_count)
         this->db_env->set_timeout (1000000, DB_SET_TXN_TIMEOUT);
         // set the maximum number of transactions, 1 per thread
         this->db_env->set_tx_max (thread_count);
-        this->db_env->set_lk_detect (DB_LOCK_MINWRITE); // TODO: policy?
+        this->db_env->set_lk_detect (DB_LOCK_MINWRITE);
         this->db_env->open (this->bdb_home.c_str (), env_flags, 0);
     } 
     catch (DbException & e)
@@ -88,15 +90,15 @@ vector<string> BDBBackend::getTablenames ()
 {
     vector<string> tablenames;
     directory_iterator end_iter;
-    // TODO: look and see if there's a way to interate through dbs in an env
     for (directory_iterator dir_itr (this->bdb_home); dir_itr != end_iter;
          ++dir_itr)
     {
-        if (is_regular (dir_itr->status ()))
+        if ((is_regular (dir_itr->status ())) && 
+            (dir_itr->path ().leaf ().find ("log.") == string::npos))
         {
-            // TODO: need to remove the .db's filter out log files, ...
             tablenames.push_back (dir_itr->path ().leaf ());
         }
+        // skipping anything that's not a file or log.*
     }
     return tablenames;
 }
@@ -208,6 +210,15 @@ ScanResponse BDBBackend::scan (const string & tablename, const string & seed,
 
         get_db (tablename)->cursor (NULL, &dbc, 0);
         bool there = seed.empty ();
+        // TODO: i don't like this b/c i have to go through everything seed to
+        // get to it i honestly don't see a better way (given the db api) to do
+        // this and it almost makes bdb useless, least you aren't going to be
+        // able to scan on them once they get to be a decent size. we might be
+        // able to save the cursors or something and let people reuse them
+        // across calls, but that's not going to do any good if there are
+        // multiple hosts. we'd also have to come up with some logic to clean
+        // them up and i think that would require having a tx open the whole
+        // time, not good.
         while ((dbc->get (&db_key, &db_value, DB_NEXT) == 0) &&
                (scan_response.elements.size () < (unsigned int)count))
         {
@@ -217,7 +228,6 @@ ScanResponse BDBBackend::scan (const string & tablename, const string & seed,
                      db_key.get_size ());
             key[db_key.get_size ()] = '\0';
 
-            // TODO: this can't be the best way to go about this
             if (there)
             {
                 Element e;
@@ -253,13 +263,44 @@ ScanResponse BDBBackend::scan (const string & tablename, const string & seed,
 
 string BDBBackend::admin (const string & op, const string & data)
 {
+    if (op == "create_tablename")
+    {
+        Db * db = NULL;
+        try
+        {
+            db = get_db (data);
+        }
+        catch (DistStoreException e) {}
+
+        if (!db)
+        {
+            Guard g (db_ops_mutex);
+
+            u_int32_t db_flags = 
+                DB_CREATE       |   // allow creating db
+                DB_AUTO_COMMIT;     // allow auto-commit   
+            db = new Db (this->db_env, 0);
+            db->open (NULL,             // Txn pointer
+                      data.c_str (),    // file name
+                      NULL,             // logical db name
+                      DB_BTREE,         // database type
+                      db_flags,         // open flags
+                      0);               // file mode, defaults
+            db->close (0);
+        }
+
+        return "done";
+    }
+    // TODO delete_tablename, but have to figure out how to close the db 
+    // handles across all of the threads first...
     return "";
 }
 
-void BDBBackend::validate (const string * tablename, const string * key,
+void BDBBackend::validate (const string & tablename, const string * key,
                            const string * value)
 {
-    if (tablename && (*tablename).length () > BDB_BACKEND_MAX_TABLENAME_SIZE)
+    DistStoreBackend::validate (tablename, key, value);
+    if (tablename.length () > BDB_BACKEND_MAX_TABLENAME_SIZE)
     {
         DistStoreException e;
         e.what = "tablename too long";
@@ -287,22 +328,31 @@ void BDBBackend::validate (const string * tablename, const string * key,
 
 Db * BDBBackend::get_db (const string & tablename)
 {
-    // TODO: don't let this create new tablenames?
     Db * db = dbs[tablename];
     if (!db)
     {
-        u_int32_t db_flags = 
-            DB_CREATE           |   // allow uncommitted reads
-            DB_AUTO_COMMIT;         // allow auto-commit   
+        Guard g (db_ops_mutex);
+
+        u_int32_t db_flags = DB_AUTO_COMMIT; // allow auto-commit   
 
         db = new Db (this->db_env, 0);
-        db->open (NULL,                 // Txn pointer
-                  tablename.c_str (),   // file name
-                  NULL,                 // logical db name
-                  DB_BTREE,             // database type
-                  db_flags,             // open flags
-                  0);                   // file mode, defaults
-        dbs[tablename] = db;
+        try
+        {
+            db->open (NULL,                 // Txn pointer
+                      tablename.c_str (),   // file name
+                      NULL,                 // logical db name
+                      DB_BTREE,             // database type
+                      db_flags,             // open flags
+                      0);                   // file mode, defaults
+            dbs[tablename] = db;
+        }
+        catch (DbException & e)
+        {
+            LOG4CXX_WARN (logger, string ("get_open: exception=") + e.what ());
+            DistStoreException de;
+            de.what = "BDBBackend error";
+            throw de;
+        }
     }
     return db;
 }

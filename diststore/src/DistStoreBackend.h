@@ -29,10 +29,20 @@ class DistStoreBackend
                                    const string & seed, int32_t count) = 0;
         virtual string admin (const string & op, const string & data) = 0;
 
-        // will be called to validate input params through the backend.
-        // should be able to handle NULL's approrpriately
-        virtual void validate (const string * tablename, const string * key,
-                               const string * value) = 0;
+        // will be called to validate input params through the backend.  should
+        // be able to handle NULL's approrpriately. all non,
+        // wrapper/passthrough backends should call up to their parents for
+        // validate.
+        void validate (const string & tablename, const string * key,
+                       const string * value)
+        {
+            if (tablename.empty () || (tablename.find (" ") != string::npos))
+            {
+                DistStoreException e;
+                e.what = "invalid tablename";
+                throw e;
+            }
+        }
 };
 
 

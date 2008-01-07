@@ -14,7 +14,6 @@
  * - cleanly recover from lost/broken connections (partially done)
  * - think about straight key parititioning to allow in order scans etc...
  * - look at libmemcached for it's partitioning algoritms
- * - convert to consistent hashing for key dist and pref increases
  */
 
 // private
@@ -491,10 +490,11 @@ string MySQLBackend::admin (const string & op, const string & data)
     return "";
 }
 
-void MySQLBackend::validate (const string * tablename, const string * key, 
+void MySQLBackend::validate (const string & tablename, const string * key, 
                              const string * value)
 {
-    if (tablename && (*tablename).length () > MYSQL_BACKEND_MAX_TABLENAME_SIZE)
+    DistStoreBackend::validate (tablename, key, value);
+    if (tablename.length () > MYSQL_BACKEND_MAX_TABLENAME_SIZE)
     {
         DistStoreException e;
         e.what = "tablename too long";

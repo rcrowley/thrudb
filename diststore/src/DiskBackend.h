@@ -20,11 +20,13 @@
 
 #include "DistStore.h"
 #include "DistStoreBackend.h"
+#include <thrift/concurrency/Mutex.h>
 
+using namespace facebook::thrift::concurrency;
 using namespace std;
 
-#define DISK_BACKEND_MAX_TABLENAME_SIZE 32
-#define DISK_BACKEND_MAX_KEY_SIZE 32
+#define DISK_BACKEND_MAX_TABLENAME_SIZE 64
+#define DISK_BACKEND_MAX_KEY_SIZE 64
 
 class DiskBackend : public DistStoreBackend
 {
@@ -39,11 +41,16 @@ class DiskBackend : public DistStoreBackend
         ScanResponse scan (const string & tablename, const string & seed,
                            int32_t count);
         string admin (const string & op, const string & data);
-        void validate (const string * tablename, const string * key,
+        void validate (const string & tablename, const string * key,
                        const string * value);
 
     protected:
         static log4cxx::LoggerPtr logger;
+        static Mutex dir_ops_mutex;
+
+        static int safe_mkdir (const string & path, long mode);
+        static int safe_rename (const string & old_path, const string & new_path);
+        static bool safe_directory_exists (string path);
 
         string doc_root;
 
@@ -53,5 +60,5 @@ class DiskBackend : public DistStoreBackend
 };
 
 #endif /* HAVE_LIBBOOST_FILESYSTEM && HAVE_LIBCRYPTO */
-        
+
 #endif

@@ -111,10 +111,16 @@ string MemcachedBackend::admin (const string & op, const string & data)
     return this->backend->admin (op, data);
 }
 
-void MemcachedBackend::validate (const string * tablename, const string * key, 
+void MemcachedBackend::validate (const string & tablename, const string * key, 
                                  const string * value)
 {
     this->backend->validate (tablename, key, value);
+    if (tablename.find (":") != string::npos)
+    {
+        DistStoreException e;
+        e.what = "invalid tablename";
+        throw e;
+    }
 }
 
 memcached_st * MemcachedBackend::get_cache ()

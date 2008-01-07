@@ -132,10 +132,11 @@ ScanResponse S3Backend::scan (const string & tablename, const string & seed,
     {
         Element e;
         e.key = (*i)->Key;
-        // TODO: this isn't going to use the full get stack, that might be a
-        // problem in some set ups (that aren't currently possible,) but it's
-        // also a benefit in that it won't fill up the cache with stuff that's
-        // only going to be fetched a single time for the scan.
+        // this isn't going to use the full get stack, that might be a problem
+        // in some set ups (that aren't currently possible,) but it's also a
+        // benefit in that it won't fill up the cache with stuff that's only
+        // going to be fetched a single time for the scan. NOTE: if this isn't
+        // the base persistent backend then this scan shouldn't be used.
         e.value = get (tablename, e.key);
         scan_response.elements.push_back (e);
     }
@@ -148,13 +149,25 @@ ScanResponse S3Backend::scan (const string & tablename, const string & seed,
 
 string S3Backend::admin (const string & op, const string & data)
 {
+    if (op == "create_tablename")
+    {
+        bucket_mkdir (data);
+        return "done";
+    }
+    else if (op == "delete_tablename")
+    {
+        bucket_rmdir (data);
+        return "done";
+    }
     return "";
 }
 
-void S3Backend::validate (const string * tablename, const string * key,
+void S3Backend::validate (const string & tablename, const string * key,
                           const string * value)
 {
-    // TODO:
+    DistStoreBackend::validate (tablename, key, value);
+    // TODO: s3's docs are broken link right now or else this would make sure
+    // you're using valid s3 keys etc.
 }
 
 #endif /* HAVE_LIBEXPAT && HAVE_LIBCURL */
