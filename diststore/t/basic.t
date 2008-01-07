@@ -11,7 +11,7 @@ use Thrift::FramedTransport;
 use Thrift::BinaryProtocol;
 use DistStore;
 
-my $tests_left = 10;
+my $tests_left = 12;
 plan tests => $tests_left;
 
 eval 
@@ -67,6 +67,11 @@ eval
     is ($client->get ($table, $key), $value, 'put/get');
     $tests_left--;
 
+    my $id;
+    ok ($id = $client->putValue ($table, $value), 'putValue');
+    is ($client->get ($table, $id), $value, 'putValue/get');
+    $tests_left--;
+
     # a new value
     $value = rand;
     # write it twice
@@ -102,6 +107,9 @@ eval
     };
     ok ($@->{what}, 'removed');
     $tests_left--;
+
+    # just try and delete this one too
+    $client->remove ($table, $id);
 
     ok (scalar (@{$client->getTablenames ()}) > 0, 'getTablenames');
     $tests_left--;

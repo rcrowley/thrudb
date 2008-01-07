@@ -494,7 +494,7 @@ string MySQLBackend::admin (const string & op, const string & data)
 void MySQLBackend::validate (const string * tablename, const string * key, 
                              const string * value)
 {
-    if (tablename && (*tablename).length () >= MYSQL_BACKEND_MAX_TABLENAME_SIZE)
+    if (tablename && (*tablename).length () > MYSQL_BACKEND_MAX_TABLENAME_SIZE)
     {
         DistStoreException e;
         e.what = "tablename too long";
@@ -506,13 +506,13 @@ void MySQLBackend::validate (const string * tablename, const string * key,
         e.what = "invalid key";
         throw e;
     }
-    else if (key && (*key).length () >= MYSQL_BACKEND_MAX_KEY_SIZE)
+    else if (key && (*key).length () > MYSQL_BACKEND_MAX_KEY_SIZE)
     {
         DistStoreException e;
         e.what = "key too long";
         throw e;
     }
-    else if (value && (*value).length () >= (unsigned int)this->max_value_size)
+    else if (value && (*value).length () > (unsigned int)this->max_value_size)
     {
         DistStoreException e;
         e.what = "value too long";

@@ -23,8 +23,8 @@
 
 using namespace std;
 
-#define DISK_BACKEND_MAX_TABLENAME_SIZE 33
-#define DISK_BACKEND_MAX_KEY_SIZE 33
+#define DISK_BACKEND_MAX_TABLENAME_SIZE 32
+#define DISK_BACKEND_MAX_KEY_SIZE 32
 
 class DiskBackend : public DistStoreBackend
 {

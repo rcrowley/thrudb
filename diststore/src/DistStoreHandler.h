@@ -24,6 +24,8 @@ class DistStoreHandler : virtual public DistStoreIf {
         void getTablenames (vector<string> & _return);
         void put (const string & tablename, const string & key,
                   const string & value);
+        void putValue (string & _return, const string & tablename, 
+                       const string & value);
         void get (string & _return, const string & tablename,
                   const string & key);
         void remove (const string & tablename, const string & key);

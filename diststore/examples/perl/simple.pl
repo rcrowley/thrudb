@@ -43,7 +43,7 @@ eval {
 
     if (rand (100) > 50)
     {
-        $diststore->remove ($tablename, $key);
+#        $diststore->remove ($tablename, $key);
     }
     else
     {

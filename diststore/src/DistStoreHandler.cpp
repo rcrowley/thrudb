@@ -1,6 +1,16 @@
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+/* hack to work around thrift and log4cxx installing config.h's */
+#undef HAVE_CONFIG_H 
+
 #include "DistStoreHandler.h"
 #include "ConfigFile.h"
+
+#if HAVE_LIBUUID
+#include <uuid/uuid.h>
+#endif
 
 /*
  * TODO:
@@ -29,6 +39,25 @@ void DistStoreHandler::put (const string & tablename, const string & key,
                    ", value=" + value);
     this->backend->validate (&tablename, &key, &value);
     this->backend->put (tablename, key, value);
+}
+
+void DistStoreHandler::putValue (string & _return, const string & tablename, 
+                                 const string & value)
+{
+#if HAVE_LIBUUID
+    uuid_t uuid;
+    uuid_generate(uuid);
+    char uuid_str[37];
+    uuid_unparse_lower(uuid, uuid_str);
+    _return = string (uuid_str);
+#else
+    DistStoreException e;
+    e.what = "putValue uuid generation not built";
+    throw e;
+#endif
+    LOG4CXX_DEBUG (logger, "putValue: tablename=" + tablename + ", value=" + 
+                   value + ", uuid=" + _return);
+    this->backend->put (tablename, _return, value);
 }
 
 void DistStoreHandler::get (string & _return, const string & tablename,

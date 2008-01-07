@@ -23,7 +23,7 @@ namespace mysql {
     #define MYSQL_BACKEND_MAX_HOST_SIZE 128
     #define MYSQL_BACKEND_MAX_DB_SIZE 14
     #define MYSQL_BACKEND_MAX_DATATABLE_SIZE 14
-    #define MYSQL_BACKEND_MAX_KEY_SIZE 32
+    #define MYSQL_BACKEND_MAX_KEY_SIZE 64
 
     class BindParams
     {

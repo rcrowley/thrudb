@@ -31,6 +31,9 @@ service DistStore
     string       get(1:string tablename, 2:string key)                 throws(DistStoreException e),
     void         remove(1:string tablename, 2:string key)              throws(DistStoreException e),
 
+    # if you want diststore to generate a doc id for you
+    string       putValue(1:string tablename, 2:string value)          throws(DistStoreException e),
+
     # scan can be used to walk over all of the elements in a partition in an
     # undefined order. it is also only guaranteed to pick up the elements that
     # exist at the time of the first call to scan. new elements _may_ be picked

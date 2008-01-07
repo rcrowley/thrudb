@@ -94,6 +94,19 @@ if test "$with_mysql" != "no"; then
                      AC_MSG_ERROR([mysql/mysql.h missing; please add mysqlclient_r development files]))
 fi
 
+# uuid
+AC_ARG_WITH(uuid,
+    AC_HELP_STRING([--with-uuid],
+                   [build in uuid support (putValue) (default is yes]),
+    [with_uuid=$withval],
+    [with_uuid=yes])
+if test "$with_uuid" != "no"; then
+    AC_CHECK_LIB(uuid, [open], [],
+                 AC_MSG_ERROR([You must install uuid; please install libraries and development files]))
+    AC_CHECK_HEADERS([uuid/uuid.h],,
+                     AC_MSG_ERROR([uuid/uuid.h missing; please add uuid development files]))
+fi
+
 # boost filesystem
 if test "$with_disk" != "no" -o "$with_bdb" != "no"; then
     AC_CHECK_LIB(boost_filesystem, [open], [],

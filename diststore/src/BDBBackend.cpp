@@ -26,9 +26,9 @@ using namespace std;
 using namespace diststore;
 using namespace log4cxx;
 
-#define BDB_BACKEND_MAX_TABLENAME_SIZE 33
-#define BDB_BACKEND_MAX_KEY_SIZE 33
-#define BDB_BACKEND_MAX_VALUE_SIZE 4097
+#define BDB_BACKEND_MAX_TABLENAME_SIZE 32
+#define BDB_BACKEND_MAX_KEY_SIZE 64
+#define BDB_BACKEND_MAX_VALUE_SIZE 4096
 
 LoggerPtr BDBBackend::logger (Logger::getLogger ("BDBBackend"));
 
@@ -108,9 +108,9 @@ string BDBBackend::get (const string & tablename, const string & key)
     db_key.set_size (key.length ());
 
     Dbt db_value;
-    char value[BDB_BACKEND_MAX_VALUE_SIZE];
+    char value[BDB_BACKEND_MAX_VALUE_SIZE + 1];
     db_value.set_data (value);
-    db_value.set_ulen (BDB_BACKEND_MAX_VALUE_SIZE);
+    db_value.set_ulen (BDB_BACKEND_MAX_VALUE_SIZE + 1);
     db_value.set_flags (DB_DBT_USERMEM);
 
     try
@@ -196,14 +196,14 @@ ScanResponse BDBBackend::scan (const string & tablename, const string & seed,
     try
     {
         Dbt db_key;
-        char key[BDB_BACKEND_MAX_KEY_SIZE];
+        char key[BDB_BACKEND_MAX_KEY_SIZE + 1];
         db_key.set_data (key);
-        db_key.set_ulen (BDB_BACKEND_MAX_KEY_SIZE);
+        db_key.set_ulen (BDB_BACKEND_MAX_KEY_SIZE + 1);
         db_key.set_flags (DB_DBT_USERMEM);
         Dbt db_value;
-        char value[BDB_BACKEND_MAX_VALUE_SIZE];
+        char value[BDB_BACKEND_MAX_VALUE_SIZE + 1];
         db_value.set_data (value);
-        db_value.set_ulen (BDB_BACKEND_MAX_VALUE_SIZE);
+        db_value.set_ulen (BDB_BACKEND_MAX_VALUE_SIZE + 1);
         db_value.set_flags (DB_DBT_USERMEM);
 
         get_db (tablename)->cursor (NULL, &dbc, 0);
@@ -259,7 +259,7 @@ string BDBBackend::admin (const string & op, const string & data)
 void BDBBackend::validate (const string * tablename, const string * key,
                            const string * value)
 {
-    if (tablename && (*tablename).length () >= BDB_BACKEND_MAX_TABLENAME_SIZE)
+    if (tablename && (*tablename).length () > BDB_BACKEND_MAX_TABLENAME_SIZE)
     {
         DistStoreException e;
         e.what = "tablename too long";
@@ -271,13 +271,13 @@ void BDBBackend::validate (const string * tablename, const string * key,
         e.what = "invalid key";
         throw e;
     }
-    else if (key && (*key).length () >= BDB_BACKEND_MAX_KEY_SIZE)
+    else if (key && (*key).length () > BDB_BACKEND_MAX_KEY_SIZE)
     {
         DistStoreException e;
         e.what = "key too long";
         throw e;
     }
-    else if (value && (*value).length () >= BDB_BACKEND_MAX_VALUE_SIZE)
+    else if (value && (*value).length () > BDB_BACKEND_MAX_VALUE_SIZE)
     {
         DistStoreException e;
         e.what = "value too long";
