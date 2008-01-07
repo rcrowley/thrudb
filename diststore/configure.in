@@ -1,13 +1,18 @@
 AC_PREREQ(2.59)
 
-AC_INIT(diststore, 0.1)
-
+AC_INIT([diststore], [0.1])
+AC_CONFIG_AUX_DIR(config)
+AC_CONFIG_HEADER(diststore_config.h)
 AM_INIT_AUTOMAKE
 
+AC_CONFIG_SRCDIR(src/DistStoreHandler.h)
+
+
 # Checks for programs.
-AC_PROG_CXX
 AC_PROG_CC
+AC_PROG_CXX
 AC_PROG_INSTALL
+AC_PROG_MAKE_SET
 
 AC_LANG(C++)
 
@@ -134,6 +139,9 @@ AC_CHECK_HEADERS([log4cxx/logger.h],,
 # misc
 AC_CHECK_FUNCS([clock_gettime])
 AC_CHECK_FUNCS([gettimeofday])
+AC_FUNC_MALLOC
+AC_C_INLINE
+AC_C_CONST
 
-AC_CONFIG_HEADERS(config.h)
-AC_OUTPUT(Makefile)
+
+AC_OUTPUT(Makefile src/Makefile examples/Makefile)

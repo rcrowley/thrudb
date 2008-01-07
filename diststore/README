@@ -1,11 +1,55 @@
-Dependancies
+Hi!
 
-Make sure you have libevent-dev installed before building thrift so that you'll
-get the non-blocking libraries.
-  libevent (dev)
+DistStore is a distributed key/value store designed to be flexible, scalable,
+and reliable. DistStore is able to take your project from inception, through
+development, all the way to scaled out production without changing a line of
+code.
 
-If you have thrift compiled, installed, and working you should at most need the
-following to get this package going.
-  OpenSSL (libssl-dev)
-  log4cxx (dev)
-  libmemcached (<url here>)
+It has quite a few dependencies, but the good new is that you can
+avoid many (almost all) of them by using --without-<backend> options. The disk
+backend is a good place to start if you just want to try DistStore out. MySQL
+is a good backend to build a site on top of. If you're working in Amazon EC2
+you might want to take a look at the S3 backend. Regardless once you go in to
+production you'll want to take a look at the Memcached backend, but keep in
+mind that you make concession in potential (though unlikely) data
+inconsistency.
+
+Depending on your use-case you may want to look at another piece of software
+called Thrucene (or something like it) which will allow you to index and search
+your data.
+
+best,
+-Ross McFarland
+
+Info:
+
+    http://diststore.com/
+
+Dependencies:
+
+Required dependencies include:
+    libevent
+    thrift (with libevent support)
+    log4cxx
+
+Optional Dependencies include:
+  boost_filesystem (for Disk and BerkeleyDB backend)
+  cyrpto (for Disk and S3 backend)
+  db_cxx (for BerkeleyDB backend)
+  expat (for S3 backend)
+  libmemcached (for Memcached backend)
+  mysqlclient (for MySQL backend)
+  spread 4 (for Spread backend)
+  ssl (for S3 backend)
+  uuid (for putValue support)
+
+Installing:
+
+    ./configure [options]
+    make all
+
+    # optional, if you want to start a server up
+    ./diststore -f examples/diststore.conf
+    make test
+
+    make install 
