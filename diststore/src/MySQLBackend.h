@@ -27,6 +27,7 @@ struct FindReturn
     string datatable;
 };
 
+// TODO: move this out of the header
 class Partition
 {
     public:
@@ -43,9 +44,16 @@ class Partition
         Partition (PartitionResults * partition_results)
         {
             this->end = partition_results->get_end ();
-            strncpy (this->host, partition_results->get_host (),
-                     sizeof (this->host));
+            strncpy (this->hostname, partition_results->get_hostname (),
+                     sizeof (this->hostname));
             this->port = partition_results->get_port ();
+            if (partition_results->get_slave_hostname () != NULL)
+            {
+                strncpy (this->slave_hostname,
+                         partition_results->get_slave_hostname (),
+                         sizeof (this->slave_hostname));
+                this->slave_port = partition_results->get_slave_port ();
+            }
             strncpy (this->db, partition_results->get_db (),
                      sizeof (this->db));
             strncpy (this->datatable, partition_results->get_datatable (),
@@ -57,14 +65,24 @@ class Partition
             return this->end;
         }
 
-        const char * get_host ()
+        const char * get_hostname ()
         {
-            return this->host;
+            return this->hostname;
         }
 
         const int get_port ()
         {
             return this->port;
+        }
+
+        const char * get_slave_hostname ()
+        {
+            return this->slave_hostname;
+        }
+
+        const int get_slave_port ()
+        {
+            return this->slave_port;
         }
 
         const char * get_db ()
@@ -79,8 +97,10 @@ class Partition
 
     protected:
         double end;
-        char host[MYSQL_BACKEND_MAX_HOST_SIZE + 1];
+        char hostname[MYSQL_BACKEND_MAX_HOSTNAME_SIZE + 1];
         short port;
+        char slave_hostname[MYSQL_BACKEND_MAX_HOSTNAME_SIZE + 1];
+        short slave_port;
         char db[MYSQL_BACKEND_MAX_DB_SIZE + 1];
         char datatable[MYSQL_BACKEND_MAX_DATATABLE_SIZE + 1];
 };

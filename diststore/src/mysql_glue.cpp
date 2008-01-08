@@ -65,8 +65,8 @@ void StringStringParams::init (const char * str1, const char * str2)
 
 PartitionResults::PartitionResults ()
 {
-    this->results = new MYSQL_BIND[10];
-    memset (this->results, 0, sizeof (MYSQL_BIND) * 10);
+    this->results = new MYSQL_BIND[12];
+    memset (this->results, 0, sizeof (MYSQL_BIND) * 12);
     this->results[0].buffer_type = MYSQL_TYPE_LONG;
     this->results[0].buffer = &this->id;
     this->results[0].is_null = &this->id_is_null;
@@ -89,38 +89,49 @@ PartitionResults::PartitionResults ()
     this->results[3].length = &this->end_length;
     this->results[3].error = &this->end_error;
     this->results[4].buffer_type = MYSQL_TYPE_STRING;
-    this->results[4].buffer = this->host;
-    this->results[4].buffer_length = sizeof (this->host);
-    this->results[4].is_null = &this->host_is_null;
-    this->results[4].length = &this->host_length;
-    this->results[4].error = &this->host_error;
+    this->results[4].buffer = this->hostname;
+    this->results[4].buffer_length = sizeof (this->hostname);
+    this->results[4].is_null = &this->hostname_is_null;
+    this->results[4].length = &this->hostname_length;
+    this->results[4].error = &this->hostname_error;
     this->results[5].buffer_type = MYSQL_TYPE_SHORT;
     this->results[5].buffer = &this->port;
     this->results[5].is_null = &this->port_is_null;
     this->results[5].length = &this->port_length;
     this->results[5].error = &this->port_error;
     this->results[6].buffer_type = MYSQL_TYPE_STRING;
-    this->results[6].buffer = this->db;
-    this->results[6].buffer_length = sizeof (this->db);
-    this->results[6].is_null = &this->db_is_null;
-    this->results[6].length = &this->db_length;
-    this->results[6].error = &this->db_error;
-    this->results[7].buffer_type = MYSQL_TYPE_STRING;
-    this->results[7].buffer = this->datatable;
-    this->results[7].buffer_length = sizeof (this->datatable);
-    this->results[7].is_null = &this->datatable_is_null;
-    this->results[7].length = &this->datatable_length;
-    this->results[7].error = &this->datatable_error;
-    this->results[8].buffer_type = MYSQL_TYPE_TIMESTAMP;
-    this->results[8].buffer = &this->created_at;
-    this->results[8].is_null = &this->created_at_is_null;
-    this->results[8].length = &this->created_at_length;
-    this->results[8].error = &this->created_at_error;
-    this->results[9].buffer_type = MYSQL_TYPE_DATETIME;
-    this->results[9].buffer = &this->retired_at;
-    this->results[9].is_null = &this->retired_at_is_null;
-    this->results[9].length = &this->retired_at_length;
-    this->results[9].error = &this->retired_at_error;
+    this->results[6].buffer = this->slave_hostname;
+    this->results[6].buffer_length = sizeof (this->slave_hostname);
+    this->results[6].is_null = &this->slave_hostname_is_null;
+    this->results[6].length = &this->slave_hostname_length;
+    this->results[6].error = &this->slave_hostname_error;
+    this->results[7].buffer_type = MYSQL_TYPE_SHORT;
+    this->results[7].buffer = &this->slave_port;
+    this->results[7].is_null = &this->slave_port_is_null;
+    this->results[7].length = &this->slave_port_length;
+    this->results[7].error = &this->slave_port_error;
+    this->results[8].buffer_type = MYSQL_TYPE_STRING;
+    this->results[8].buffer = this->db;
+    this->results[8].buffer_length = sizeof (this->db);
+    this->results[8].is_null = &this->db_is_null;
+    this->results[8].length = &this->db_length;
+    this->results[8].error = &this->db_error;
+    this->results[9].buffer_type = MYSQL_TYPE_STRING;
+    this->results[9].buffer = this->datatable;
+    this->results[9].buffer_length = sizeof (this->datatable);
+    this->results[9].is_null = &this->datatable_is_null;
+    this->results[9].length = &this->datatable_length;
+    this->results[9].error = &this->datatable_error;
+    this->results[10].buffer_type = MYSQL_TYPE_TIMESTAMP;
+    this->results[10].buffer = &this->created_at;
+    this->results[10].is_null = &this->created_at_is_null;
+    this->results[10].length = &this->created_at_length;
+    this->results[10].error = &this->created_at_error;
+    this->results[11].buffer_type = MYSQL_TYPE_DATETIME;
+    this->results[11].buffer = &this->retired_at;
+    this->results[11].is_null = &this->retired_at_is_null;
+    this->results[11].length = &this->retired_at_length;
+    this->results[11].error = &this->retired_at_error;
 }
 
 KeyValueResults::KeyValueResults (int max_value_size)
@@ -368,7 +379,7 @@ PreparedStatement * Connection::find_partitions_statement ()
     {
         BindParams * bind_params = new StringParams ();
         BindResults * bind_results = new PartitionResults ();
-        const char query[] = "select d.id, tablename, start, end, h.hostname, h.port, db, datatable, created_at, retired_at from directory d join host h on d.host_id = h.id where tablename = ? and retired_at is null order by end asc";
+        const char query[] = "select d.id, tablename, start, end, h.hostname, h.port, s.hostname, s.port, db, datatable, created_at, retired_at from directory d join host h on d.host_id = h.id left join host s on h.slave_id = s.id where tablename = ? and retired_at is null order by end asc";
         stmt = new PreparedStatement (&this->mysql, query, bind_params, bind_results);
         this->partitions_statements[key] = stmt;
     }
@@ -383,7 +394,7 @@ PreparedStatement * Connection::find_next_statement ()
     {
         BindParams * bind_params = new StringStringParams ();
         BindResults * bind_results = new PartitionResults ();
-        const char query[] = "select d.id, tablename, start, end, h.hostname, h.port, db, datatable, created_at, retired_at from directory d join host h on d.host_id = h.id where tablename = ? and datatable > ? and retired_at is null order by end asc limit 1";
+        const char query[] = "select d.id, tablename, start, end, h.hostname, h.port, s.hostname, s.port, db, datatable, created_at, retired_at from directory d join host h on d.host_id = h.id left join host s on h.slave_id = s.id where tablename = ? and datatable > ? and retired_at is null order by end asc limit 1";
         stmt = new PreparedStatement (&this->mysql, query, bind_params,
                                       bind_results);
         this->next_statements[key] = stmt;

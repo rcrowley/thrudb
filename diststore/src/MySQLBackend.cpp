@@ -352,7 +352,7 @@ FindReturn MySQLBackend::find_and_checkout (const string & tablename,
             LOG4CXX_DEBUG (logger, string ("found container, datatable=") +
                            (*partition)->get_datatable ());
             find_return.connection = get_connection
-                ((*partition)->get_host (), (*partition)->get_port (),
+                ((*partition)->get_hostname (), (*partition)->get_port (),
                  (*partition)->get_db ());
             find_return.datatable = (*partition)->get_datatable ();
             return find_return;
@@ -414,7 +414,8 @@ FindReturn MySQLBackend::find_next_and_checkout (const string & tablename,
 
     find_return.datatable = fpr->get_datatable ();
 
-    find_return.connection = get_connection(fpr->get_host (), fpr->get_port (),
+    find_return.connection = get_connection(fpr->get_hostname (),
+                                            fpr->get_port (),
                                             fpr->get_db ());
 
     next_statement->free_result ();

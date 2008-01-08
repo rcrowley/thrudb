@@ -20,7 +20,7 @@ namespace mysql {
     #define MYSQL_BACKEND_MAX_STRING_SIZE 64
 
     #define MYSQL_BACKEND_MAX_TABLENAME_SIZE 32
-    #define MYSQL_BACKEND_MAX_HOST_SIZE 128
+    #define MYSQL_BACKEND_MAX_HOSTNAME_SIZE 128
     #define MYSQL_BACKEND_MAX_DB_SIZE 14
     #define MYSQL_BACKEND_MAX_DATATABLE_SIZE 14
     #define MYSQL_BACKEND_MAX_KEY_SIZE 64
@@ -237,14 +237,26 @@ namespace mysql {
                 return this->end;
             }
 
-            const char * get_host ()
+            const char * get_hostname ()
             {
-                return this->host;
+                return this->hostname;
             }
 
             const int get_port ()
             {
                 return this->port;
+            }
+
+            const char * get_slave_hostname ()
+            {
+                return this->slave_hostname_is_null ?
+                    NULL : this->slave_hostname;
+            }
+
+            const int get_slave_port ()
+            {
+                return this->slave_hostname_is_null ? 
+                    0 : this->slave_port;
             }
 
             const char * get_db ()
@@ -297,11 +309,11 @@ namespace mysql {
             my_bool end_error;
 
             /* 4 */
-            char host[MYSQL_BACKEND_MAX_HOST_SIZE + 1];
-            //MYSQL_TYPE host_type = MYSQL_TYPE_STRING;
-            unsigned long host_length;
-            my_bool host_is_null;
-            my_bool host_error;
+            char hostname[MYSQL_BACKEND_MAX_HOSTNAME_SIZE + 1];
+            //MYSQL_TYPE hostname_type = MYSQL_TYPE_STRING;
+            unsigned long hostname_length;
+            my_bool hostname_is_null;
+            my_bool hostname_error;
 
             /* 5 */
             unsigned short port;
@@ -311,27 +323,41 @@ namespace mysql {
             my_bool port_error;
 
             /* 6 */
+            char slave_hostname[MYSQL_BACKEND_MAX_HOSTNAME_SIZE + 1];
+            //MYSQL_TYPE slave_hostname_type = MYSQL_TYPE_STRING;
+            unsigned long slave_hostname_length;
+            my_bool slave_hostname_is_null;
+            my_bool slave_hostname_error;
+
+            /* 7 */
+            unsigned short slave_port;
+            //MYSQL_TYPE id_type = MYSQL_TYPE_SHORT;
+            unsigned long slave_port_length;
+            my_bool slave_port_is_null;
+            my_bool slave_port_error;
+
+            /* 8 */
             char db[MYSQL_BACKEND_MAX_DB_SIZE + 1];
             //MYSQL_TYPE db_type = MYSQL_TYPE_STRING;
             unsigned long db_length;
             my_bool db_is_null;
             my_bool db_error;
 
-            /* 7 */
+            /* 9 */
             char datatable[MYSQL_BACKEND_MAX_DATATABLE_SIZE + 1];
             //MYSQL_TYPE datatable_type = MYSQL_TYPE_STRING;
             unsigned long datatable_length;
             my_bool datatable_is_null;
             my_bool datatable_error;
 
-            /* 8 */
+            /* 10 */
             MYSQL_TIME created_at;
             //MYSQL_TYPE created_at_type = MYSQL_TYPE_TIMESTAMP;
             unsigned long created_at_length;
             my_bool created_at_is_null;
             my_bool created_at_error;
 
-            /* 9 */
+            /* 11 */
             MYSQL_TIME retired_at;
             //MYSQL_TYPE retired_at_type = MYSQL_TYPE_DATETIME;
             unsigned long retired_at_length;
