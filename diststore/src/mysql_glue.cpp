@@ -63,7 +63,7 @@ void StringStringParams::init (const char * str1, const char * str2)
     this->params[1].length = &this->str2_length;
 }
 
-PartitionsResults::PartitionsResults ()
+PartitionResults::PartitionResults ()
 {
     this->results = new MYSQL_BIND[10];
     memset (this->results, 0, sizeof (MYSQL_BIND) * 10);
@@ -367,7 +367,7 @@ PreparedStatement * Connection::find_partitions_statement ()
     if (!stmt)
     {
         BindParams * bind_params = new StringParams ();
-        BindResults * bind_results = new PartitionsResults ();
+        BindResults * bind_results = new PartitionResults ();
         const char query[] = "select d.id, tablename, start, end, h.hostname, h.port, db, datatable, created_at, retired_at from directory d join host h on d.host_id = h.id where tablename = ? and retired_at is null order by end asc";
         stmt = new PreparedStatement (&this->mysql, query, bind_params, bind_results);
         this->partitions_statements[key] = stmt;
@@ -382,7 +382,7 @@ PreparedStatement * Connection::find_next_statement ()
     if (!stmt)
     {
         BindParams * bind_params = new StringStringParams ();
-        BindResults * bind_results = new PartitionsResults ();
+        BindResults * bind_results = new PartitionResults ();
         const char query[] = "select d.id, tablename, start, end, h.hostname, h.port, db, datatable, created_at, retired_at from directory d join host h on d.host_id = h.id where tablename = ? and datatable > ? and retired_at is null order by end asc limit 1";
         stmt = new PreparedStatement (&this->mysql, query, bind_params,
                                       bind_results);

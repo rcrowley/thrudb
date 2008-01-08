@@ -71,8 +71,8 @@ MySQLBackend::load_partitions (const string & tablename)
         throw e;
     }
 
-    PartitionsResults * pr =
-        (PartitionsResults*)partitions_statement->get_bind_results ();
+    PartitionResults * pr =
+        (PartitionResults*)partitions_statement->get_bind_results ();
 
     while (partitions_statement->fetch () != MYSQL_NO_DATA)
     {
@@ -409,8 +409,8 @@ FindReturn MySQLBackend::find_next_and_checkout (const string & tablename,
     if (next_statement->fetch () == MYSQL_NO_DATA)
         return find_return;
 
-    PartitionsResults * fpr =
-        (PartitionsResults*)next_statement->get_bind_results ();
+    PartitionResults * fpr =
+        (PartitionResults*)next_statement->get_bind_results ();
 
     find_return.datatable = fpr->get_datatable ();
 

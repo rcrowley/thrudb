@@ -40,7 +40,7 @@ class Partition
             this->end = end;
         }
 
-        Partition (PartitionsResults * partition_results)
+        Partition (PartitionResults * partition_results)
         {
             this->end = partition_results->get_end ();
             strncpy (this->host, partition_results->get_host (),

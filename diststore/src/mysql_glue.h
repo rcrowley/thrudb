@@ -212,10 +212,10 @@ namespace mysql {
     };
 
 
-    class PartitionsResults : public BindResults
+    class PartitionResults : public BindResults
     {
         public:
-            PartitionsResults ();
+            PartitionResults ();
 
             unsigned long get_id ()
             {
