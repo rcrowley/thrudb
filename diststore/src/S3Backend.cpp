@@ -11,7 +11,7 @@
 #include "diststore_config.h"
 #endif
 /* hack to work around thrift and log4cxx installing config.h's */
-#undef HAVE_CONFIG_H 
+#undef HAVE_CONFIG_H
 
 #if HAVE_LIBEXPAT && HAVE_LIBCURL
 
@@ -151,13 +151,52 @@ string S3Backend::admin (const string & op, const string & data)
 {
     if (op == "create_tablename")
     {
-        bucket_mkdir (data);
-        return "done";
+        // will throw
+        validate (data, NULL, NULL);
+
+        DistStoreException e;
+        class response_buffer * b =  request ("PUT", data, "", 0, 0, 0, 0);
+        if( b == NULL )
+            e.what = "S3Backend error";
+        int result = b->result;
+        delete b;
+        switch(result)
+        {
+            case 200:
+                return "done";
+            case 409:
+                e.what = "tablename " + data + " already exists";
+        }
+        LOG4CXX_WARN (logger, e.what);
+        throw e;
     }
     else if (op == "delete_tablename")
     {
-        bucket_rmdir (data);
-        return "done";
+        // will throw
+        validate (data, NULL, NULL);
+
+        // NOTE: only works if empty...
+        class response_buffer * b = request ("DELETE", data, "", 0, 0, 0, 0);
+        int result = b->result;
+        delete b;
+        DistStoreException e;
+        switch(result)
+        {
+            case 204:
+            case 200:
+                return "done";
+            case 403:
+                e.what = "S3Backend error:EACCES";
+                break;
+            case 404:
+                e.what = "S3Backend error: ENOENT";
+                break;
+            case 409:
+                e.what = "S3Backend error: ENOTEMPTY";
+                break;
+        }
+        LOG4CXX_WARN (logger, e.what);
+        throw e;
     }
     return "";
 }
@@ -166,8 +205,19 @@ void S3Backend::validate (const string & tablename, const string * key,
                           const string * value)
 {
     DistStoreBackend::validate (tablename, key, value);
-    // TODO: s3's docs are broken link right now or else this would make sure
-    // you're using valid s3 keys etc.
+
+    // NOTE: s3 is going to validate them for us so do we really need to?
+
+    // tablenames
+    // - lowercase letters, numbers, periods, underscores, and dashes
+    // - start with a number or letter
+    // - must be between 3 and 255 chars
+    // - can not look like an ip address
+
+
+    // key/value, no stated restrictions, value has a max size well beyond what
+    // you can get in our api so...
+
 }
 
 #endif /* HAVE_LIBEXPAT && HAVE_LIBCURL */
