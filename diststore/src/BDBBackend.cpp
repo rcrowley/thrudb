@@ -13,15 +13,11 @@
 #include "BDBBackend.h"
 
 #include "DistStore.h"
-#include "utils.h"
 
-#include <fstream>
 #include <stdexcept>
-#include <boost/filesystem/operations.hpp>
-#include <boost/filesystem/path.hpp>
-#include <boost/progress.hpp>
+#include <boost/filesystem.hpp>
 
-using namespace boost::filesystem;
+namespace fs = boost::filesystem;
 using namespace diststore;
 using namespace log4cxx;
 using namespace std;
@@ -32,13 +28,16 @@ using namespace std;
 
 LoggerPtr BDBBackend::logger (Logger::getLogger ("BDBBackend"));
 
-Mutex BDBBackend::db_ops_mutex = Mutex ();
-
 BDBBackend::BDBBackend (const string & bdb_home, const int & thread_count)
 {
     LOG4CXX_INFO (logger, "BDBBackend: bdb_home=" + bdb_home);
 
     this->bdb_home = bdb_home;
+
+    if (!fs::is_directory (bdb_home))
+    {
+        fs::create_directories (bdb_home);
+    }
 
     try 
     {
@@ -89,11 +88,11 @@ BDBBackend::~BDBBackend ()
 vector<string> BDBBackend::getTablenames ()
 {
     vector<string> tablenames;
-    directory_iterator end_iter;
-    for (directory_iterator dir_itr (this->bdb_home); dir_itr != end_iter;
+    fs::directory_iterator end_iter;
+    for (fs::directory_iterator dir_itr (this->bdb_home); dir_itr != end_iter;
          ++dir_itr)
     {
-        if ((is_regular (dir_itr->status ())) && 
+        if ((fs::is_regular (dir_itr->status ())) && 
             (dir_itr->path ().leaf ().find ("log.") == string::npos))
         {
             tablenames.push_back (dir_itr->path ().leaf ());
@@ -274,8 +273,6 @@ string BDBBackend::admin (const string & op, const string & data)
 
         if (!db)
         {
-            Guard g (db_ops_mutex);
-
             u_int32_t db_flags = 
                 DB_CREATE       |   // allow creating db
                 DB_AUTO_COMMIT;     // allow auto-commit   
@@ -331,8 +328,6 @@ Db * BDBBackend::get_db (const string & tablename)
     Db * db = dbs[tablename];
     if (!db)
     {
-        Guard g (db_ops_mutex);
-
         u_int32_t db_flags = DB_AUTO_COMMIT; // allow auto-commit   
 
         db = new Db (this->db_env, 0);

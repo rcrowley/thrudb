@@ -36,7 +36,6 @@
 #include "log4cxx/helpers/exception.h"
 
 #include "ConfigFile.h"
-#include "utils.h"
 #include "DistStoreBackend.h"
 #include "BDBBackend.h"
 #include "DiskBackend.h"
@@ -85,11 +84,8 @@ int main (int argc, char **argv) {
             nonblocking = true;
     }
 
-    if ( file_exists ( conf_file ) )
-    {
-        //Read da config
-        ConfigManager->readFile ( conf_file );
-    }
+    //Read da config
+    ConfigManager->readFile ( conf_file );
 
     try{
         //Init logger

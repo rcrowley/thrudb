@@ -14,10 +14,6 @@
 #include "DistStore.h"
 #include "DistStoreBackend.h"
 
-#include <thrift/concurrency/Mutex.h>
-
-using namespace facebook::thrift::concurrency;
-
 class BDBBackend : public DistStoreBackend
 {
     public:
@@ -37,7 +33,6 @@ class BDBBackend : public DistStoreBackend
 
     protected:
         static log4cxx::LoggerPtr logger;
-        static Mutex db_ops_mutex;
 
         string bdb_home;
         DbEnv * db_env;

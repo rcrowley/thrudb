@@ -26,59 +26,43 @@
 #include <openssl/md5.h>
 #include <stdexcept>
 #include <stack>
-#include <boost/filesystem/operations.hpp>
-#include <boost/filesystem/path.hpp>
-#include <boost/progress.hpp>
+#include <boost/filesystem.hpp>
+#include <boost/filesystem/fstream.hpp>
 #include "DistStore.h"
-#include "utils.h"
 
-using namespace boost::filesystem;
+namespace fs = boost::filesystem;
 using namespace diststore;
 using namespace log4cxx;
 using namespace std;
 
 LoggerPtr DiskBackend::logger (Logger::getLogger ("DiskBackend"));
 
-Mutex DiskBackend::dir_ops_mutex = Mutex ();
-
-int DiskBackend::safe_mkdir (const string & path, long mode)
-{
-    Guard g (dir_ops_mutex);
-    return mkdir (path.c_str (), mode);
-}
-
-int DiskBackend::safe_rename (const string & old_path, 
-                                     const string & new_path)
-{
-    Guard g (dir_ops_mutex);
-    // NOTE: this is only sorta safe, but probably ok enough
-    return rename (old_path.c_str (), new_path.c_str ());
-}
-
-bool DiskBackend::safe_directory_exists (string path)
-{
-    Guard g (dir_ops_mutex);
-    return directory_exists (path);
-}
-
 DiskBackend::DiskBackend (const string & doc_root)
 {
     LOG4CXX_INFO (logger, "DiskBackend: doc_root=" + doc_root);
     this->doc_root = doc_root;
-    if (!safe_directory_exists (doc_root))
+    if (!fs::is_directory (doc_root))
     {
-        safe_mkdir (doc_root, 0777L);
+        try
+        {
+            fs::create_directories (doc_root);
+        }
+        catch (exception e)
+        {
+            LOG4CXX_ERROR (logger, string ("disk error: ") + e.what ());
+            throw e;
+        }
     }
 }
 
 vector<string> DiskBackend::getTablenames ()
 {
     vector<string> tablenames;
-    directory_iterator end_iter;
-    for (directory_iterator dir_itr (doc_root); dir_itr != end_iter;
+    fs::directory_iterator end_iter;
+    for (fs::directory_iterator dir_itr (doc_root); dir_itr != end_iter;
          ++dir_itr)
     {
-        if (is_directory (dir_itr->status()) &&
+        if (fs::is_directory (dir_itr->status()) &&
             (dir_itr->path ().leaf ().find ("-del_") == string::npos))
         {
             tablenames.push_back (dir_itr->path ().leaf ());
@@ -91,8 +75,8 @@ string DiskBackend::get (const string & tablename, const string & key)
 {
     string file = build_filename (tablename, key);
 
-    std::ifstream infile;
-    infile.open (file.c_str (), ios::in | ios::binary | ios::ate);
+    fs::ifstream infile;
+    infile.open (file, ios::in | ios::binary | ios::ate);
 
     if (!infile.is_open ())
     {
@@ -102,7 +86,7 @@ string DiskBackend::get (const string & tablename, const string & key)
     }
 
     ifstream::pos_type size = infile.tellg ();
-    char          *memblock = new char [size];
+    char * memblock = new char [size];
 
     infile.seekg (0, ios::beg);
     infile.read (memblock, size);
@@ -119,49 +103,18 @@ string DiskBackend::get (const string & tablename, const string & key)
 void DiskBackend::put (const string & tablename, const string & key,
                        const string & value)
 {
-    string dir_p1;
-    string dir_p2;
-    string dir_p3;
-    get_dir_pieces (dir_p1, dir_p2, dir_p3, tablename, key);
+    string d1;
+    string d2;
+    string d3;
+    get_dir_pieces (d1, d2, d3, tablename, key);
 
-    string base = doc_root + "/" + tablename + "/";
-    if (!safe_directory_exists (base + dir_p1 + "/" + dir_p2 + "/" + dir_p3))
+    string loc = doc_root + "/" + tablename + "/" + d1 + "/" + d2 + "/" + d3;
+    if (!fs::is_directory (loc))
     {
-        if (!safe_directory_exists (base + dir_p1))
-        {
-            if (0 != safe_mkdir (base + dir_p1, 0777L))
-            {
-                LOG4CXX_ERROR (logger, "put: can't mkdir: " + base + dir_p1);
-                DistStoreException e;
-                e.what = "DiskBackend error";
-                throw e;
-            }
-        }
-
-        if (!safe_directory_exists (base + dir_p1 + "/" + dir_p2))
-        {
-            if (0 != safe_mkdir (base + dir_p1 + "/" + dir_p2, 0777L))
-            {
-                LOG4CXX_ERROR (logger, "put: can't mkdir: " + base + dir_p1 + 
-                               "/" + dir_p2);
-                DistStoreException e;
-                e.what = "DiskBackend error";
-                throw e;
-            }
-        }
-
-        if (0 != safe_mkdir (base + dir_p1 + "/" + dir_p2 + "/" + dir_p3,
-                             0777L))
-        {
-            LOG4CXX_ERROR (logger, "put: can't mkdir: " + base + dir_p1 + "/" +
-                           dir_p2 + "/" + dir_p3);
-            DistStoreException e;
-            e.what = "DiskBackend error";
-            throw e;
-        }
+        fs::create_directories (loc);
     }
 
-    string file = build_filename (tablename, key);
+    string file = build_filename (tablename, d1, d2, d3, key);
 
     std::ofstream outfile;
     outfile.open (file.c_str (), ios::out | ios::binary | ios::trunc);
@@ -182,9 +135,9 @@ void DiskBackend::remove (const string & tablename, const string & key)
 {
     string file = build_filename (tablename, key);
 
-    if (file_exists (file))
+    if (fs::is_regular (file))
     {
-        if (0 != unlink (file.c_str ()))
+        if (!fs::remove (file.c_str ()))
         {
             DistStoreException e;
             e.what = "Can't remove " + tablename + "/" + key;
@@ -196,26 +149,26 @@ void DiskBackend::remove (const string & tablename, const string & key)
 ScanResponse DiskBackend::scan (const string & tablename, const string & seed,
                                 int32_t count)
 {
-    stack<directory_iterator *> dir_stack;
-    directory_iterator * i;
-    directory_iterator end;
+    stack<fs::directory_iterator *> dir_stack;
+    fs::directory_iterator * i;
+    fs::directory_iterator end;
 
     string base = doc_root + "/" + tablename + "/";
     if (seed.empty ())
     {
-        i = new directory_iterator (base);
+        i = new fs::directory_iterator (base);
         dir_stack.push (i);
         if ((*i) != end && is_directory ((*i)->status ()))
         {
-            i = new directory_iterator ((*i)->path ());
+            i = new fs::directory_iterator ((*i)->path ());
             dir_stack.push (i);
             if ((*i) != end && is_directory ((*i)->status ()))
             {
-                i = new directory_iterator ((*i)->path ());
+                i = new fs::directory_iterator ((*i)->path ());
                 dir_stack.push (i);
                 if ((*i) != end && is_directory ((*i)->status ()))
                 {
-                    i = new directory_iterator ((*i)->path ());
+                    i = new fs::directory_iterator ((*i)->path ());
                     dir_stack.push (i);
                 }
             }
@@ -228,25 +181,25 @@ ScanResponse DiskBackend::scan (const string & tablename, const string & seed,
 
         // TODO: fix this if seed doesn't exist
 
-        i = new directory_iterator (base);
+        i = new fs::directory_iterator (base);
         dir_stack.push (i);
         // pre-wind to d1
         while ((*i) != end && (*i)->path ().leaf () != d1)
             ++(*i);
 
-        i  = new directory_iterator (base + d1);
+        i  = new fs::directory_iterator (base + d1);
         dir_stack.push (i);
         // pre-wind to d2
         while ((*i) != end && (*i)->path ().leaf () != d2)
             ++(*i);
 
-        i = new directory_iterator (base + d1 + "/" + d2);
+        i = new fs::directory_iterator (base + d1 + "/" + d2);
         dir_stack.push (i);
         // pre-wind to d3
         while ((*i) != end && (*i)->path ().leaf () != d3)
             ++(*i);
 
-        i = new directory_iterator (base + d1 + "/" + d2 + "/" + d3);
+        i = new fs::directory_iterator (base + d1 + "/" + d2 + "/" + d3);
         dir_stack.push (i);
         // pre-wind to seed 
         while ((*i) != end && (*i)->path ().leaf () != seed)
@@ -288,7 +241,7 @@ ScanResponse DiskBackend::scan (const string & tablename, const string & seed,
         else if (is_directory ((*i)->status ()))
         {
             // push
-            i = new directory_iterator ((*i)->path ());
+            i = new fs::directory_iterator ((*i)->path ());
             dir_stack.push (i);
         }
         else
@@ -319,21 +272,34 @@ string DiskBackend::admin (const string & op, const string & data)
     if (op == "create_tablename")
     {
         string base = doc_root + "/" + data;
-        if (safe_directory_exists (base))
+        if (fs::is_directory (base))
             return "done";
-        if (safe_mkdir (base, 0777L) == 0)
+        if (fs::create_directories (base) == 0)
             return "done";
     }
     else if (op == "delete_tablename")
     {
-        string base = doc_root + "/" + data;
-        if (!safe_directory_exists (base))
-            return "done";
-        char buf[128];
-        sprintf (buf, "%s-del_%06d", base.c_str (), rand ());
-        string del_base(buf);
-        if (safe_rename (base, del_base) == 0)
-            return "done";
+        try
+        {
+            string base = doc_root + "/" + data;
+            if (!fs::is_directory (base))
+                return "done";
+            char buf[128];
+            sprintf (buf, "%s-del_%06d", base.c_str (), rand ());
+            string deleted (buf);
+            // we're making a somehwat safe assumption that deleted doesn't 
+            // exist
+            fs::rename (base, deleted);
+        }
+        catch (exception & e)
+        {
+            LOG4CXX_WARN (logger, string ("admin: delete_tablename: what=") +
+                          e.what ());
+            DistStoreException de;
+            de.what = "DiskBackend error";
+            throw de;
+        }
+        return "done";
     }
     return "";
 }
@@ -387,6 +353,13 @@ string DiskBackend::build_filename(const string & tablename,
 {
     string d1, d2, d3;
     get_dir_pieces (d1, d2, d3, tablename, key);
+    return build_filename (tablename, d1, d2, d3, key);
+}
+
+string DiskBackend::build_filename(const string & tablename, const string & d1,
+                                   const string & d2, const string & d3,
+                                   const string & key)
+{
     return 
         doc_root + "/" + 
         tablename + "/" + 

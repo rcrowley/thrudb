@@ -18,7 +18,6 @@
 #include "S3Backend.h"
 
 #include "DistStore.h"
-#include "utils.h"
 #include "s3_glue.h"
 
 #include <fstream>
