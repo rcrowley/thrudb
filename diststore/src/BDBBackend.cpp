@@ -208,35 +208,44 @@ ScanResponse BDBBackend::scan (const string & tablename, const string & seed,
         db_value.set_flags (DB_DBT_USERMEM);
 
         get_db (tablename)->cursor (NULL, &dbc, 0);
-        bool there = seed.empty ();
-        // TODO: i don't like this b/c i have to go through everything seed to
-        // get to it i honestly don't see a better way (given the db api) to do
-        // this and it almost makes bdb useless, least you aren't going to be
-        // able to scan on them once they get to be a decent size. we might be
-        // able to save the cursors or something and let people reuse them
-        // across calls, but that's not going to do any good if there are
-        // multiple hosts. we'd also have to come up with some logic to clean
-        // them up and i think that would require having a tx open the whole
-        // time, not good.
-        while ((dbc->get (&db_key, &db_value, DB_NEXT) == 0) &&
-               (scan_response.elements.size () < (unsigned int)count))
+
+        // this get positions us at the last key we grabbed or the one
+        // imediately following it
+        // copy over the seed and it's size
+        strncpy (key, seed.c_str (), seed.length () + 1);
+        db_key.set_size (seed.length () + 1);
+        if (dbc->get (&db_key, &db_value, DB_SET_RANGE) == 0)
         {
-            // note that key is not going to be null terminated, but
-            // we're doing a N on everything below so that's ok
             strncpy (key, (const char *)db_key.get_data (), 
                      db_key.get_size ());
             key[db_key.get_size ()] = '\0';
 
-            if (there)
+            if (seed != key)
             {
+                // we got the one after it, it must be gone now, so return 
+                // this one
+                Element e;
+                e.key = string (key, db_key.get_size ());
+                e.value = string ((const char *)db_value.get_data (),
+                                  db_value.get_size ());
+                scan_response.elements.push_back (e);
+            } // we'll skip it, it's the one we had last time
+
+            // now keep going until we run out of items or get our fill
+            while ((dbc->get (&db_key, &db_value, DB_NEXT) == 0) &&
+                   (scan_response.elements.size () < (unsigned int)count))
+            {
+                strncpy (key, (const char *)db_key.get_data (), 
+                         db_key.get_size ());
+                key[db_key.get_size ()] = '\0';
+                LOG4CXX_ERROR (logger, string ("getn=") + key);
+
                 Element e;
                 e.key = string (key, db_key.get_size ());
                 e.value = string ((const char *)db_value.get_data (),
                                   db_value.get_size ());
                 scan_response.elements.push_back (e);
             }
-            else if (strncmp (key, seed.c_str (), seed.length ()) >= 0)
-                there = true; // next time around we'll start adding them
         }
     }
     catch (DbDeadlockException & e)
@@ -301,12 +310,6 @@ void BDBBackend::validate (const string & tablename, const string * key,
     {
         DistStoreException e;
         e.what = "tablename too long";
-        throw e;
-    }
-    else if (key && (*key) == "")
-    {
-        DistStoreException e;
-        e.what = "invalid key";
         throw e;
     }
     else if (key && (*key).length () > BDB_BACKEND_MAX_KEY_SIZE)

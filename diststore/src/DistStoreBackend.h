@@ -42,6 +42,12 @@ class DistStoreBackend
                 e.what = "invalid tablename";
                 throw e;
             }
+            else if (key && (*key) == "")
+            {
+                DistStoreException e;
+                e.what = "invalid key";
+                throw e;
+            }
         }
 };
 
