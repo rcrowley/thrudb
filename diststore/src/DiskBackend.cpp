@@ -269,7 +269,8 @@ string DiskBackend::admin (const string & op, const string & data)
         string base = doc_root + "/" + data;
         if (fs::is_directory (base))
             return "done";
-        if (fs::create_directories (base) == 0)
+        LOG4CXX_INFO (logger, "admin: creating dir=" + data);
+        if (fs::create_directories (base))
             return "done";
     }
     else if (op == "delete_tablename")

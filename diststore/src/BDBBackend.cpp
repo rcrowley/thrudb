@@ -282,6 +282,8 @@ string BDBBackend::admin (const string & op, const string & data)
 
         if (!db)
         {
+            LOG4CXX_INFO (logger, "admin: creating db=" + data);
+
             u_int32_t db_flags = 
                 DB_CREATE       |   // allow creating db
                 DB_AUTO_COMMIT;     // allow auto-commit   
