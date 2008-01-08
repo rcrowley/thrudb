@@ -7,11 +7,6 @@
  *
  **/
 
-/*
- * TODO:
- * - convert everything to use boost filesystem libs, is possible/makes sense
- */
-
 #ifdef HAVE_CONFIG_H
 #include "diststore_config.h"
 #endif
