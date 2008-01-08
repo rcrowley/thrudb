@@ -11,8 +11,6 @@
 #include <log4cxx/logger.h>
 #include <set>
 #include <string>
-#include <thrift/protocol/TBinaryProtocol.h>
-#include <thrift/transport/TTransportUtils.h>
 #include "DistStore.h"
 #include "DistStoreBackend.h"
 
