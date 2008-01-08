@@ -454,8 +454,8 @@ namespace mysql {
                         const char * username, const char * password);
             ~Connection ();
 
-            PreparedStatement * find_partitions_statement (const char * tablename);
-            PreparedStatement * find_next_statement (const char * tablename);
+            PreparedStatement * find_partitions_statement ();
+            PreparedStatement * find_next_statement ();
             PreparedStatement * find_get_statement (const char * tablename,
                                                     int max_value_size);
             PreparedStatement * find_put_statement (const char * tablename);

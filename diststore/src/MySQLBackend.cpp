@@ -56,7 +56,7 @@ MySQLBackend::load_partitions (const string & tablename)
          this->master_db.c_str ());
 
     PreparedStatement * partitions_statement =
-        connection->find_partitions_statement ("directory");
+        connection->find_partitions_statement ();
 
     StringParams * fp = (StringParams*)partitions_statement->get_bind_params ();
     fp->set_str (tablename.c_str ());
@@ -386,7 +386,7 @@ FindReturn MySQLBackend::find_next_and_checkout (const string & tablename,
          this->master_db.c_str ());
 
     PreparedStatement * next_statement =
-        connection->find_next_statement ("directory");
+        connection->find_next_statement ();
 
     StringStringParams * fpp = 
         (StringStringParams*)next_statement->get_bind_params ();

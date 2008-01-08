@@ -360,34 +360,30 @@ Connection::~Connection ()
     mysql_close (&this->mysql);
 }
 
-PreparedStatement * Connection::find_partitions_statement (const char * tablename)
+PreparedStatement * Connection::find_partitions_statement ()
 {
-    string key = string (tablename);
+    string key = "directory";
     PreparedStatement * stmt = this->partitions_statements[key];
     if (!stmt)
     {
         BindParams * bind_params = new StringParams ();
         BindResults * bind_results = new PartitionsResults ();
-        char query[256];
-        sprintf (query, "select id, tablename, start, end, host, port, db, datatable, created_at, retired_at from %s where tablename = ? and retired_at is null order by end asc",
-                 tablename);
+        const char query[] = "select d.id, tablename, start, end, h.hostname, h.port, db, datatable, created_at, retired_at from directory d join host h on d.host_id = h.id where tablename = ? and retired_at is null order by end asc";
         stmt = new PreparedStatement (&this->mysql, query, bind_params, bind_results);
         this->partitions_statements[key] = stmt;
     }
     return stmt;
 }
 
-PreparedStatement * Connection::find_next_statement (const char * tablename)
+PreparedStatement * Connection::find_next_statement ()
 {
-    string key = string (tablename);
+    string key = "directory";
     PreparedStatement * stmt = this->next_statements[key];
     if (!stmt)
     {
         BindParams * bind_params = new StringStringParams ();
         BindResults * bind_results = new PartitionsResults ();
-        char query[256];
-        sprintf (query, "select id, tablename, start, end, host, port, db, datatable, created_at, retired_at from %s where tablename = ? and datatable > ? and retired_at is null order by end asc limit 1",
-                 tablename);
+        const char query[] = "select d.id, tablename, start, end, h.hostname, h.port, db, datatable, created_at, retired_at from directory d join host h on d.host_id = h.id where tablename = ? and datatable > ? and retired_at is null order by end asc limit 1";
         stmt = new PreparedStatement (&this->mysql, query, bind_params,
                                       bind_results);
         this->next_statements[key] = stmt;
