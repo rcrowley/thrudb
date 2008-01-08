@@ -11,13 +11,13 @@ use Thrift::BinaryProtocol;
 use Thrift::Socket;
 use Thrift::FramedTransport;
 
-#Thrudb
-use Thrucene;
-use Thrudoc;
-
 #Bookmark
 use lib "../gen-perl";
 use Tutorial::Types;
+
+#Thrudb
+use Thrucene;
+use Thrudoc;
 
 
 package BookmarkManager;
@@ -183,7 +183,7 @@ sub store_bookmark
 
     my $b_str    = $self->serialize_bookmark($b);
 
-    my $id = $thrudoc->store( $b_str );
+    my $id = $thrudoc->add( $b_str );
 
     return $id;
 }
@@ -245,7 +245,7 @@ sub remove_all
 
     do{
 
-        $ids = $thrudoc->fetchIds($offset,$limit);
+        $ids = $thrudoc->listIds($offset,$limit);
 
         if(@$ids > 0 ){
 

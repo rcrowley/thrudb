@@ -27,29 +27,20 @@ ThrudocHandler::ThrudocHandler( boost::shared_ptr<ThrudocBackend> b )
     this->backend = b;
 }
 
-void ThrudocHandler::store(std::string &_return, const string &obj, const string &oldid)
-{
 
+void ThrudocHandler::add(std::string& _return, const std::string& doc)
+{
     //Skip nulls
-    if(obj.empty())
+    if(doc.empty())
         return;
 
-    //Validate or create doc id
-    string     id;
-    if( this->isValidID( oldid ) ){
-        id = oldid;
-    } else {
-        if(oldid.empty())
-            id = generateUUID();
-        else
-            id = generateMD5(oldid);
-    }
+    string id = generateUUID();
 
     //Write it
-    backend->write(obj, id);
+    backend->write(doc, id);
 
     //Cache it
-    memd->set(id, obj);
+    memd->set(id, doc);
 
     //bloom it
     if(!BloomManager->exists(id)){
@@ -58,7 +49,62 @@ void ThrudocHandler::store(std::string &_return, const string &obj, const string
 
     //done
     _return = id;
+
 }
+
+void ThrudocHandler::addList(std::vector<std::string> & _return, const std::vector<std::string> & docs)
+{
+    for(size_t i=0; i<docs.size(); i++){
+        string id;
+        this->add(id,docs[i]);
+
+        _return.push_back(id);
+    }
+}
+
+void ThrudocHandler::store(const std::string& oldid, const std::string& doc)
+{
+    //Skip nulls
+    if(doc.empty())
+        return;
+
+    if(oldid.empty()){
+        ThrudocException e;
+        e.what = "ID is required";
+
+        throw e;
+    }
+
+    //Validate or create doc id
+    string     id;
+    if( this->isValidID( oldid ) ){
+        id = oldid;
+    } else {
+        id = generateMD5(oldid);
+    }
+
+    //Write it
+    backend->write(doc, id);
+
+    //Cache it
+    memd->set(id, doc);
+
+    //bloom it
+    if(!BloomManager->exists(id)){
+        BloomManager->add( id );
+    }
+
+}
+
+void ThrudocHandler::storeList(const std::map<std::string, std::string> & docs)
+{
+    map<string,string>::const_iterator it;
+
+    for(it=docs.begin(); it != docs.end(); ++it){
+        this->store(it->first,it->second);
+    }
+}
+
 
 bool ThrudocHandler::remove(const std::string &_id)
 {
@@ -127,7 +173,7 @@ void ThrudocHandler::fetch(std::string &_return, const std::string &_id)
     _return = data;
 }
 
-void ThrudocHandler::fetchIds(std::vector<std::string> &_return, const int32_t offset, const int32_t limit)
+void ThrudocHandler::listIds(std::vector<std::string> &_return, const int32_t offset, const int32_t limit)
 {
 
     string doc_root = ConfigManager->read<string>("DOC_ROOT");
@@ -135,8 +181,7 @@ void ThrudocHandler::fetchIds(std::vector<std::string> &_return, const int32_t o
 
     string     idx_file = doc_root + "/bloom.idx";
     struct stat idx_stat;
-    bool     idx_exists = file_exists( idx_file, idx_stat );
-
+    file_exists( idx_file, idx_stat );
 
     std::ifstream infile;
     infile.open(idx_file.c_str());
@@ -169,7 +214,6 @@ void ThrudocHandler::fetchIds(std::vector<std::string> &_return, const int32_t o
 
         _return.push_back(line);
     }
-
 }
 
 

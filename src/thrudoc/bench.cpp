@@ -93,8 +93,8 @@ public:
 
     void testWrite() {
         for (size_t ix = 0; ix < _loopCount; ix++) {
-            string result,id;
-            _client->store(result,sample,id);
+            string result;
+            _client->add(result,sample);
 
         }
     }
@@ -110,7 +110,7 @@ public:
 
         for (size_t ix = 0; ix < _loopCount/2; ix++) {
             string result,id;
-            _client->store(result,sample,id);
+            _client->add(result,sample);
             _client->fetch(result,"sample");
         }
     }
@@ -230,7 +230,7 @@ int main(int argc, char **argv) {
 
         socket->open();
         string r;
-        serviceClient->store(r,sample,"sample");
+        serviceClient->store("sample",sample);
 
         socket->close();
 
@@ -307,9 +307,12 @@ int main(int argc, char **argv) {
 
         averageTime /= clientCount;
 
+
+
         cout <<" Finished"<<endl;
         cout << "clients:"<<clientCount << ", loops:"<<loopCount <<
-            ", type:"<<type<<", size:"<<docSize<<", rate:" << (clientCount * loopCount * 1000) / ((double)(time01 - time00)) << endl;
+            ", type:"<<type<<", size:"<<docSize<<", tps:" << (clientCount * loopCount) / ((double)(time01 - time00)/1000) << endl;
+        cout <<"AVG time (ms):" <<averageTime<<endl;
 
     }
 

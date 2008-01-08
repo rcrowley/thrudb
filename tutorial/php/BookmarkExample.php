@@ -127,7 +127,7 @@ class BookmarkManager {
     private function store_bookmark( $b )
     {
         $b_str = $this->serialize_bookmark($b);
-        $id    = $this->thrudoc->store($b_str, null);
+        $id    = $this->thrudoc->add($b_str);
 
         return $id;
     }
@@ -175,7 +175,7 @@ class BookmarkManager {
 
         do{
 
-            $ids  = $this->thrudoc->fetchIds($offset,$limit);
+            $ids  = $this->thrudoc->listIds($offset,$limit);
             $docs = array();
 
             if(count($ids) == 0)
@@ -193,7 +193,7 @@ class BookmarkManager {
              $this->thrucene->removeList($docs);
              $this->thrudoc->removeList($ids);
 
-             $offset += $limit;
+             $offset = $offset + $limit;
 
              $this->thrucene->commitAll();
 

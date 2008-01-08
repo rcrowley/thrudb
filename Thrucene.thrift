@@ -9,18 +9,13 @@ enum ExceptionClass
         CRITICAL
 }
 
-enum StorageType
-{
-        KEYWORD,
-        TEXT,
-        UNSTORED
-}
-
 exception ThruceneException
 {
         1: ExceptionClass eclass,
         2: string what
 }
+
+
 
 struct QueryMsg
 {
@@ -47,6 +42,13 @@ struct RemoveMsg
         3: string docid
 }
 
+enum StorageType
+{
+        KEYWORD,
+        TEXT,
+        UNSTORED
+}
+
 struct Field
 {
         1: string name,
@@ -67,10 +69,10 @@ struct DocMsg
 
 service Thrucene
 {
-        void         ping(),
-        void         add(1:DocMsg d)       throws(ThruceneException e),
-        void         update(1:DocMsg u)    throws(ThruceneException e),
-        void         remove(1:RemoveMsg d) throws(ThruceneException e),
+        void          ping(),
+        void          add(1:DocMsg d)       throws(ThruceneException e),
+        void          update(1:DocMsg u)    throws(ThruceneException e),
+        void          remove(1:RemoveMsg d) throws(ThruceneException e),
         QueryResponse query(1:QueryMsg q)   throws(ThruceneException e),
 
         void         addList(1:list<DocMsg> d)             throws(ThruceneException e),

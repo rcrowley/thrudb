@@ -27,14 +27,20 @@ class ThrudocHandler : virtual public ThrudocIf {
 
 
   void ping() {};
-  void store(std::string &_return, const std::string &obj, const std::string &id);
+
+  void add(std::string& _return, const std::string& doc);
+  void addList(std::vector<std::string> & _return, const std::vector<std::string> & docs);
+
+  void store(const std::string& id, const std::string& doc);
+  void storeList(const std::map<std::string, std::string> & docs);
+
   bool remove(const std::string &id);
-  void fetch(std::string &_return, const std::string &id);
-
-  void fetchIds(std::vector<std::string> &_return, const int32_t offset, int32_t limit);
-
   bool removeList(const std::vector<std::string> &ids);
+
+  void fetch(std::string &_return, const std::string &id);
   void fetchList(std::vector<std::string> &_return, const std::vector<std::string> &ids);
+
+  void listIds(std::vector<std::string> &_return, const int32_t offset, int32_t limit);
 
  private:
   ThrudocHandler(){};

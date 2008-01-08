@@ -108,7 +108,7 @@ class BookmarkManager
 
      def store_bookmark(b)
          b_str = serialize(b)
-         id    = @thrudoc.store( b_str, nil )
+         id    = @thrudoc.add( b_str )
 
          return id
      end
@@ -152,7 +152,7 @@ class BookmarkManager
          docs   = []
 
          begin
-                ids = @thrudoc.fetchIds(offset,limit)
+                ids = @thrudoc.listIds(offset,limit)
 
                 ids.each { |id|
                    rm = RemoveMsg.new()

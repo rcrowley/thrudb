@@ -35,11 +35,18 @@ my $count = shift;
 $transport->open();
 
 
+my @docs;
+
+
 my $t0 = gettimeofday();
 for(my $i=0; $i<$count; $i++){
-    my $id = $client->store($doc);
+    push(@docs,$doc);
 }
+my $ids = $client->addList(\@docs);
+
 my $t1 = gettimeofday();
+
+warn(Dumper($ids));
 
 print "Added $count docs in ".sprintf("%0.2f",($t1-$t0))."Secs\n";
 

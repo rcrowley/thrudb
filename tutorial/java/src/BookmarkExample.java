@@ -139,7 +139,7 @@ public class BookmarkExample {
     private String storeBookmark( Bookmark b ) throws TException, ThrudocException, IOException{
 
         String b_str = this.serialize(b);
-        String id    = thrudoc.store(b_str,null);
+        String id    = thrudoc.add(b_str);
 
         return id;
     }
@@ -182,7 +182,7 @@ public class BookmarkExample {
         ArrayList<String> ids;
 
         do{
-            ids = thrudoc.fetchIds(offset,limit);
+            ids = thrudoc.listIds(offset,limit);
 
             if(ids.size() == 0)
                 break;
