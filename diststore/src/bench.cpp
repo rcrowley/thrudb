@@ -122,8 +122,8 @@ public:
 
     void testWrite() {
         for (size_t ix = 0; ix < _loopCount; ix++) {
-            string result, id = "sample";
-            _client->put("data",id,sample);
+            string result, id;
+            _client->putValue(id, "data",sample);
 
         }
     }
@@ -138,8 +138,8 @@ public:
     void testBoth() {
 
         for (size_t ix = 0; ix < _loopCount/2; ix++) {
-            string result,id = "sample";
-            _client->put("data",id,sample);
+            string result,id;
+            _client->putValue(id, "data",sample);
             _client->get(result,"data",id);
         }
     }
