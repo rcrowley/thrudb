@@ -41,6 +41,7 @@
 #include "DiskBackend.h"
 #include "MemcachedBackend.h"
 #include "MySQLBackend.h"
+#include "NBackend.h"
 #include "S3Backend.h"
 #include "s3_glue.h"
 #include "SpreadBackend.h"
@@ -67,6 +68,26 @@ inline void usage ()
     cerr<<"\tor create ~/.thrudoc"<<endl;
     cerr<<"\t-nb creates non-blocking server"<<endl;
     exit (-1);
+}
+
+vector<string> split (const string & str, const string & delimiters = " ")
+{
+    // Skip delimiters at beginning.
+    string::size_type lastPos = str.find_first_not_of(delimiters, 0);
+    // Find first "non-delimiter".
+    string::size_type pos     = str.find_first_of(delimiters, lastPos);
+
+    vector<string> tokens;
+    while (string::npos != pos || string::npos != lastPos)
+    {
+        // Found a token, add it to the vector.
+        tokens.push_back(str.substr(lastPos, pos - lastPos));
+        // Skip delimiters.  Note the "not_of"
+        lastPos = str.find_first_not_of(delimiters, pos);
+        // Find next "non-delimiter"
+        pos = str.find_first_of(delimiters, lastPos);
+    }
+    return tokens;
 }
 
 int main (int argc, char **argv) {
@@ -100,76 +121,90 @@ int main (int argc, char **argv) {
         shared_ptr<TProtocolFactory>
             protocolFactory (new TBinaryProtocolFactory ());
 
-        shared_ptr<DistStoreBackend> backend;
+        vector<shared_ptr<DistStoreBackend> > backends;
 
         string which = ConfigManager->read<string> ("BACKEND", "mysql");
-        if (0)
+        vector<string> whiches = split (which);
+        vector<string>::iterator be;
+        for (be = whiches.begin (); be != whiches.end (); be++)
         {
-            // just here to keep thing from blowing up
-        }
 #if HAVE_LIBDB_CXX
-        else if (which == "bdb")
-        {
-            // BDB backend
-            string bdb_home =
-                ConfigManager->read<string>("BDB_HOME", "/tmp/bdbs");
-            backend =
-                shared_ptr<DistStoreBackend>(new BDBBackend (bdb_home,
-                                                             thread_count));
-        }
+            if ((*be) == "bdb")
+            {
+                // BDB backend
+                string bdb_home =
+                    ConfigManager->read<string>("BDB_HOME", "/tmp/bdbs");
+                backends.push_back 
+                    (shared_ptr<DistStoreBackend>(new BDBBackend (bdb_home,
+                                                                  thread_count)));
+            }
 #endif /* HAVE_LIBDB_CXX */
 #if HAVE_LIBBOOST_FILESYSTEM
-        else if (which == "disk")
-        {
-            // Disk backend
-            string doc_root =
-                ConfigManager->read<string>("DISK_DOC_ROOT", "/tmp/docs");
-            backend = shared_ptr<DistStoreBackend>(new DiskBackend (doc_root));
-        }
+            if ((*be) == "disk")
+            {
+                // Disk backend
+                string doc_root =
+                    ConfigManager->read<string>("DISK_DOC_ROOT", "/tmp/docs");
+                backends.push_back 
+                    (shared_ptr<DistStoreBackend>(new DiskBackend (doc_root)));
+            }
 #endif /* HAVE_LIBBOOST_FILESYSTEM */
 #if HAVE_LIBEXPAT && HAVE_LIBCURL
-        else if (which == "s3")
-        {
-            // S3 backend
-            curl_global_init(CURL_GLOBAL_ALL);
+            if ((*be) == "s3")
+            {
+                // S3 backend
+                curl_global_init(CURL_GLOBAL_ALL);
 
-            // TODO: make these part of the backend, so that they're not global
+                // TODO: make these part of the backend, so that they're not global
+                //s3_debug = 4;
+                aws_access_key_id     = ConfigManager->read<string>("AWS_ACCESS_KEY").c_str();
+                aws_secret_access_key = ConfigManager->read<string>("AWS_SECRET_ACCESS_KEY").c_str();
 
-            //s3_debug = 4;
-            aws_access_key_id     = ConfigManager->read<string>("AWS_ACCESS_KEY").c_str();
-            aws_secret_access_key = ConfigManager->read<string>("AWS_SECRET_ACCESS_KEY").c_str();
-
-            backend = shared_ptr<DistStoreBackend>(new S3Backend ());
-        }
+                backends.push_back 
+                    (shared_ptr<DistStoreBackend>(new S3Backend ()));
+            }
 #endif /* HAVE_LIBEXPAT && HAVE_LIBCURL */
 #if HAVE_LIBMYSQLCLIENT_R
-        else if (which == "mysql")
-        {
-            // MySQL backend
-            string master_hostname =
-                ConfigManager->read<string>("MYSQL_MASTER_HOST", "localhost");
-            short master_port = ConfigManager->read<short>("MYSQL_MASTER_PORT",
-                                                           3306);
-            string master_db = ConfigManager->read<string>("MYSQL_MASTER_DB",
-                                                           "diststore");
-            string username = ConfigManager->read<string>("MYSQL_USERNAME",
-                                                          "diststore");
-            string password = ConfigManager->read<string>("MYSQL_PASSWORD",
-                                                          "diststore");
-            int max_value_size = 
-                ConfigManager->read<int>("MYSQL_MAX_VALUES_SIZE", 1024);
-            backend = shared_ptr<DistStoreBackend>
-                (new MySQLBackend (master_hostname, master_port, master_db,
-                                   username, password, max_value_size));
-        }
+            if ((*be) == "mysql")
+            {
+                // MySQL backend
+                string master_hostname =
+                    ConfigManager->read<string>("MYSQL_MASTER_HOST", "localhost");
+                short master_port = 
+                    ConfigManager->read<short>("MYSQL_MASTER_PORT", 3306);
+                string master_db = 
+                    ConfigManager->read<string>("MYSQL_MASTER_DB", "diststore");
+                string username = 
+                    ConfigManager->read<string>("MYSQL_USERNAME", "diststore");
+                string password = 
+                    ConfigManager->read<string>("MYSQL_PASSWORD", "diststore");
+                int max_value_size = 
+                    ConfigManager->read<int>("MYSQL_MAX_VALUES_SIZE", 1024);
+                backends.push_back (shared_ptr<DistStoreBackend>
+                                    (new MySQLBackend (master_hostname, 
+                                                       master_port, master_db,
+                                                       username, password, 
+                                                       max_value_size)));
+            }
 #endif /* HAVE_LIBMYSQLCLIENT_R */
-        else
+        }
+
+        shared_ptr<DistStoreBackend> backend;
+        if (backends.size () == 0)
         {
             LOG4CXX_ERROR (logger, string ("unknown or unbuilt backend=") + 
                            which);
             fprintf (stderr, "unknown or unbuilt backend=%s\n", 
                      which.c_str ());
             exit (1);
+        }
+        else if (backends.size () == 1)
+        {
+            backend = *backends.begin ();
+        }
+        else
+        {
+            backend = shared_ptr<DistStoreBackend> (new NBackend (backends));
         }
 
         // Memcached cache
@@ -281,3 +316,4 @@ int main (int argc, char **argv) {
 
     return 0;
 }
+

@@ -29,7 +29,7 @@ eval
 
     # this should be a no-op if the table already exists, not all engines will
     # support this call, so it can't guarantee success
-    unless ($client->admin ('create_tablename', $table) eq 'done')
+    unless ($client->admin ('create_tablename', $table) =~ /done/)
     {
         $table = 'test';
     }
