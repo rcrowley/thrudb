@@ -571,11 +571,12 @@ PreparedStatement * Connection::find_scan_statement (const char * tablename,
     return stmt;
 }
 
-#define HOST_PORT_DB_KEY(key, hostname, port, db)   \
-{                                                   \
-    char buf[200];                                  \
-    sprintf (buf, "%s:%d:%s", hostname, port, db);  \
-    key = string (buf);                             \
+#define HOST_PORT_DB_KEY(key, hostname, port, slave_hostname, slave_port, db)   \
+{                                                           \
+    char buf[200];                                          \
+    sprintf (buf, "%s:%d:%s:%d:%s", hostname, port,         \
+             slave_hostname, slave_port, db);               \
+    key = string (buf);                                     \
 }
 
 ConnectionFactory::ConnectionFactory ()
@@ -608,7 +609,7 @@ Connection * ConnectionFactory::get_connection
     }
 
     string key;
-    HOST_PORT_DB_KEY (key, hostname, port, db);
+    HOST_PORT_DB_KEY (key, hostname, port, slave_hostname, slave_port, db);
     LOG4CXX_DEBUG (logger, string ("get_connection: key=") + key);
     // get the connection for this host/db
     Connection * connection = (*connections)[key];
