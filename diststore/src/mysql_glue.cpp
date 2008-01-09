@@ -241,7 +241,7 @@ void PreparedStatement::init (Connection * connection, const char * query,
         // the one i'm getting when the server goes away
         if (mysql_stmt_errno (this->stmt) == CR_CONN_HOST_ERROR)
         {
-            this->connection->clear ();
+            this->connection->lost_connection ();
         }
 
         DistStoreException e;
@@ -293,7 +293,6 @@ void PreparedStatement::execute ()
             LOG4CXX_DEBUG (logger, "execute error: what=" + e.what);
             throw e;
         }
-        // TODO: this is where we'll try to get out of read only mode
     }
 
     int ret;
@@ -309,7 +308,7 @@ void PreparedStatement::execute ()
         // the one i'm getting when the server goes away
         if (mysql_stmt_errno (this->stmt) == CR_CONN_HOST_ERROR)
         {
-            this->connection->clear ();
+            this->connection->lost_connection ();
         }
 
         DistStoreException e;
@@ -331,9 +330,12 @@ void PreparedStatement::execute ()
     }
 }
 
-void Connection::clear ()
+void Connection::reset_connection ()
 {
-    LOG4CXX_DEBUG (logger, "clear");
+    LOG4CXX_DEBUG (logger, "reset_connection");
+
+    // TODO: figure out how to get .clear () to do the deletes for us if 
+    // possible?
 
     // get rid of all of it's prepared statements, we'll reconnect, 
     // but they'll be bad now
@@ -357,10 +359,75 @@ void Connection::clear ()
     for (i = scan_statements.begin (); i != scan_statements.end (); i++)
         delete i->second;
     scan_statements.clear ();
+}
 
-    // see if we're connected, (auto-reconnected at play here)
-    // if not then switch to read only mode if we can
+void Connection::switch_to_master ()
+{
+    LOG4CXX_INFO (logger, "switch_to_master");
+    // we're in read only
+    if (this->read_only)
+    {
+        // we're working with slave
+        reset_connection ();
+        this->read_only = 0;
+    }
+}
 
+void Connection::switch_to_slave ()
+{
+    LOG4CXX_INFO (logger, "switch_to_slave");
+    // we're not already read_only and we have a slave
+    if (!this->read_only && !this->slave_hostname.empty ())
+    {
+        // we're working with slave
+        reset_connection ();
+        LOG4CXX_DEBUG (logger, "switch_to_slave: setting read_only");
+        this->read_only = time (NULL) + MYSQL_MASTER_RETRY_WAIT;
+    }
+}
+
+void Connection::check_master ()
+{
+    LOG4CXX_DEBUG (logger, "check_master");
+    // if it's time to check the master again
+    if (this->read_only && this->read_only < time (0))
+    {
+        LOG4CXX_DEBUG (logger, "check_master: checking");
+        // if we can talk to the master again
+        if (mysql_ping (&this->mysql) == 0)
+        {
+            switch_to_master ();
+        }
+        else
+        {
+            LOG4CXX_DEBUG (logger, "check_master: failed, resetting read_only");
+            this->read_only = time (NULL) + MYSQL_MASTER_RETRY_WAIT;
+        }
+    }
+}
+
+void Connection::lost_connection ()
+{
+    LOG4CXX_INFO (logger, "lost_connection");
+
+    // if we lost the connection, we always have to reset
+    reset_connection ();
+
+    // if we're not in read_only mode already
+    if (!this->read_only)
+    {
+        // see if we're connected to the master, (auto-reconnected at play
+        // here) avoids switching to master when it was just a broken
+        // connection, ie the master is still there.
+        if (mysql_ping (&this->mysql) != 0)
+        {
+            // if not then switch to read only mode if we can
+            if (!this->slave_hostname.empty ())
+            {
+                switch_to_slave ();
+            }
+        }
+    }
 }
 
 unsigned long PreparedStatement::num_rows ()
@@ -464,7 +531,7 @@ Connection::Connection (const char * hostname, const short port,
 Connection::~Connection ()
 {
     LOG4CXX_DEBUG (logger, "~Connection");
-    clear ();
+    reset_connection ();
     mysql_close (&this->mysql);
 }
 

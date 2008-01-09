@@ -25,6 +25,8 @@ namespace mysql {
     #define MYSQL_BACKEND_MAX_DATATABLE_SIZE 14
     #define MYSQL_BACKEND_MAX_KEY_SIZE 64
 
+    #define MYSQL_MASTER_RETRY_WAIT 5
+
     class BindParams
     {
         public:
@@ -489,7 +491,11 @@ namespace mysql {
                         const char * password);
             ~Connection ();
 
-            void clear ();
+            void reset_connection ();
+            void check_master ();
+            void lost_connection ();
+            void switch_to_master ();
+            void switch_to_slave ();
 
             PreparedStatement * find_partitions_statement ();
             PreparedStatement * find_next_statement ();
@@ -518,7 +524,8 @@ namespace mysql {
         protected:
             MYSQL * get_mysql ()
             {
-                return &this->mysql;
+                check_master ();
+                return this->read_only ? &this->slave_mysql : &this->mysql;
             }
 
             time_t get_read_only ()
