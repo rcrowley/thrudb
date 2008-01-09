@@ -2,7 +2,7 @@
 #include "diststore_config.h"
 #endif
 /* hack to work around thrift and log4cxx installing config.h's */
-#undef HAVE_CONFIG_H 
+#undef HAVE_CONFIG_H
 
 #if HAVE_LIBMYSQLCLIENT_R
 
@@ -171,30 +171,39 @@ KeyValueResults::~KeyValueResults ()
     free (this->value);
 }
 
-PreparedStatement::PreparedStatement (MYSQL * mysql,
-                                      const char * query,
+PreparedStatement::PreparedStatement (Connection * connection,
+                                      const char * query, bool writes,
                                       BindParams * bind_params)
 {
-    init (mysql, query, bind_params, NULL);
+    init (connection, query, writes, bind_params, NULL);
 }
 
-PreparedStatement::PreparedStatement (MYSQL * mysql,
-                                      const char * query,
+PreparedStatement::PreparedStatement (Connection * connection,
+                                      const char * query, bool writes,
                                       BindParams * bind_params,
                                       BindResults * bind_results)
 {
-    init (mysql, query, bind_params, bind_results);
+    init (connection, query, writes, bind_params, bind_results);
 }
 
-void PreparedStatement::init (MYSQL * mysql, const char * query,
-                              BindParams * bind_params,
+PreparedStatement::~PreparedStatement ()
+{
+    LOG4CXX_DEBUG (logger, "~PreparedStatement");
+    mysql_stmt_close (this->stmt);
+}
+
+void PreparedStatement::init (Connection * connection, const char * query,
+                              bool writes, BindParams * bind_params,
                               BindResults * bind_results)
 {
+    this->connection = connection;
     this->query = query;
+    this->writes = writes;
     this->bind_params = bind_params;
     this->bind_results = bind_results;
     LOG4CXX_DEBUG (logger, string ("init: query=") + this->query);
 
+    MYSQL * mysql = this->connection->get_mysql ();
     this->stmt = mysql_stmt_init (mysql);
     if (this->stmt == NULL)
     {
@@ -208,12 +217,12 @@ void PreparedStatement::init (MYSQL * mysql, const char * query,
     }
 
     int ret;
-    if ((ret = mysql_stmt_prepare (this->stmt, this->query, 
+    if ((ret = mysql_stmt_prepare (this->stmt, this->query,
                                    strlen (this->query))) != 0)
     {
         char buf[1024];
         sprintf (buf, "mysql_stmt_prepare failed: %d - %p - %d - %s - %s",
-                 ret, this->stmt, mysql_errno (mysql), mysql_error (mysql), 
+                 ret, this->stmt, mysql_errno (mysql), mysql_error (mysql),
                  query);
         LOG4CXX_ERROR (logger, buf);
         DistStoreException e;
@@ -254,12 +263,21 @@ void PreparedStatement::execute ()
 {
     LOG4CXX_DEBUG (logger, "execute");
 
+    // if this statements writes and we're a read only connection, fail
+    if (this->writes && this->connection->get_read_only ())
+    {
+        DistStoreException e;
+        e.what = "MySQLBackend read-only error";
+        LOG4CXX_DEBUG (logger, "execute error: what=" + e.what);
+        throw e;
+    }
+
     int ret;
     if ((ret = mysql_stmt_execute (this->stmt)) != 0)
     {
         char buf[1024];
-        sprintf (buf, "mysql_stmt_execute failed: %d - %p - %d - %s", ret, 
-                 this->stmt, mysql_stmt_errno (this->stmt), 
+        sprintf (buf, "mysql_stmt_execute failed: %d - %p - %d - %s", ret,
+                 this->stmt, mysql_stmt_errno (this->stmt),
                  mysql_stmt_error (this->stmt));
         LOG4CXX_ERROR (logger, buf);
         DistStoreException e;
@@ -271,8 +289,8 @@ void PreparedStatement::execute ()
     if ((ret = mysql_stmt_store_result (this->stmt)) != 0)
     {
         char buf[1024];
-        sprintf (buf, "mysql_stmt_store_result failed: %d - %p - %d - %s", ret, 
-                 this->stmt, mysql_stmt_errno (this->stmt), 
+        sprintf (buf, "mysql_stmt_store_result failed: %d - %p - %d - %s", ret,
+                 this->stmt, mysql_stmt_errno (this->stmt),
                  mysql_stmt_error (this->stmt));
         LOG4CXX_ERROR (logger, buf);
         DistStoreException e;
@@ -321,12 +339,17 @@ void PreparedStatement::free_result ()
     }
 }
 
-Connection::Connection (const char * hostname, const char * db, const int port,
-                        const char * username, const char * password)
+Connection::Connection (const char * hostname, const short port,
+                        const char * slave_hostname, const short slave_port,
+                        const char * db, const char * username,
+                        const char * password)
 {
     this->hostname = hostname;
     this->port = port;
+    this->slave_hostname = slave_hostname ? slave_hostname : "";
+    this->slave_port = slave_port;
     this->db = db;
+    this->read_only = 0;
 
     if (!mysql_init (&this->mysql))
         LOG4CXX_ERROR (logger, "mysql_init failed");
@@ -345,17 +368,11 @@ Connection::Connection (const char * hostname, const char * db, const int port,
     mysql_options (&this->mysql, MYSQL_OPT_RECONNECT, &val);
 }
 
-PreparedStatement::~PreparedStatement ()
-{
-    LOG4CXX_DEBUG (logger, "~PreparedStatement");
-    mysql_stmt_close (this->stmt);
-}
-
 Connection::~Connection ()
 {
     LOG4CXX_DEBUG (logger, "~Connection");
     map<string, PreparedStatement *>::iterator i;
-    for (i = partitions_statements.begin (); 
+    for (i = partitions_statements.begin ();
          i != partitions_statements.end (); i++)
         delete i->second;
     for (i = next_statements.begin (); i != next_statements.end (); i++)
@@ -380,7 +397,8 @@ PreparedStatement * Connection::find_partitions_statement ()
         BindParams * bind_params = new StringParams ();
         BindResults * bind_results = new PartitionResults ();
         const char query[] = "select d.id, tablename, start, end, h.hostname, h.port, s.hostname, s.port, db, datatable, created_at, retired_at from directory d join host h on d.host_id = h.id left join host s on h.slave_id = s.id where tablename = ? and retired_at is null order by end asc";
-        stmt = new PreparedStatement (&this->mysql, query, bind_params, bind_results);
+        stmt = new PreparedStatement (this, query, false,
+                                      bind_params, bind_results);
         this->partitions_statements[key] = stmt;
     }
     return stmt;
@@ -395,8 +413,8 @@ PreparedStatement * Connection::find_next_statement ()
         BindParams * bind_params = new StringStringParams ();
         BindResults * bind_results = new PartitionResults ();
         const char query[] = "select d.id, tablename, start, end, h.hostname, h.port, s.hostname, s.port, db, datatable, created_at, retired_at from directory d join host h on d.host_id = h.id left join host s on h.slave_id = s.id where tablename = ? and datatable > ? and retired_at is null order by end asc limit 1";
-        stmt = new PreparedStatement (&this->mysql, query, bind_params,
-                                      bind_results);
+        stmt = new PreparedStatement (this, query, false,
+                                      bind_params, bind_results);
         this->next_statements[key] = stmt;
     }
     return stmt;
@@ -414,8 +432,8 @@ PreparedStatement * Connection::find_get_statement (const char * tablename,
         char query[256];
         sprintf (query, "select k, v, created_at, modified_at from %s where k = ?",
                  tablename);
-        stmt = new PreparedStatement (&this->mysql, query, bind_params,
-                                      bind_results);
+        stmt = new PreparedStatement (this, query, false,
+                                      bind_params, bind_results);
         this->get_statements[key] = stmt;
     }
     return stmt;
@@ -431,7 +449,8 @@ PreparedStatement * Connection::find_put_statement (const char * tablename)
         char query[256];
         sprintf (query, "insert into %s (k, v, created_at) values (?, ?, now()) on duplicate key update v = values (v)",
                  tablename);
-        stmt = new PreparedStatement (&this->mysql, query, bind_params);
+        stmt = new PreparedStatement (this, query, true,
+                                      bind_params);
         this->put_statements[key] = stmt;
     }
     return stmt;
@@ -446,7 +465,8 @@ PreparedStatement * Connection::find_delete_statement (const char * tablename)
         BindParams * bind_params = new StringParams ();
         char query[128];
         sprintf (query, "delete from %s where k = ?", tablename);
-        stmt = new PreparedStatement (&this->mysql, query, bind_params);
+        stmt = new PreparedStatement (this, query, true,
+                                      bind_params);
         this->delete_statements[key] = stmt;
     }
     return stmt;
@@ -464,8 +484,8 @@ PreparedStatement * Connection::find_scan_statement (const char * tablename,
         char query[256];
         sprintf (query, "select k, v, created_at, modified_at from %s where k > ? order by k asc limit ?",
                  tablename);
-        stmt = new PreparedStatement (&this->mysql, query, bind_params,
-                                      bind_results);
+        stmt = new PreparedStatement (this, query, false,
+                                      bind_params, bind_results);
         this->scan_statements[key] = stmt;
     }
     return stmt;

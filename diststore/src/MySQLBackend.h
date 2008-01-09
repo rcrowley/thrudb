@@ -130,7 +130,8 @@ class MySQLBackend : public DistStoreBackend
         FindReturn find_next_and_checkout (const string & tablename,
                                            const string & current_datatablename);
         Connection * get_connection(const char * hostname, const short port, 
-                                    const char * db);
+                                    const char * slave_hostnae, 
+                                    const short slave_port, const char * db);
         void destroy_connection(Connection * connection);
 
     private:

@@ -255,7 +255,7 @@ namespace mysql {
 
             const int get_slave_port ()
             {
-                return this->slave_hostname_is_null ? 
+                return this->slave_hostname_is_null ?
                     0 : this->slave_port;
             }
 
@@ -422,16 +422,19 @@ namespace mysql {
             my_bool modified_at_error;
     };
 
+    class Connection;
 
     class PreparedStatement
     {
         public:
-            PreparedStatement (MYSQL * mysql,
+            PreparedStatement (Connection * connection,
                                const char * query,
+                               bool writes,
                                BindParams * bind_params);
 
-            PreparedStatement (MYSQL * mysql,
+            PreparedStatement (Connection * connection,
                                const char * query,
+                               bool writes,
                                BindParams * bind_params,
                                BindResults * bind_results);
 
@@ -461,7 +464,9 @@ namespace mysql {
             void free_result ();
 
         protected:
+            Connection * connection;
             const char * query;
+            bool writes;
             MYSQL_STMT * stmt;
             BindParams * bind_params;
             BindResults * bind_results;
@@ -469,15 +474,19 @@ namespace mysql {
         private:
             static log4cxx::LoggerPtr logger;
 
-            void init (MYSQL * mysql, const char * query,
+            void init (Connection * connection, const char * query, bool writes,
                        BindParams * bind_params, BindResults * bind_results);
     };
 
     class Connection
     {
+        friend class PreparedStatement;
+
         public:
-            Connection (const char * host, const char * db, const int port,
-                        const char * username, const char * password);
+            Connection (const char * host, const short port,
+                        const char * slave_host, const short slave_port,
+                        const char * db, const char * username,
+                        const char * password);
             ~Connection ();
 
             PreparedStatement * find_partitions_statement ();
@@ -505,19 +514,32 @@ namespace mysql {
             }
 
         protected:
+            MYSQL * get_mysql ()
+            {
+                return &this->mysql;
+            }
+
+            time_t get_read_only ()
+            {
+                return this->read_only;
+            }
+
+        private:
             static log4cxx::LoggerPtr logger;
 
             string hostname;
             int port;
+            string slave_hostname;
+            int slave_port;
             string db;
             MYSQL mysql;
+            time_t read_only;
             map<string, PreparedStatement *> partitions_statements;
             map<string, PreparedStatement *> next_statements;
             map<string, PreparedStatement *> get_statements;
             map<string, PreparedStatement *> put_statements;
             map<string, PreparedStatement *> delete_statements;
             map<string, PreparedStatement *> scan_statements;
-
     };
 };
 

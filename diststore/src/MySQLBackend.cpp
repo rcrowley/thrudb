@@ -52,7 +52,7 @@ MySQLBackend::load_partitions (const string & tablename)
         (Partition::greater);
 
     Connection * connection = get_connection
-        (this->master_hostname.c_str (), this->master_port, 
+        (this->master_hostname.c_str (), this->master_port, NULL, 0,
          this->master_db.c_str ());
 
     PreparedStatement * partitions_statement =
@@ -257,7 +257,8 @@ ScanResponse MySQLBackend::scan (const string & tablename, const string & seed,
         find_return = this->find_next_and_checkout (tablename, "0");
     }
     LOG4CXX_DEBUG (logger, 
-                   string ("scan: hostname=") + find_return.connection->get_hostname () +
+                   string ("scan: hostname=") + 
+                   find_return.connection->get_hostname () +
                    string (", db=") + find_return.connection->get_db () +
                    string (", datatable=") + find_return.datatable);
 
@@ -353,7 +354,8 @@ FindReturn MySQLBackend::find_and_checkout (const string & tablename,
                            (*partition)->get_datatable ());
             find_return.connection = get_connection
                 ((*partition)->get_hostname (), (*partition)->get_port (),
-                 (*partition)->get_db ());
+                 (*partition)->get_slave_hostname (), 
+                 (*partition)->get_slave_port (), (*partition)->get_db ());
             find_return.datatable = (*partition)->get_datatable ();
             return find_return;
         }
@@ -382,7 +384,7 @@ FindReturn MySQLBackend::find_next_and_checkout (const string & tablename,
                                                  const string & current_datatable)
 {
     Connection * connection = get_connection 
-        (this->master_hostname.c_str (), this->master_port, 
+        (this->master_hostname.c_str (), this->master_port, NULL, 0,
          this->master_db.c_str ());
 
     PreparedStatement * next_statement =
@@ -414,8 +416,10 @@ FindReturn MySQLBackend::find_next_and_checkout (const string & tablename,
 
     find_return.datatable = fpr->get_datatable ();
 
-    find_return.connection = get_connection(fpr->get_hostname (),
+    find_return.connection = get_connection( fpr->get_hostname (),
                                             fpr->get_port (),
+                                            fpr->get_slave_hostname (),
+                                            fpr->get_slave_port (),
                                             fpr->get_db ());
 
     next_statement->free_result ();
@@ -438,6 +442,8 @@ FindReturn MySQLBackend::find_next_and_checkout (const string & tablename,
 
 Connection * MySQLBackend::get_connection(const char * hostname, 
                                           const short port,
+                                          const char * slave_hostname,
+                                          const short slave_port,
                                           const char * db)
 {
     // get our per-thread connections map
@@ -460,8 +466,9 @@ Connection * MySQLBackend::get_connection(const char * hostname,
 
     if (!connection)
     {
-        connection = new Connection (hostname, db, port,
-                                     this->username.c_str (),
+        connection = new Connection (hostname, port, 
+                                     slave_hostname, slave_port,
+                                     db, this->username.c_str (),
                                      this->password.c_str ());
         (*connections)[key] = connection;
     }
