@@ -335,8 +335,6 @@ void Connection::clear ()
 {
     LOG4CXX_DEBUG (logger, "clear");
 
-    // so we've lost our connection here. we'll need to:
-
     // get rid of all of it's prepared statements, we'll reconnect, 
     // but they'll be bad now
     map<string, PreparedStatement *>::iterator i;
@@ -360,8 +358,7 @@ void Connection::clear ()
         delete i->second;
     scan_statements.clear ();
 
-    // see if we're connected, auto reconnected worked
-    
+    // see if we're connected, (auto-reconnected at play here)
     // if not then switch to read only mode if we can
 
 }
@@ -413,26 +410,55 @@ Connection::Connection (const char * hostname, const short port,
 {
     this->hostname = hostname;
     this->port = port;
-    this->slave_hostname = slave_hostname ? slave_hostname : "";
-    this->slave_port = slave_port;
     this->db = db;
     this->read_only = 0;
 
+    LOG4CXX_DEBUG (logger, string ("Connection: setting up master hostname=") + 
+                   hostname);
+
     if (!mysql_init (&this->mysql))
-        LOG4CXX_ERROR (logger, "mysql_init failed");
+        LOG4CXX_ERROR (logger, "mysql_init master failed");
 
     my_bool val = true;
     mysql_options (&this->mysql, MYSQL_OPT_RECONNECT, &val);
 
     if (!mysql_real_connect (&this->mysql, hostname, username, password, db,
                              port, NULL, 0))
-        LOG4CXX_ERROR (logger, string ("mysql_real_connect failed: host=") +
+        LOG4CXX_ERROR (logger, 
+                       string ("mysql_real_connect master failed: host=") +
                        string (hostname) + string (", db=") + string (db) +
                        string (", username=") + string (username));
 
     // doing this before and after to work around potential bugs in mysql
     // server versions < 5.0.19
     mysql_options (&this->mysql, MYSQL_OPT_RECONNECT, &val);
+
+    if (slave_hostname && strlen (slave_hostname) > 0)
+    {
+        this->slave_hostname = slave_hostname;
+        this->slave_port = slave_port;
+
+        LOG4CXX_DEBUG (logger, 
+                       string ("Connection: setting up slave hostname=") +
+                       slave_hostname);
+
+        if (!mysql_init (&this->slave_mysql))
+            LOG4CXX_ERROR (logger, "mysql_init slave failed");
+
+        my_bool val = true;
+        mysql_options (&this->slave_mysql, MYSQL_OPT_RECONNECT, &val);
+
+        if (!mysql_real_connect (&this->slave_mysql, slave_hostname, 
+                                 username, password, db, slave_port, NULL, 0))
+            LOG4CXX_ERROR (logger, 
+                           string ("mysql_real_connect slave failed: host=") +
+                           string (hostname) + string (", db=") + string (db) +
+                           string (", username=") + string (username));
+
+        // doing this before and after to work around potential bugs in mysql
+        // server versions < 5.0.19
+        mysql_options (&this->slave_mysql, MYSQL_OPT_RECONNECT, &val);
+    }
 }
 
 Connection::~Connection ()

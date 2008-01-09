@@ -20,19 +20,25 @@ LoggerPtr MySQLBackend::logger (Logger::getLogger ("MySQLBackend"));
 
 MySQLBackend::MySQLBackend (const string & master_hostname, 
                             const short master_port,
-                            const string & master_db, const string & username,
-                            const string & password, int max_value_size)
+                            const string & slave_hostname, 
+                            const short slave_port,
+                            const string & directory_db,
+                            const string & username, const string & password, 
+                            int max_value_size)
 {
     {
         char buf[256];
-        sprintf (buf, "MySQLBackend: master_hostname=%s, master_port=%d, master_db=%s, username=%s, password=****, max_value_size=%d\n", 
-                 master_hostname.c_str (), master_port, master_db.c_str (),
-                 username.c_str (), max_value_size);
+        sprintf (buf, "MySQLBackend: master_hostname=%s, master_port=%d, slave_hostname=%s, slave_port=%d, directory_db=%s, username=%s, password=****, max_value_size=%d\n", 
+                 master_hostname.c_str (), master_port, slave_hostname.c_str (), 
+                 slave_port, directory_db.c_str (), username.c_str (), 
+                 max_value_size);
         LOG4CXX_INFO (logger, buf);
     }
     this->master_hostname = master_hostname;
     this->master_port = master_port;
-    this->master_db = master_db;
+    this->slave_hostname = slave_hostname;
+    this->slave_port = slave_port;
+    this->directory_db = directory_db;
     this->username = username;
     this->password = password;
     this->max_value_size = max_value_size;
@@ -50,8 +56,9 @@ MySQLBackend::load_partitions (const string & tablename)
         (Partition::greater);
 
     Connection * connection = connection_factory->get_connection
-        (this->master_hostname.c_str (), this->master_port, NULL, 0,
-         this->master_db.c_str (), this->username.c_str (),
+        (this->master_hostname.c_str (), this->master_port, 
+         this->slave_hostname.c_str (), this->slave_port, 
+         this->directory_db.c_str (), this->username.c_str (),
          this->password.c_str ());
 
     PreparedStatement * partitions_statement =
@@ -344,8 +351,9 @@ FindReturn MySQLBackend::find_next_and_checkout (const string & tablename,
                                                  const string & current_datatable)
 {
     Connection * connection = connection_factory->get_connection 
-        (this->master_hostname.c_str (), this->master_port, NULL, 0,
-         this->master_db.c_str (), this->username.c_str (), 
+        (this->master_hostname.c_str (), this->master_port,
+         this->slave_hostname.c_str (), this->slave_port,
+         this->directory_db.c_str (), this->username.c_str (), 
          this->password.c_str ());
 
     PreparedStatement * next_statement =

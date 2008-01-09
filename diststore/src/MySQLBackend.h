@@ -107,7 +107,8 @@ class MySQLBackend : public DistStoreBackend
 {
     public:
         MySQLBackend (const string & master_hostname, const short master_port,
-                      const string & master_db, const string & username,
+                      const string & slave_hostname, const short slave_port,
+                      const string & directory_db, const string & username,
                       const string & password, int max_value_size);
 
         vector<string> getTablenames ();
@@ -136,7 +137,9 @@ class MySQLBackend : public DistStoreBackend
             partitions;
         string master_hostname;
         short master_port;
-        string master_db;
+        string slave_hostname;
+        short slave_port;
+        string directory_db;
         string username;
         string password;
         int max_value_size;

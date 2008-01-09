@@ -531,11 +531,12 @@ namespace mysql {
 
             string hostname;
             int port;
+            MYSQL mysql;
             string slave_hostname;
             int slave_port;
-            string db;
-            MYSQL mysql;
+            MYSQL slave_mysql;
             time_t read_only;
+            string db;
             map<string, PreparedStatement *> partitions_statements;
             map<string, PreparedStatement *> next_statements;
             map<string, PreparedStatement *> get_statements;

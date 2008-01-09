@@ -172,8 +172,13 @@ int main (int argc, char **argv) {
                     ConfigManager->read<string>("MYSQL_MASTER_HOST", "localhost");
                 short master_port = 
                     ConfigManager->read<short>("MYSQL_MASTER_PORT", 3306);
-                string master_db = 
-                    ConfigManager->read<string>("MYSQL_MASTER_DB", "diststore");
+                string slave_hostname =
+                    ConfigManager->read<string>("MYSQL_SLAVE_HOST", "");
+                short slave_port = 
+                    ConfigManager->read<short>("MYSQL_SLAVE_PORT", 3306);
+                string directory_db = 
+                    ConfigManager->read<string>("MYSQL_DIRECTORY_DB", 
+                                                "diststore");
                 string username = 
                     ConfigManager->read<string>("MYSQL_USERNAME", "diststore");
                 string password = 
@@ -182,7 +187,10 @@ int main (int argc, char **argv) {
                     ConfigManager->read<int>("MYSQL_MAX_VALUES_SIZE", 1024);
                 backends.push_back (shared_ptr<DistStoreBackend>
                                     (new MySQLBackend (master_hostname, 
-                                                       master_port, master_db,
+                                                       master_port, 
+                                                       slave_hostname, 
+                                                       slave_port, 
+                                                       directory_db,
                                                        username, password, 
                                                        max_value_size)));
             }
