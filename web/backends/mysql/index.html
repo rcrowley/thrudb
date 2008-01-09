@@ -15,9 +15,23 @@
                 <li>Partitioned data storage to allow near-infinite dataset size</li>
                 <li>Simple setup, just install MySQL and DistStore, run the tablename create script, and set a couple of configuration values</li>
             </ul>
+            <li>Supports automatic and instant read-only failover and master switchback.</li>
             <li>Straightforward in DB storage, so you can easily write your own apps/scripts to work with the data</li>
             <li>Works with any MySQL setup: replication, backup, ...</li>
         </ul>
+
+        <h2>Suggested/Proposed Architecture</h2>
+        <img src="mysql.png">
+
+        <p>One or more DistStore servers fronting a pool of two or more MySQL
+        servers in master-master pairs. datatables are assigned to each mysql
+        server and it's sibling will provide read-only failover. Once the
+        downed host returns to service the DistStore servers will automatically
+        switch back to it in read-write mode without any data loss. If for some
+        reason the host can not be brought back up a manual read-write failover
+        can take place, to the sibling if it can handle the load of both, or to
+        a host replacing the downed one. At most replication delay information
+        is lost, if the downed host can't be brought back up.</p>
 
         <h2>Future Direction &amp; Development</h2>
         <ul>
@@ -32,16 +46,22 @@
         <h2>Use &amp; Configuration</h2>
 
 <pre>
-    mysql_backend_create_tablename.pl --master_hostname=&lt;host&gt; --master_port=&lt;port&gt; --master_db=&lt;db&gt;
-        --username=&lt;username&gt; --password=&lt;password&gt; --tablename=&lt;tablename&gt; --partitions_per_host=&lt;2&gt; 
-        --hosts=&lt;host1,host2,...&gt;
+    mysql_backend_create_tablename.pl --master-hostname=&lt;host&gt; --master-port=&lt;port&gt; --database=&lt;db&gt;
+        --root-pass=&lt;password&gt; --tablename=&lt;tablename&gt; --hosts=&lt;host1,host2,...&gt; --parts-per=&lt;2&gt; 
+        --with-circular-slaves
 </pre>
+
+        <p>Sensible defaults are provided for all options above. If
+        --with-circular-replication is provided there must be an even number of
+        hosts and they will be paired up in the order given.</p>
 
         To use the MySQL backend add the following lines to your diststore.conf replacing the right hand sides with values appropriate for your environment.
 <pre>
     MYSQL_MASTER_HOST = &lt;host&gt;
     MYSQL_MASTER_PORT = &lt;port&gt;
-    MYSQL_MASTER_DB = &lt;db&gt;
+    MYSQL_SLAVE_HOST = &lt;host&gt;
+    MYSQL_SLAVE_PORT = &lt;port&gt;
+    MYSQL_DIRECTORY_DB = &lt;db&gt;
     MYSQL_USERNAME = &lt;username&gt;
     MYSQL_PASSWORD = &lt;password&gt;
 </pre>
