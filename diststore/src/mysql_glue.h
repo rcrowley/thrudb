@@ -489,6 +489,8 @@ namespace mysql {
                         const char * password);
             ~Connection ();
 
+            void clear ();
+
             PreparedStatement * find_partitions_statement ();
             PreparedStatement * find_next_statement ();
             PreparedStatement * find_get_statement (const char * tablename,
@@ -541,8 +543,28 @@ namespace mysql {
             map<string, PreparedStatement *> delete_statements;
             map<string, PreparedStatement *> scan_statements;
     };
-};
 
+    class ConnectionFactory
+    {
+        public:
+            ConnectionFactory();
+            ~ConnectionFactory();
+
+            Connection * get_connection(const char * hostname,
+                                        const short port,
+                                        const char * slave_hostname,
+                                        const short slave_port, 
+                                        const char * db, 
+                                        const char * username,
+                                        const char * password);
+
+        private:
+            static log4cxx::LoggerPtr logger;
+
+            pthread_key_t connections_key;
+    };
+
+};
 #endif /* HAVE_LIBMYSQLCLIENT_R */
 
 #endif

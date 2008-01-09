@@ -11,7 +11,6 @@
 /*
  * TODO:
  * - timeout the directory info at some interval
- * - cleanly recover from lost/broken connections (partially done)
  * - think about straight key parititioning to allow in order scans etc...
  * - look at libmemcached for it's partitioning algoritms
  */
@@ -37,9 +36,8 @@ MySQLBackend::MySQLBackend (const string & master_hostname,
     this->username = username;
     this->password = password;
     this->max_value_size = max_value_size;
-        
-    // init the per-thread connections key
-    pthread_key_create (&connections_key, NULL);
+
+    this->connection_factory = new ConnectionFactory ();
 }
 
 set<Partition*, bool(*)(Partition*, Partition*)> * 
@@ -51,9 +49,10 @@ MySQLBackend::load_partitions (const string & tablename)
         new_partitions = new set<Partition*, bool(*)(Partition*, Partition*)>
         (Partition::greater);
 
-    Connection * connection = get_connection
+    Connection * connection = connection_factory->get_connection
         (this->master_hostname.c_str (), this->master_port, NULL, 0,
-         this->master_db.c_str ());
+         this->master_db.c_str (), this->username.c_str (),
+         this->password.c_str ());
 
     PreparedStatement * partitions_statement =
         connection->find_partitions_statement ();
@@ -61,15 +60,7 @@ MySQLBackend::load_partitions (const string & tablename)
     StringParams * fp = (StringParams*)partitions_statement->get_bind_params ();
     fp->set_str (tablename.c_str ());
 
-    try
-    {
-        partitions_statement->execute ();
-    }
-    catch (DistStoreException e)
-    {
-        destroy_connection (connection);
-        throw e;
-    }
+    partitions_statement->execute ();
 
     PartitionResults * pr =
         (PartitionResults*)partitions_statement->get_bind_results ();
@@ -120,15 +111,7 @@ string MySQLBackend::get (const string & tablename, const string & key )
     StringParams * tkp = (StringParams*)get_statement->get_bind_params ();
     tkp->set_str (key.c_str ());
 
-    try
-    {
-        get_statement->execute ();
-    }
-    catch (DistStoreException e)
-    {
-        destroy_connection (find_return.connection);
-        throw e;
-    }
+    get_statement->execute ();
 
     string value;
     if (get_statement->fetch () == MYSQL_NO_DATA)
@@ -162,15 +145,7 @@ void MySQLBackend::put (const string & tablename, const string & key, const stri
     kvp->set_str1 (key.c_str ());
     kvp->set_str2 (value.c_str ());
 
-    try
-    {
-        put_statement->execute ();
-    }
-    catch (DistStoreException e)
-    {
-        destroy_connection (find_return.connection);
-        throw e;
-    }
+    put_statement->execute ();
 }
 
 void MySQLBackend::remove (const string & tablename, const string & key )
@@ -184,15 +159,7 @@ void MySQLBackend::remove (const string & tablename, const string & key )
     StringParams * kvp = (StringParams*)delete_statement->get_bind_params ();
     kvp->set_str (key.c_str ());
 
-    try
-    {
         delete_statement->execute ();
-    }
-    catch (DistStoreException e)
-    {
-        destroy_connection (find_return.connection);
-        throw e;
-    }
 }
 
 string MySQLBackend::scan_helper (ScanResponse & scan_response,
@@ -209,15 +176,7 @@ string MySQLBackend::scan_helper (ScanResponse & scan_response,
     kcp->set_str (seed.c_str ());
     kcp->set_i (count);
 
-    try
-    {
-        scan_statement->execute ();
-    }
-    catch (DistStoreException e)
-    {
-        destroy_connection (find_return.connection);
-        throw e;
-    }
+    scan_statement->execute ();
 
     int ret;
     KeyValueResults * kvr =
@@ -352,10 +311,11 @@ FindReturn MySQLBackend::find_and_checkout (const string & tablename,
         {
             LOG4CXX_DEBUG (logger, string ("found container, datatable=") +
                            (*partition)->get_datatable ());
-            find_return.connection = get_connection
+            find_return.connection = connection_factory->get_connection
                 ((*partition)->get_hostname (), (*partition)->get_port (),
                  (*partition)->get_slave_hostname (), 
-                 (*partition)->get_slave_port (), (*partition)->get_db ());
+                 (*partition)->get_slave_port (), (*partition)->get_db (),
+                 this->username.c_str (), this->password.c_str ());
             find_return.datatable = (*partition)->get_datatable ();
             return find_return;
         }
@@ -383,9 +343,10 @@ FindReturn MySQLBackend::find_and_checkout (const string & tablename,
 FindReturn MySQLBackend::find_next_and_checkout (const string & tablename,
                                                  const string & current_datatable)
 {
-    Connection * connection = get_connection 
+    Connection * connection = connection_factory->get_connection 
         (this->master_hostname.c_str (), this->master_port, NULL, 0,
-         this->master_db.c_str ());
+         this->master_db.c_str (), this->username.c_str (), 
+         this->password.c_str ());
 
     PreparedStatement * next_statement =
         connection->find_next_statement ();
@@ -395,15 +356,7 @@ FindReturn MySQLBackend::find_next_and_checkout (const string & tablename,
     fpp->set_str1 (tablename.c_str ());
     fpp->set_str2 (current_datatable.c_str ());
 
-    try
-    {
-        next_statement->execute ();
-    }
-    catch (DistStoreException e)
-    {
-        destroy_connection (connection);
-        throw e;
-    }
+    next_statement->execute ();
 
     FindReturn find_return;
     find_return.connection = NULL;
@@ -416,11 +369,10 @@ FindReturn MySQLBackend::find_next_and_checkout (const string & tablename,
 
     find_return.datatable = fpr->get_datatable ();
 
-    find_return.connection = get_connection( fpr->get_hostname (),
-                                            fpr->get_port (),
-                                            fpr->get_slave_hostname (),
-                                            fpr->get_slave_port (),
-                                            fpr->get_db ());
+    find_return.connection = connection_factory->get_connection
+        (fpr->get_hostname (), fpr->get_port (), fpr->get_slave_hostname (),
+         fpr->get_slave_port (), fpr->get_db (), this->username.c_str (),
+         this->password.c_str ());
 
     next_statement->free_result ();
 
@@ -433,49 +385,8 @@ FindReturn MySQLBackend::find_next_and_checkout (const string & tablename,
     return find_return;
 }
 
-#define HOST_PORT_DB_KEY(key, hostname, port, db)       \
-{                                                   \
-    char buf[200];                                  \
-    sprintf (buf, "%s:%d:%s", hostname, port, db);  \
-    key = string (buf);                             \
-}
 
-Connection * MySQLBackend::get_connection(const char * hostname, 
-                                          const short port,
-                                          const char * slave_hostname,
-                                          const short slave_port,
-                                          const char * db)
-{
-    // get our per-thread connections map
-    map<string, Connection*> * connections = 
-        (map<string, Connection*>*) pthread_getspecific(connections_key);
-
-    if (connections == NULL)
-    {
-        // set up it if it doesn't yet exist
-        connections = new map<string, Connection*>();
-        // store it
-        pthread_setspecific(connections_key, connections);
-    }
-
-    string key;
-    HOST_PORT_DB_KEY (key, hostname, port, db);
-    LOG4CXX_DEBUG (logger, string ("get_connection: key=") + key);
-    // get the connection for this host/db
-    Connection * connection = (*connections)[key];
-
-    if (!connection)
-    {
-        connection = new Connection (hostname, port, 
-                                     slave_hostname, slave_port,
-                                     db, this->username.c_str (),
-                                     this->password.c_str ());
-        (*connections)[key] = connection;
-    }
-
-    return connection;
-}
-
+    /* TODO: 
 void MySQLBackend::destroy_connection (Connection * connection)
 {
     string key;
@@ -487,6 +398,7 @@ void MySQLBackend::destroy_connection (Connection * connection)
     (*connections)[key] = NULL;
     delete connection;
 }
+    */
 
 string MySQLBackend::admin (const string & op, const string & data)
 {

@@ -10,8 +10,6 @@
 #include <string>
 #include <set>
 #include <log4cxx/logger.h>
-#include <thrift/transport/TTransportUtils.h>
-#include <thrift/protocol/TBinaryProtocol.h>
 #include "DistStore.h"
 #include "DistStoreBackend.h"
 #include "mysql_glue.h"
@@ -129,15 +127,11 @@ class MySQLBackend : public DistStoreBackend
                                       const string & key );
         FindReturn find_next_and_checkout (const string & tablename,
                                            const string & current_datatablename);
-        Connection * get_connection(const char * hostname, const short port, 
-                                    const char * slave_hostnae, 
-                                    const short slave_port, const char * db);
-        void destroy_connection(Connection * connection);
 
     private:
         static log4cxx::LoggerPtr logger;
 
-        pthread_key_t connections_key;
+        ConnectionFactory * connection_factory;
         map<string, set<Partition*, bool(*)(Partition*, Partition*)>* > 
             partitions;
         string master_hostname;

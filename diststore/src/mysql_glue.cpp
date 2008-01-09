@@ -7,6 +7,7 @@
 #if HAVE_LIBMYSQLCLIENT_R
 
 #include "mysql_glue.h"
+#include <mysql/errmsg.h>
 
 using namespace std;
 using namespace log4cxx;
@@ -16,6 +17,7 @@ using namespace facebook::thrift::concurrency;
 // private
 LoggerPtr PreparedStatement::logger (Logger::getLogger ("PreparedStatement"));
 LoggerPtr Connection::logger (Logger::getLogger ("Connection"));
+LoggerPtr ConnectionFactory::logger (Logger::getLogger ("ConnectionFactory"));
 
 void StringParams::init (const char * str)
 {
@@ -189,7 +191,16 @@ PreparedStatement::PreparedStatement (Connection * connection,
 PreparedStatement::~PreparedStatement ()
 {
     LOG4CXX_DEBUG (logger, "~PreparedStatement");
-    mysql_stmt_close (this->stmt);
+    if (this->stmt)
+    {
+        mysql_stmt_close (this->stmt);
+        this->stmt = NULL;
+    }
+    if (this->bind_params)
+        delete this->bind_params;
+    if (this->bind_results)
+        delete this->bind_results;
+    // TODO: query?
 }
 
 void PreparedStatement::init (Connection * connection, const char * query,
@@ -225,6 +236,14 @@ void PreparedStatement::init (Connection * connection, const char * query,
                  ret, this->stmt, mysql_errno (mysql), mysql_error (mysql),
                  query);
         LOG4CXX_ERROR (logger, buf);
+
+        // NOTE: this isn't one of the error codes listed in the doc, but it's
+        // the one i'm getting when the server goes away
+        if (mysql_stmt_errno (this->stmt) == CR_CONN_HOST_ERROR)
+        {
+            this->connection->clear ();
+        }
+
         DistStoreException e;
         e.what = "MySQLBackend error";
         throw e;
@@ -264,12 +283,17 @@ void PreparedStatement::execute ()
     LOG4CXX_DEBUG (logger, "execute");
 
     // if this statements writes and we're a read only connection, fail
-    if (this->writes && this->connection->get_read_only ())
+    
+    if (this->connection->get_read_only ())
     {
-        DistStoreException e;
-        e.what = "MySQLBackend read-only error";
-        LOG4CXX_DEBUG (logger, "execute error: what=" + e.what);
-        throw e;
+        if (this->writes)
+        {
+            DistStoreException e;
+            e.what = "MySQLBackend read-only error";
+            LOG4CXX_DEBUG (logger, "execute error: what=" + e.what);
+            throw e;
+        }
+        // TODO: this is where we'll try to get out of read only mode
     }
 
     int ret;
@@ -280,6 +304,14 @@ void PreparedStatement::execute ()
                  this->stmt, mysql_stmt_errno (this->stmt),
                  mysql_stmt_error (this->stmt));
         LOG4CXX_ERROR (logger, buf);
+
+        // NOTE: this isn't one of the error codes listed in the doc, but it's
+        // the one i'm getting when the server goes away
+        if (mysql_stmt_errno (this->stmt) == CR_CONN_HOST_ERROR)
+        {
+            this->connection->clear ();
+        }
+
         DistStoreException e;
         e.what = "MySQLBackend error";
         throw e;
@@ -297,6 +329,41 @@ void PreparedStatement::execute ()
         e.what = "MySQLBackend error";
         throw e;
     }
+}
+
+void Connection::clear ()
+{
+    LOG4CXX_DEBUG (logger, "clear");
+
+    // so we've lost our connection here. we'll need to:
+
+    // get rid of all of it's prepared statements, we'll reconnect, 
+    // but they'll be bad now
+    map<string, PreparedStatement *>::iterator i;
+    for (i = partitions_statements.begin ();
+         i != partitions_statements.end (); i++)
+        delete i->second;
+    partitions_statements.clear ();
+    for (i = next_statements.begin (); i != next_statements.end (); i++)
+        delete i->second;
+    next_statements.clear ();
+    for (i = get_statements.begin (); i != get_statements.end (); i++)
+        delete i->second;
+    get_statements.clear ();
+    for (i = put_statements.begin (); i != put_statements.end (); i++)
+        delete i->second;
+    put_statements.clear ();
+    for (i = delete_statements.begin (); i != delete_statements.end (); i++)
+        delete i->second;
+    delete_statements.clear ();
+    for (i = scan_statements.begin (); i != scan_statements.end (); i++)
+        delete i->second;
+    scan_statements.clear ();
+
+    // see if we're connected, auto reconnected worked
+    
+    // if not then switch to read only mode if we can
+
 }
 
 unsigned long PreparedStatement::num_rows ()
@@ -371,20 +438,7 @@ Connection::Connection (const char * hostname, const short port,
 Connection::~Connection ()
 {
     LOG4CXX_DEBUG (logger, "~Connection");
-    map<string, PreparedStatement *>::iterator i;
-    for (i = partitions_statements.begin ();
-         i != partitions_statements.end (); i++)
-        delete i->second;
-    for (i = next_statements.begin (); i != next_statements.end (); i++)
-        delete i->second;
-    for (i = get_statements.begin (); i != get_statements.end (); i++)
-        delete i->second;
-    for (i = put_statements.begin (); i != put_statements.end (); i++)
-        delete i->second;
-    for (i = delete_statements.begin (); i != delete_statements.end (); i++)
-        delete i->second;
-    for (i = scan_statements.begin (); i != scan_statements.end (); i++)
-        delete i->second;
+    clear ();
     mysql_close (&this->mysql);
 }
 
@@ -490,5 +544,66 @@ PreparedStatement * Connection::find_scan_statement (const char * tablename,
     }
     return stmt;
 }
+
+#define HOST_PORT_DB_KEY(key, hostname, port, db)   \
+{                                                   \
+    char buf[200];                                  \
+    sprintf (buf, "%s:%d:%s", hostname, port, db);  \
+    key = string (buf);                             \
+}
+
+ConnectionFactory::ConnectionFactory ()
+{
+    // init the per-thread connections key
+    pthread_key_create (&connections_key, NULL);
+}
+
+ConnectionFactory::~ConnectionFactory ()
+{
+    // init the per-thread connections key
+    pthread_key_delete (connections_key);
+}
+
+Connection * ConnectionFactory::get_connection
+(const char * hostname, const short port, const char * slave_hostname,
+ const short slave_port, const char * db, const char * username,
+ const char * password)
+{
+    // get our per-thread connections map
+    map<string, Connection*> * connections =
+        (map<string, Connection*>*) pthread_getspecific(connections_key);
+
+    if (connections == NULL)
+    {
+        // set up it if it doesn't yet exist
+        connections = new map<string, Connection*>();
+        // store it
+        pthread_setspecific(connections_key, connections);
+    }
+
+    string key;
+    HOST_PORT_DB_KEY (key, hostname, port, db);
+    LOG4CXX_DEBUG (logger, string ("get_connection: key=") + key);
+    // get the connection for this host/db
+    Connection * connection = (*connections)[key];
+
+    if (!connection)
+    {
+        LOG4CXX_DEBUG (logger, string ("get_connection create: key=") + key);
+        connection = new Connection (hostname, port, slave_hostname, 
+                                     slave_port, db, username, password);
+        (*connections)[key] = connection;
+    }
+    // TODO: if we're in read only mode and it's time see about 
+    // going back to read-write
+    else if (0) 
+    {
+        // TODO:
+        ;
+    }
+
+    return connection;
+}
+
 
 #endif /* HAVE_LIBMYSQLCLIENT_R */
