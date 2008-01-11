@@ -19,6 +19,18 @@ LoggerPtr PreparedStatement::logger (Logger::getLogger ("PreparedStatement"));
 LoggerPtr Connection::logger (Logger::getLogger ("Connection"));
 LoggerPtr ConnectionFactory::logger (Logger::getLogger ("ConnectionFactory"));
 
+LoggerPtr glogger (Logger::getLogger ("glogger"));
+
+BindParams::~BindParams()
+{
+    delete [] this->params;
+}
+
+BindResults::~BindResults()
+{
+    delete [] this->results;
+}
+
 void StringParams::init (const char * str)
 {
     this->set_str (str);
@@ -190,7 +202,6 @@ PreparedStatement::PreparedStatement (Connection * connection,
 
 PreparedStatement::~PreparedStatement ()
 {
-    LOG4CXX_DEBUG (logger, "~PreparedStatement");
     if (this->stmt)
     {
         mysql_stmt_close (this->stmt);
@@ -243,6 +254,18 @@ void PreparedStatement::init (Connection * connection, const char * query,
         {
             this->connection->lost_connection ();
         }
+
+        // this prepared statement object hasn't been returned and associated
+        // with the connection object yet so it can't have been deleted and
+        // cleaned up as the others are in lost_connection (). at this point
+        // we "own" bind_params and bind_results so we need to get rid of them
+        // i don't really like this, but it's necessary. might be a sign that 
+        // something's not quite right about how my prepared statement stuff
+        // is laid out.
+        if (bind_params)
+            delete bind_params;
+        if (bind_results)
+            delete bind_results;
 
         DistStoreException e;
         e.what = "MySQLBackend error";
@@ -409,7 +432,7 @@ void Connection::check_master ()
 void Connection::lost_connection ()
 {
     LOG4CXX_INFO (logger, "lost_connection");
-
+    
     // if we lost the connection, we always have to reset
     reset_connection ();
 
@@ -688,14 +711,6 @@ Connection * ConnectionFactory::get_connection
                                      slave_port, db, username, password);
         (*connections)[key] = connection;
     }
-    // TODO: if we're in read only mode and it's time see about 
-    // going back to read-write
-    else if (0) 
-    {
-        // TODO:
-        ;
-    }
-
     return connection;
 }
 

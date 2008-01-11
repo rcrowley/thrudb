@@ -111,6 +111,8 @@ class MySQLBackend : public DistStoreBackend
                       const string & directory_db, const string & username,
                       const string & password, int max_value_size);
 
+        ~MySQLBackend ();
+
         vector<string> getTablenames ();
         string get (const string & tablename, const string & key );
         void put (const string & tablename, const string & key, 

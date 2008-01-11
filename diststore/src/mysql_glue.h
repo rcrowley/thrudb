@@ -34,6 +34,9 @@ namespace mysql {
             {
                 return this->params;
             }
+
+            virtual ~BindParams();
+
         protected:
             MYSQL_BIND * params;
     };
@@ -45,6 +48,9 @@ namespace mysql {
             {
                 return this->results;
             }
+
+            virtual ~BindResults();
+            
         protected:
             MYSQL_BIND * results;
     };

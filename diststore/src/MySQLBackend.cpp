@@ -13,6 +13,7 @@
  * - timeout the directory info at some interval
  * - think about straight key parititioning to allow in order scans etc...
  * - look at libmemcached for it's partitioning algoritms
+ * - rename master to directory where appropriate, code, script, doc, ...
  */
 
 // private
@@ -46,14 +47,23 @@ MySQLBackend::MySQLBackend (const string & master_hostname,
     this->connection_factory = new ConnectionFactory ();
 }
 
+MySQLBackend::~MySQLBackend ()
+{
+    map<string, set<Partition*, bool(*)(Partition*, Partition*)>* >::iterator i;
+    for (i = partitions.begin (); i != partitions.end (); i++)
+    {
+        set<Partition*, bool(*)(Partition*, Partition*)>::iterator j;
+        for (j = (*i).second->begin (); j != (*i).second->end (); j++)
+            delete (*j);  // each partition
+        delete (*i).second; // the set
+    }
+    delete this->connection_factory;
+}
+
 set<Partition*, bool(*)(Partition*, Partition*)> * 
 MySQLBackend::load_partitions (const string & tablename)
 {
     LOG4CXX_INFO (logger, string ("load_partitions: tablename=") + tablename);
-
-    set<Partition*, bool(*)(Partition*, Partition*)> *
-        new_partitions = new set<Partition*, bool(*)(Partition*, Partition*)>
-        (Partition::greater);
 
     Connection * connection = connection_factory->get_connection
         (this->master_hostname.c_str (), this->master_port, 
@@ -72,6 +82,10 @@ MySQLBackend::load_partitions (const string & tablename)
     PartitionResults * pr =
         (PartitionResults*)partitions_statement->get_bind_results ();
 
+    set<Partition*, bool(*)(Partition*, Partition*)> *
+        new_partitions = new set<Partition*, bool(*)(Partition*, Partition*)>
+        (Partition::greater);
+
     while (partitions_statement->fetch () != MYSQL_NO_DATA)
     {
         LOG4CXX_INFO (logger, string ("  load_partitions inserting: datatable=") +
@@ -83,6 +97,16 @@ MySQLBackend::load_partitions (const string & tablename)
 
     if (new_partitions->size () > 0)
     {
+        set<Partition*, bool(*)(Partition*, Partition*)> * old_partitions = 
+            partitions[tablename];
+        if (old_partitions)
+        {
+            set<Partition*, bool(*)(Partition*, Partition*)>::iterator i;
+            for (i = old_partitions->begin (); 
+                 i != old_partitions->end (); i++)
+                delete (*i);  // each partition
+            delete old_partitions; // the set
+        }
         partitions[tablename] = new_partitions;
     }
     else
