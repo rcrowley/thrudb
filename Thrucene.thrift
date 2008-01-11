@@ -44,16 +44,16 @@ struct RemoveMsg
 
 enum StorageType
 {
-        KEYWORD,
-        TEXT,
-        UNSTORED
+        KEYWORD  = 1,
+        TEXT     = 2,
+        UNSTORED = 3
 }
 
 struct Field
 {
         1: string name,
         2: string value,
-        3: StorageType stype,
+        3: StorageType stype = UNSTORED,
         4: i32    boost      = 1,
         5: bool   sortable   = 0
 }
