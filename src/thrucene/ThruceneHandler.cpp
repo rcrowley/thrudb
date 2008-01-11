@@ -168,6 +168,8 @@ void ThruceneHandler::addList( const vector<DocMsg> &dv )
 {
     LOG4CXX::DEBUG("Entering addList");
 
+    if(dv.empty())
+        return;
 
     boost::shared_ptr<Transaction> t = TransactionManager->beginTransaction();
 
@@ -225,6 +227,9 @@ void ThruceneHandler::addList( const vector<DocMsg> &dv )
 
 void ThruceneHandler::_addList( const vector<DocMsg> &dv )
 {
+
+    if(dv.empty())
+        return;
 
     vector< lucene::document::Document *> docs;
 
@@ -311,6 +316,10 @@ void ThruceneHandler::_addList( const vector<DocMsg> &dv )
 
 void ThruceneHandler::removeList( const vector<RemoveMsg> &rl )
 {
+    if(rl.empty())
+        return;
+
+
     boost::shared_ptr<Transaction> t = TransactionManager->beginTransaction();
 
     //Create raw message
@@ -369,6 +378,9 @@ void ThruceneHandler::_removeList( const vector<RemoveMsg> &rl )
 {
     LOG4CXX::DEBUG("Entering _removeList");
 
+    if(rl.empty())
+        return;
+
     vector<wstring> to_remove;
 
     string domain;
@@ -398,13 +410,15 @@ void ThruceneHandler::_removeList( const vector<RemoveMsg> &rl )
         to_remove.push_back(docid);
     }
 
-
-    return this->remove(domain,index,to_remove);
+    this->remove(domain,index,to_remove);
 
 }
 
 void ThruceneHandler::updateList( const vector<DocMsg> &ul)
 {
+    if(ul.empty())
+        return;
+
     boost::shared_ptr<Transaction> t = TransactionManager->beginTransaction();
 
     //Create raw message
@@ -461,6 +475,9 @@ void ThruceneHandler::updateList( const vector<DocMsg> &ul)
 
 void ThruceneHandler::_updateList( const vector<DocMsg> &ul)
 {
+    if(ul.empty())
+        return;
+
 
     vector<RemoveMsg> to_remove;
     for(unsigned int i=0; i<ul.size(); i++)
@@ -475,11 +492,15 @@ void ThruceneHandler::_updateList( const vector<DocMsg> &ul)
     }
 
     this->removeList(to_remove);
-    return this->addList(ul);
+    this->addList(ul);
 }
 
 void ThruceneHandler::queryList(vector<QueryResponse> &_return, const vector<QueryMsg> &q)
 {
+
+    if(q.empty())
+        return;
+
 
     string domain;
     string index;
