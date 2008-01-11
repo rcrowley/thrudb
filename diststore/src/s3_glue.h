@@ -39,7 +39,6 @@ extern long long s3_total_read;
 void s3_audit(int x);
 
 namespace s3 {
-    using namespace std;
 
     struct s3headers {
         const char *name;                       // do not include x-amz-meta-
@@ -66,57 +65,57 @@ namespace s3 {
     class response_buffer : public buffer {
     public:
         long   result;                  // HTTP result code
-        map<string,string> rheaders;    // response headers
+        std::map<std::string,std::string> rheaders;    // response headers
         unsigned char ETag[16];         // if provided, in binary
     };
 
     /* S3 XML Objects */
     class Contents {
     public:
-        string Key;
-        string LastModified;
-        string ETag;
+        std::string Key;
+        std::string LastModified;
+        std::string ETag;
         size_t Size;
-        string OwnerID;
-        string OwnerDisplayName;
-        string StorageClass;
+        std::string OwnerID;
+        std::string OwnerDisplayName;
+        std::string StorageClass;
     };
 
     class Bucket {
     public:
-        string Name;
-        string CreationDate;
+        std::string Name;
+        std::string CreationDate;
     };
 
     class ListAllMyBucketsResult {
     public:
         ~ListAllMyBucketsResult(){
-            for(vector<Bucket *>::iterator i = Buckets.begin();
+            for(std::vector<Bucket *>::iterator i = Buckets.begin();
                 i != Buckets.end();
                 i++){
                 delete *i;
             }
         }
-        string OwnerID;
-        string OwnerDisplayName;
-        vector<Bucket *> Buckets;
+        std::string OwnerID;
+        std::string OwnerDisplayName;
+        std::vector<Bucket *> Buckets;
     };
 
     class ListBucketResult {
     public:
         ~ListBucketResult(){
-            for(vector<Contents *>::iterator i = contents.begin();
+            for(std::vector<Contents *>::iterator i = contents.begin();
                 i != contents.end();
                 i++){
                 delete *i;
             }
         }
-        string Name;
-        string Prefix;
-        string Marker;
+        std::string Name;
+        std::string Prefix;
+        std::string Marker;
         int MaxKeys;
         bool IsTruncated;
-        vector<Contents *> contents;            // list of objects
+        std::vector<Contents *> contents;            // list of objects
     };
 
     class s3_result {
@@ -127,28 +126,28 @@ namespace s3 {
             if(lbr) delete lbr;
         }
         int depth;
-        string cbuf;                    // buffer of these characters
+        std::string cbuf;                    // buffer of these characters
         class ListAllMyBucketsResult *lambr;
         class ListBucketResult *lbr;                            // list bucket results
         const class buffer *buf;        // what we are parsing
     };
 
-    response_buffer *request(string method,string path,string query,time_t expires,
+    response_buffer *request(std::string method,std::string path,std::string query,time_t expires,
                              const char *sendbuf,size_t sendbuflen,
                              const s3headers *extra_headers);
     response_buffer *get_url(const char *url);
     s3_result *list_buckets();
-    s3_result *list_bucket(string bucket,string prefix,string marker,int max_keys);
-    int object_put(string bucket,string path,
+    s3_result *list_bucket(std::string bucket,std::string prefix,std::string marker,int max_keys);
+    int object_put(std::string bucket,std::string path,
                       const char *buf,size_t buflen,
                       const struct s3headers *meta);
-    int bucket_mkdir(string bucket);
-    int bucket_rmdir(string bucket);
-    response_buffer *object_get(string bucket,string path,
+    int bucket_mkdir(std::string bucket);
+    int bucket_rmdir(std::string bucket);
+    response_buffer *object_get(std::string bucket,std::string path,
                                 const s3headers *extra_headers);
-    response_buffer *object_head(string bucket,string path,
+    response_buffer *object_head(std::string bucket,std::string path,
                                  const s3headers *extra_headers);
-    int object_rm(string bucket,string path);
+    int object_rm(std::string bucket,std::string path);
 }
 
 #endif /* HAVE_LIBEXPAT && HAVE_LIBCURL */

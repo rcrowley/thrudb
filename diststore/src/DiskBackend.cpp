@@ -26,6 +26,7 @@
 #include "DistStore.h"
 
 namespace fs = boost::filesystem;
+using namespace boost;
 using namespace diststore;
 using namespace log4cxx;
 using namespace std;
@@ -80,7 +81,7 @@ string DiskBackend::get (const string & tablename, const string & key)
         throw e;
     }
 
-    ifstream::pos_type size = infile.tellg ();
+    fs::ifstream::pos_type size = infile.tellg ();
     char * memblock = new char [size];
 
     infile.seekg (0, ios::beg);
@@ -111,7 +112,7 @@ void DiskBackend::put (const string & tablename, const string & key,
 
     string file = build_filename (tablename, d1, d2, d3, key);
 
-    std::ofstream outfile;
+    fs::ofstream outfile;
     outfile.open (file.c_str (), ios::out | ios::binary | ios::trunc);
 
     if (!outfile.is_open ())

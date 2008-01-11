@@ -8,9 +8,13 @@
 
 #if HAVE_LIBMEMCACHED
 
+using namespace boost;
+using namespace diststore;
+using namespace log4cxx;
+using namespace std;
+
 // private
 LoggerPtr MemcachedBackend::logger (Logger::getLogger ("MemcachedBackend"));
-pthread_key_t MemcachedBackend::memcached_key;
 
 MemcachedBackend::MemcachedBackend (const string & memcached_servers, 
                                     shared_ptr<DistStoreBackend> backend)

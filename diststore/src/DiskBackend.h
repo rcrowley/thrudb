@@ -21,38 +21,41 @@
 #include "DistStore.h"
 #include "DistStoreBackend.h"
 
-using namespace std;
-
 #define DISK_BACKEND_MAX_TABLENAME_SIZE 64
 #define DISK_BACKEND_MAX_KEY_SIZE 64
 
 class DiskBackend : public DistStoreBackend
 {
     public:
-        DiskBackend(const string & doc_root);
+        DiskBackend(const std::string & doc_root);
 
-        vector<string> getTablenames ();
-        string get (const string & tablename, const string & key );
-        void put (const string & tablename, const string & key, 
-                  const string & value);
-        void remove (const string & tablename, const string & key );
-        ScanResponse scan (const string & tablename, const string & seed,
-                           int32_t count);
-        string admin (const string & op, const string & data);
-        void validate (const string & tablename, const string * key,
-                       const string * value);
+        std::vector<std::string> getTablenames ();
+        std::string get (const std::string & tablename,
+                         const std::string & key);
+        void put (const std::string & tablename, const std::string & key,
+                  const std::string & value);
+        void remove (const std::string & tablename, const std::string & key);
+        diststore::ScanResponse scan (const std::string & tablename,
+                                      const std::string & seed, int32_t count);
+        std::string admin (const std::string & op, const std::string & data);
+        void validate (const std::string & tablename, const std::string * key,
+                       const std::string * value);
 
     protected:
         static log4cxx::LoggerPtr logger;
 
-        string doc_root;
+        std::string doc_root;
 
-        void get_dir_pieces (string & d1, string & d2, string & d3, 
-                             const string & tablename, const string & key);
-        string build_filename(const string & tablename, const string & key);
-        string build_filename(const string & tablename, const string & d1,
-                              const string & d2, const string & d3,
-                              const string & key);
+        void get_dir_pieces (std::string & d1, std::string & d2,
+                             std::string & d3, const std::string & tablename,
+                             const std::string & key);
+        std::string build_filename(const std::string & tablename,
+                                   const std::string & key);
+        std::string build_filename(const std::string & tablename,
+                                   const std::string & d1,
+                                   const std::string & d2,
+                                   const std::string & d3,
+                                   const std::string & key);
 };
 
 #endif /* HAVE_LIBBOOST_FILESYSTEM && HAVE_LIBCRYPTO */

@@ -8,6 +8,11 @@
 
 #if HAVE_LIBMEMCACHED
 
+using namespace boost;
+using namespace diststore;
+using namespace log4cxx;
+using namespace std;
+
 // private
 LoggerPtr NBackend::logger (Logger::getLogger ("NBackend"));
 

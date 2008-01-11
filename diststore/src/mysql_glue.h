@@ -12,9 +12,6 @@
 #include <thrift/concurrency/Mutex.h>
 #include "DistStore.h"
 
-using namespace std;
-using namespace diststore;
-
 namespace mysql {
 
     #define MYSQL_BACKEND_MAX_STRING_SIZE 64
@@ -50,7 +47,7 @@ namespace mysql {
             }
 
             virtual ~BindResults();
-            
+
         protected:
             MYSQL_BIND * results;
     };
@@ -482,8 +479,9 @@ namespace mysql {
         private:
             static log4cxx::LoggerPtr logger;
 
-            void init (Connection * connection, const char * query, bool writes,
-                       BindParams * bind_params, BindResults * bind_results);
+            void init (Connection * connection, const char * query,
+                       bool writes, BindParams * bind_params,
+                       BindResults * bind_results);
     };
 
     class Connection
@@ -512,7 +510,7 @@ namespace mysql {
             PreparedStatement * find_scan_statement (const char * tablename,
                                                      int max_value_size);
 
-            string get_hostname ()
+            std::string get_hostname ()
             {
                 return this->hostname;
             }
@@ -522,7 +520,7 @@ namespace mysql {
                 return this->port;
             }
 
-            string get_db ()
+            std::string get_db ()
             {
                 return this->db;
             }
@@ -542,20 +540,20 @@ namespace mysql {
         private:
             static log4cxx::LoggerPtr logger;
 
-            string hostname;
+            std::string hostname;
             int port;
             MYSQL mysql;
-            string slave_hostname;
+            std::string slave_hostname;
             int slave_port;
             MYSQL slave_mysql;
             time_t read_only;
-            string db;
-            map<string, PreparedStatement *> partitions_statements;
-            map<string, PreparedStatement *> next_statements;
-            map<string, PreparedStatement *> get_statements;
-            map<string, PreparedStatement *> put_statements;
-            map<string, PreparedStatement *> delete_statements;
-            map<string, PreparedStatement *> scan_statements;
+            std::string db;
+            std::map<std::string, PreparedStatement *> partitions_statements;
+            std::map<std::string, PreparedStatement *> next_statements;
+            std::map<std::string, PreparedStatement *> get_statements;
+            std::map<std::string, PreparedStatement *> put_statements;
+            std::map<std::string, PreparedStatement *> delete_statements;
+            std::map<std::string, PreparedStatement *> scan_statements;
     };
 
     class ConnectionFactory
@@ -567,8 +565,8 @@ namespace mysql {
             Connection * get_connection(const char * hostname,
                                         const short port,
                                         const char * slave_hostname,
-                                        const short slave_port, 
-                                        const char * db, 
+                                        const short slave_port,
+                                        const char * db,
                                         const char * username,
                                         const char * password);
 

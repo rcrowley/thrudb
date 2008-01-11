@@ -12,6 +12,11 @@
 // occur otherwise
 #define SPREAD_BACKEND_MAX_MESSAGE_SIZE 128
 
+using namespace boost;
+using namespace diststore;
+using namespace log4cxx;
+using namespace std;
+
 // private
 LoggerPtr SpreadBackend::logger (Logger::getLogger ("SpreadBackend"));
 

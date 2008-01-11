@@ -17,28 +17,30 @@
 class BDBBackend : public DistStoreBackend
 {
     public:
-        BDBBackend (const string & bdb_root, const int & thread_count);
+        BDBBackend (const std::string & bdb_root, const int & thread_count);
         ~BDBBackend ();
 
-        vector<string> getTablenames ();
-        string get (const string & tablename, const string & key );
-        void put (const string & tablename, const string & key, 
-                  const string & value);
-        void remove (const string & tablename, const string & key );
-        ScanResponse scan (const string & tablename, const string & seed,
-                           int32_t count);
-        string admin (const string & op, const string & data);
-        void validate (const string & tablename, const string * key,
-                       const string * value);
+        std::vector<std::string> getTablenames ();
+        std::string get (const std::string & tablename,
+                         const std::string & key);
+        void put (const std::string & tablename, const std::string & key,
+                  const std::string & value);
+        void remove (const std::string & tablename, const std::string & key);
+        diststore::ScanResponse scan (const std::string & tablename,
+                                      const std::string & seed,
+                                      int32_t count);
+        std::string admin (const std::string & op, const std::string & data);
+        void validate (const std::string & tablename, const std::string * key,
+                       const std::string * value);
 
     protected:
         static log4cxx::LoggerPtr logger;
 
-        string bdb_home;
+        std::string bdb_home;
         DbEnv * db_env;
-        map<string, Db *> dbs;
+        std::map<std::string, Db *> dbs;
 
-        Db * get_db (const string & tablename);
+        Db * get_db (const std::string & tablename);
 };
 
 #endif /* HAVE_LIBDB_CXX && HAVE_LIBBOOST_FILESYSTEM */

@@ -16,6 +16,11 @@
  * - rename master to directory where appropriate, code, script, doc, ...
  */
 
+using namespace diststore;
+using namespace log4cxx;
+using namespace mysql;
+using namespace std;
+
 // private
 LoggerPtr MySQLBackend::logger (Logger::getLogger ("MySQLBackend"));
 

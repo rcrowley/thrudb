@@ -14,40 +14,37 @@
 #include "DistStore.h"
 #include "DistStoreBackend.h"
 
-using namespace boost;
-using namespace log4cxx;
-using namespace diststore;
-using namespace std;
-
 class MemcachedBackend : public DistStoreBackend
 {
     public:
-        MemcachedBackend (const string & memcached_servers, 
-                          shared_ptr<DistStoreBackend> backend);
+        MemcachedBackend (const std::string & memcached_servers,
+                          boost::shared_ptr<DistStoreBackend> backend);
         ~MemcachedBackend ();
 
-        vector<string> getTablenames ();
-        string get (const string & tablename, const string & key );
-        void put (const string & tablename, const string & key, 
-                  const string & value);
-        void remove (const string & tablename, const string & key );
-        ScanResponse scan (const string & tablename, const string & seed,
-                           int32_t count);
-        string admin (const string & op, const string & data);
-        void validate (const string & tablename, const string * key,
-                       const string * value);
+        std::vector<std::string> getTablenames ();
+        std::string get (const std::string & tablename,
+                         const std::string & key);
+        void put (const std::string & tablename, const std::string & key,
+                  const std::string & value);
+        void remove (const std::string & tablename, const std::string & key);
+        diststore::ScanResponse scan (const std::string & tablename,
+                                      const std::string & seed, int32_t count);
+        std::string admin (const std::string & op, const std::string & data);
+        void validate (const std::string & tablename, const std::string * key,
+                       const std::string * value);
 
     protected:
         memcached_st * get_cache ();
 
-        void cache_put (const string & cache_key, const string & value);
+        void cache_put (const std::string & cache_key,
+                        const std::string & value);
 
     private:
         static log4cxx::LoggerPtr logger;
-        static pthread_key_t memcached_key;
-        
-        string memcached_servers;
-        shared_ptr<DistStoreBackend> backend;
+
+        pthread_key_t memcached_key;
+        std::string memcached_servers;
+        boost::shared_ptr<DistStoreBackend> backend;
 };
 
 #endif /* HAVE_LIBMEMCACHED */

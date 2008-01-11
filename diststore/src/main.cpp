@@ -47,17 +47,16 @@
 #include "SpreadBackend.h"
 #include "DistStoreHandler.h"
 
-using namespace log4cxx;
-using namespace log4cxx::helpers;
-
-using namespace std;
+using namespace boost;
+using namespace diststore;
 using namespace facebook::thrift;
 using namespace facebook::thrift::concurrency;
 using namespace facebook::thrift::protocol;
-using namespace facebook::thrift::transport;
 using namespace facebook::thrift::server;
-
-using namespace boost;
+using namespace facebook::thrift::transport;
+using namespace log4cxx;
+using namespace log4cxx::helpers;
+using namespace std;
 
 LoggerPtr logger (Logger::getLogger ("DistStore"));
 

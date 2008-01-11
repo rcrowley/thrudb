@@ -14,15 +14,10 @@
 #include "DistStoreBackend.h"
 #include "mysql_glue.h"
 
-using namespace log4cxx;
-using namespace mysql;
-using namespace diststore;
-using namespace std;
-
 struct FindReturn
 {
-    Connection * connection;
-    string datatable;
+    mysql::Connection * connection;
+    std::string datatable;
 };
 
 // TODO: move this out of the header
@@ -39,7 +34,7 @@ class Partition
             this->end = end;
         }
 
-        Partition (PartitionResults * partition_results)
+        Partition (mysql::PartitionResults * partition_results)
         {
             this->end = partition_results->get_end ();
             strncpy (this->hostname, partition_results->get_hostname (),
@@ -106,54 +101,60 @@ class Partition
 class MySQLBackend : public DistStoreBackend
 {
     public:
-        MySQLBackend (const string & master_hostname, const short master_port,
-                      const string & slave_hostname, const short slave_port,
-                      const string & directory_db, const string & username,
-                      const string & password, int max_value_size);
+        MySQLBackend (const std::string & master_hostname,
+                      const short master_port,
+                      const std::string & slave_hostname,
+                      const short slave_port,
+                      const std::string & directory_db,
+                      const std::string & username,
+                      const std::string & password,
+                      int max_value_size);
 
         ~MySQLBackend ();
 
-        vector<string> getTablenames ();
-        string get (const string & tablename, const string & key );
-        void put (const string & tablename, const string & key, 
-                  const string & value);
-        void remove (const string & tablename, const string & key );
-        ScanResponse scan (const string & tablename, const string & seed,
-                           int32_t count);
-        string admin (const string & op, const string & data);
-        void validate (const string & tablename, const string * key,
-                       const string * value);
+        std::vector<std::string> getTablenames ();
+        std::string get (const std::string & tablename,
+                         const std::string & key);
+        void put (const std::string & tablename, const std::string & key,
+                  const std::string & value);
+        void remove (const std::string & tablename, const std::string & key);
+        diststore::ScanResponse scan (const std::string & tablename,
+                                      const std::string & seed, int32_t count);
+        std::string admin (const std::string & op, const std::string & data);
+        void validate (const std::string & tablename, const std::string * key,
+                       const std::string * value);
 
     protected:
 
-        FindReturn find_and_checkout (const string & tablename,
-                                      const string & key );
-        FindReturn find_next_and_checkout (const string & tablename,
-                                           const string & current_datatablename);
+        FindReturn find_and_checkout (const std::string & tablename,
+                                      const std::string & key);
+        FindReturn find_next_and_checkout
+            (const std::string & tablename,
+             const std::string & current_datatablename);
 
     private:
         static log4cxx::LoggerPtr logger;
 
-        ConnectionFactory * connection_factory;
-        map<string, set<Partition*, bool(*)(Partition*, Partition*)>* > 
+        mysql::ConnectionFactory * connection_factory;
+        std::map<std::string, std::set<Partition*, bool(*)(Partition*, Partition*)>* >
             partitions;
-        string master_hostname;
+        std::string master_hostname;
         short master_port;
-        string slave_hostname;
+        std::string slave_hostname;
         short slave_port;
-        string directory_db;
-        string username;
-        string password;
+        std::string directory_db;
+        std::string username;
+        std::string password;
         int max_value_size;
 
-        set<Partition*, bool(*)(Partition*, Partition*)> * 
-            load_partitions (const string & tablename);
+        std::set<Partition*, bool(*)(Partition*, Partition*)> *
+            load_partitions (const std::string & tablename);
 
-        FindReturn and_checkout (Connection * connection,
-                                 PreparedStatement * statement);
-        string scan_helper (ScanResponse & scan_response,
-                            FindReturn & find_return, const string & offset,
-                            int32_t count);
+        FindReturn and_checkout (mysql::Connection * connection,
+                                 mysql::PreparedStatement * statement);
+        std::string scan_helper (diststore::ScanResponse & scan_response,
+                                 FindReturn & find_return,
+                                 const std::string & offset, int32_t count);
 };
 
 #endif /* HAVE_LIBMYSQLCLIENT_R */

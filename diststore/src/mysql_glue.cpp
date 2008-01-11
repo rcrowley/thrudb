@@ -9,10 +9,11 @@
 #include "mysql_glue.h"
 #include <mysql/errmsg.h>
 
-using namespace std;
+using namespace diststore;
+using namespace facebook::thrift::concurrency;
 using namespace log4cxx;
 using namespace mysql;
-using namespace facebook::thrift::concurrency;
+using namespace std;
 
 // private
 LoggerPtr PreparedStatement::logger (Logger::getLogger ("PreparedStatement"));

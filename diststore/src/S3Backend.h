@@ -23,16 +23,17 @@ class S3Backend : public DistStoreBackend
     public:
         S3Backend();
 
-        vector<string> getTablenames ();
-        string get (const string & tablename, const string & key );
-        void put (const string & tablename, const string & key, 
-                  const string & value);
-        void remove (const string & tablename, const string & key );
-        ScanResponse scan (const string & tablename, const string & seed,
-                           int32_t count);
-        string admin (const string & op, const string & data);
-        void validate (const string & tablename, const string * key,
-                       const string * value);
+        std::vector<std::string> getTablenames ();
+        std::string get (const std::string & tablename,
+                         const std::string & key);
+        void put (const std::string & tablename, const std::string & key,
+                  const std::string & value);
+        void remove (const std::string & tablename, const std::string & key);
+        diststore::ScanResponse scan (const std::string & tablename,
+                                      const std::string & seed, int32_t count);
+        std::string admin (const std::string & op, const std::string & data);
+        void validate (const std::string & tablename, const std::string * key,
+                       const std::string * value);
 
     protected:
         static log4cxx::LoggerPtr logger;

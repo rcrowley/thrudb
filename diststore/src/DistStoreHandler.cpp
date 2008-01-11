@@ -3,7 +3,7 @@
 #include "diststore_config.h"
 #endif
 /* hack to work around thrift and log4cxx installing config.h's */
-#undef HAVE_CONFIG_H 
+#undef HAVE_CONFIG_H
 
 #include "DistStoreHandler.h"
 #include "ConfigFile.h"
@@ -13,7 +13,9 @@
 #endif
 
 using namespace boost;
+using namespace diststore;
 using namespace log4cxx;
+using namespace std;
 
 LoggerPtr DistStoreHandler::logger (Logger::getLogger ("DistStoreHandler"));
 
@@ -37,7 +39,7 @@ void DistStoreHandler::put (const string & tablename, const string & key,
     this->backend->put (tablename, key, value);
 }
 
-void DistStoreHandler::putValue (string & _return, const string & tablename, 
+void DistStoreHandler::putValue (string & _return, const string & tablename,
                                  const string & value)
 {
 #if HAVE_LIBUUID
@@ -51,7 +53,7 @@ void DistStoreHandler::putValue (string & _return, const string & tablename,
     e.what = "putValue uuid generation not built";
     throw e;
 #endif
-    LOG4CXX_DEBUG (logger, "putValue: tablename=" + tablename + ", value=" + 
+    LOG4CXX_DEBUG (logger, "putValue: tablename=" + tablename + ", value=" +
                    value + ", uuid=" + _return);
     this->backend->put (tablename, _return, value);
 }
