@@ -121,7 +121,6 @@
    fun:_ZN7log4cxx20PropertyConfigurator9configureERKSs
    fun:main
 }
-Starting the server...
 {
    <insert a suppression name here>
    Memcheck:Addr2
@@ -139,7 +138,6 @@ Starting the server...
    fun:_ZN8facebook6thrift6server18TNonblockingServer5serveEv
    fun:main
 }
-libevent 1.3b method epoll
 {
    <insert a suppression name here>
    Memcheck:Addr2
