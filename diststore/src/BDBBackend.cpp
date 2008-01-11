@@ -77,6 +77,7 @@ BDBBackend::~BDBBackend ()
             (*i).second->close (0);
         }
         this->db_env->close (0);
+        delete db_env;
     } 
     catch (DbException & e) 
     {
@@ -216,16 +217,14 @@ ScanResponse BDBBackend::scan (const string & tablename, const string & seed,
         db_key.set_size (seed.length () + 1);
         if (dbc->get (&db_key, &db_value, DB_SET_RANGE) == 0)
         {
-            strncpy (key, (const char *)db_key.get_data (), 
-                     db_key.get_size ());
-            key[db_key.get_size ()] = '\0';
-
-            if (seed != key)
+            string key_tmp ((const char *)db_key.get_data (),
+                            db_key.get_size ());
+            if (seed != key_tmp)
             {
                 // we got the one after it, it must be gone now, so return 
                 // this one
                 Element e;
-                e.key = string (key, db_key.get_size ());
+                e.key = key_tmp;
                 e.value = string ((const char *)db_value.get_data (),
                                   db_value.get_size ());
                 scan_response.elements.push_back (e);
@@ -235,13 +234,9 @@ ScanResponse BDBBackend::scan (const string & tablename, const string & seed,
             while ((dbc->get (&db_key, &db_value, DB_NEXT) == 0) &&
                    (scan_response.elements.size () < (unsigned int)count))
             {
-                strncpy (key, (const char *)db_key.get_data (), 
-                         db_key.get_size ());
-                key[db_key.get_size ()] = '\0';
-                LOG4CXX_ERROR (logger, string ("getn=") + key);
-
                 Element e;
-                e.key = string (key, db_key.get_size ());
+                e.key = string ((const char *)db_key.get_data (),
+                                db_key.get_size ());
                 e.value = string ((const char *)db_value.get_data (),
                                   db_value.get_size ());
                 scan_response.elements.push_back (e);
@@ -295,6 +290,7 @@ string BDBBackend::admin (const string & op, const string & data)
                       db_flags,         // open flags
                       0);               // file mode, defaults
             db->close (0);
+            delete db;
         }
 
         return "done";
@@ -348,6 +344,7 @@ Db * BDBBackend::get_db (const string & tablename)
         }
         catch (DbException & e)
         {
+            delete db;
             LOG4CXX_WARN (logger, string ("get_open: exception=") + e.what ());
             DistStoreException de;
             de.what = "BDBBackend error";

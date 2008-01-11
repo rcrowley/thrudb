@@ -418,3 +418,702 @@
    fun:_ZN7log4cxx6Logger9forcedLogERKNS_7helpers10ObjectPtrTINS_5LevelEEERKSsPKci
    fun:main
 }
+{
+   <insert a suppression name here>
+   Memcheck:Addr2
+   fun:getenv
+   fun:__dcigettext
+   fun:strerror_r
+   fun:strerror
+   fun:db_strerror
+   fun:_ZN11DbException8describeEPKcS1_
+   fun:_ZN11DbExceptionC1EPKci
+   fun:_ZN5DbEnv13runtime_errorEPS_PKcii
+   fun:_ZN2Db4openEP5DbTxnPKcS3_6DBTYPEji
+   fun:_ZN10BDBBackend6get_dbERKSs
+   fun:_ZN10BDBBackend5adminERKSsS1_
+   fun:_ZN16DistStoreHandler5adminERSsRKSsS2_
+}
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:malloc
+   fun:__os_malloc
+   fun:__db_shalloc
+   fun:__db_e_attach
+   fun:__env_open
+   fun:_ZN5DbEnv4openEPKcji
+   fun:_ZN10BDBBackendC1ERKSsRKi
+   fun:main
+}
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:malloc
+   fun:__os_malloc
+   fun:__db_shalloc
+   fun:__lock_open
+   fun:__env_open
+   fun:_ZN5DbEnv4openEPKcji
+   fun:_ZN10BDBBackendC1ERKSsRKi
+   fun:main
+}
+{
+   <insert a suppression name here>
+   Memcheck:Addr2
+   fun:getenv
+   fun:__dcigettext
+   fun:strerror_r
+   fun:strerror
+   fun:ERR_load_ERR_strings
+   fun:ERR_load_crypto_strings
+   fun:SSL_load_error_strings
+   obj:/usr/lib/libcurl.so.4.0.0
+   fun:curl_global_init
+   fun:main
+}
+{
+   <insert a suppression name here>
+   Memcheck:Addr2
+   fun:getenv
+   fun:__dcigettext
+   fun:strerror_r
+   fun:strerror
+   fun:ERR_load_ERR_strings
+   fun:ERR_load_crypto_strings
+   fun:SSL_load_error_strings
+   obj:/usr/lib/libcurl.so.4.0.0
+   fun:curl_global_init
+   fun:main
+}
+{
+   <insert a suppression name here>
+   Memcheck:Addr2
+   fun:getenv
+   fun:__dcigettext
+   fun:strerror_r
+   fun:ERR_load_ERR_strings
+   fun:ERR_load_crypto_strings
+   fun:SSL_load_error_strings
+   obj:/usr/lib/libcurl.so.4.0.0
+   fun:curl_global_init
+   fun:main
+}
+{
+   <insert a suppression name here>
+   Memcheck:Addr2
+   fun:getenv
+   fun:tzset_internal
+   fun:tzset
+   fun:strftime_l
+   fun:_ZN2s37requestESsSsSslPKcmPKNS_9s3headersE
+   fun:_ZN9S3Backend5adminERKSsS1_
+   fun:_ZN16DistStoreHandler5adminERSsRKSsS2_
+   fun:_ZN9diststore18DistStoreProcessor13process_adminEiPN8facebook6thrift8protocol9TProtocolES5_
+   fun:_ZN9diststore18DistStoreProcessor10process_fnEPN8facebook6thrift8protocol9TProtocolES5_RSsi
+   fun:_ZN9diststore18DistStoreProcessor7processEN5boost10shared_ptrIN8facebook6thrift8protocol9TProtocolEEES7_
+   fun:_ZN8facebook6thrift6server11TConnection4Task3runEv
+   fun:_ZN8facebook6thrift11concurrency13ThreadManager4Task3runEv
+}
+{
+   <insert a suppression name here>
+   Memcheck:Addr1
+   fun:getenv
+   fun:tzset_internal
+   fun:tzset
+   fun:strftime_l
+   fun:_ZN2s37requestESsSsSslPKcmPKNS_9s3headersE
+   fun:_ZN9S3Backend5adminERKSsS1_
+   fun:_ZN16DistStoreHandler5adminERSsRKSsS2_
+   fun:_ZN9diststore18DistStoreProcessor13process_adminEiPN8facebook6thrift8protocol9TProtocolES5_
+   fun:_ZN9diststore18DistStoreProcessor10process_fnEPN8facebook6thrift8protocol9TProtocolES5_RSsi
+   fun:_ZN9diststore18DistStoreProcessor7processEN5boost10shared_ptrIN8facebook6thrift8protocol9TProtocolEEES7_
+   fun:_ZN8facebook6thrift6server11TConnection4Task3runEv
+   fun:_ZN8facebook6thrift11concurrency13ThreadManager4Task3runEv
+}
+{
+   <insert a suppression name here>
+   Memcheck:Addr1
+   fun:tzset_internal
+   fun:tzset
+   fun:strftime_l
+   fun:_ZN2s37requestESsSsSslPKcmPKNS_9s3headersE
+   fun:_ZN9S3Backend5adminERKSsS1_
+   fun:_ZN16DistStoreHandler5adminERSsRKSsS2_
+   fun:_ZN9diststore18DistStoreProcessor13process_adminEiPN8facebook6thrift8protocol9TProtocolES5_
+   fun:_ZN9diststore18DistStoreProcessor10process_fnEPN8facebook6thrift8protocol9TProtocolES5_RSsi
+   fun:_ZN9diststore18DistStoreProcessor7processEN5boost10shared_ptrIN8facebook6thrift8protocol9TProtocolEEES7_
+   fun:_ZN8facebook6thrift6server11TConnection4Task3runEv
+   fun:_ZN8facebook6thrift11concurrency13ThreadManager4Task3runEv
+   fun:_ZN8facebook6thrift11concurrency13ThreadManager6Worker3runEv
+}
+{
+   <insert a suppression name here>
+   Memcheck:Addr1
+   fun:strcmp
+   fun:tzset_internal
+   fun:tzset
+   fun:strftime_l
+   fun:_ZN2s37requestESsSsSslPKcmPKNS_9s3headersE
+   fun:_ZN9S3Backend5adminERKSsS1_
+   fun:_ZN16DistStoreHandler5adminERSsRKSsS2_
+   fun:_ZN9diststore18DistStoreProcessor13process_adminEiPN8facebook6thrift8protocol9TProtocolES5_
+   fun:_ZN9diststore18DistStoreProcessor10process_fnEPN8facebook6thrift8protocol9TProtocolES5_RSsi
+   fun:_ZN9diststore18DistStoreProcessor7processEN5boost10shared_ptrIN8facebook6thrift8protocol9TProtocolEEES7_
+   fun:_ZN8facebook6thrift6server11TConnection4Task3runEv
+   fun:_ZN8facebook6thrift11concurrency13ThreadManager4Task3runEv
+}
+{
+   <insert a suppression name here>
+   Memcheck:Addr1
+   fun:tzset_internal
+   fun:tzset
+   fun:strftime_l
+   fun:strftime_l
+   fun:_ZN2s37requestESsSsSslPKcmPKNS_9s3headersE
+   fun:_ZN9S3Backend5adminERKSsS1_
+   fun:_ZN16DistStoreHandler5adminERSsRKSsS2_
+   fun:_ZN9diststore18DistStoreProcessor13process_adminEiPN8facebook6thrift8protocol9TProtocolES5_
+   fun:_ZN9diststore18DistStoreProcessor10process_fnEPN8facebook6thrift8protocol9TProtocolES5_RSsi
+   fun:_ZN9diststore18DistStoreProcessor7processEN5boost10shared_ptrIN8facebook6thrift8protocol9TProtocolEEES7_
+   fun:_ZN8facebook6thrift6server11TConnection4Task3runEv
+   fun:_ZN8facebook6thrift11concurrency13ThreadManager4Task3runEv
+}
+{
+   <insert a suppression name here>
+   Memcheck:Addr1
+   fun:tzset_internal
+   fun:tzset
+   fun:strftime_l
+   fun:strftime_l
+   fun:_ZN2s37requestESsSsSslPKcmPKNS_9s3headersE
+   fun:_ZN9S3Backend5adminERKSsS1_
+   fun:_ZN16DistStoreHandler5adminERSsRKSsS2_
+   fun:_ZN9diststore18DistStoreProcessor13process_adminEiPN8facebook6thrift8protocol9TProtocolES5_
+   fun:_ZN9diststore18DistStoreProcessor10process_fnEPN8facebook6thrift8protocol9TProtocolES5_RSsi
+   fun:_ZN9diststore18DistStoreProcessor7processEN5boost10shared_ptrIN8facebook6thrift8protocol9TProtocolEEES7_
+   fun:_ZN8facebook6thrift6server11TConnection4Task3runEv
+   fun:_ZN8facebook6thrift11concurrency13ThreadManager4Task3runEv
+}
+{
+   <insert a suppression name here>
+   Memcheck:Addr1
+   fun:tzset_internal
+   fun:tzset
+   fun:strftime_l
+   fun:strftime_l
+   fun:_ZN2s37requestESsSsSslPKcmPKNS_9s3headersE
+   fun:_ZN9S3Backend5adminERKSsS1_
+   fun:_ZN16DistStoreHandler5adminERSsRKSsS2_
+   fun:_ZN9diststore18DistStoreProcessor13process_adminEiPN8facebook6thrift8protocol9TProtocolES5_
+   fun:_ZN9diststore18DistStoreProcessor10process_fnEPN8facebook6thrift8protocol9TProtocolES5_RSsi
+   fun:_ZN9diststore18DistStoreProcessor7processEN5boost10shared_ptrIN8facebook6thrift8protocol9TProtocolEEES7_
+   fun:_ZN8facebook6thrift6server11TConnection4Task3runEv
+   fun:_ZN8facebook6thrift11concurrency13ThreadManager4Task3runEv
+}
+{
+   <insert a suppression name here>
+   Memcheck:Addr2
+   fun:getenv
+   fun:curl_getenv
+   obj:/usr/lib/libcurl.so.4.0.0
+   obj:/usr/lib/libcurl.so.4.0.0
+   fun:_ZN2s37requestESsSsSslPKcmPKNS_9s3headersE
+   fun:_ZN9S3Backend5adminERKSsS1_
+   fun:_ZN16DistStoreHandler5adminERSsRKSsS2_
+   fun:_ZN9diststore18DistStoreProcessor13process_adminEiPN8facebook6thrift8protocol9TProtocolES5_
+   fun:_ZN9diststore18DistStoreProcessor10process_fnEPN8facebook6thrift8protocol9TProtocolES5_RSsi
+   fun:_ZN9diststore18DistStoreProcessor7processEN5boost10shared_ptrIN8facebook6thrift8protocol9TProtocolEEES7_
+   fun:_ZN8facebook6thrift6server11TConnection4Task3runEv
+   fun:_ZN8facebook6thrift11concurrency13ThreadManager4Task3runEv
+}
+{
+   <insert a suppression name here>
+   Memcheck:Addr2
+   fun:getenv
+   fun:curl_getenv
+   obj:/usr/lib/libcurl.so.4.0.0
+   obj:/usr/lib/libcurl.so.4.0.0
+   fun:_ZN2s37requestESsSsSslPKcmPKNS_9s3headersE
+   fun:_ZN9S3Backend5adminERKSsS1_
+   fun:_ZN16DistStoreHandler5adminERSsRKSsS2_
+   fun:_ZN9diststore18DistStoreProcessor13process_adminEiPN8facebook6thrift8protocol9TProtocolES5_
+   fun:_ZN9diststore18DistStoreProcessor10process_fnEPN8facebook6thrift8protocol9TProtocolES5_RSsi
+   fun:_ZN9diststore18DistStoreProcessor7processEN5boost10shared_ptrIN8facebook6thrift8protocol9TProtocolEEES7_
+   fun:_ZN8facebook6thrift6server11TConnection4Task3runEv
+   fun:_ZN8facebook6thrift11concurrency13ThreadManager4Task3runEv
+}
+{
+   <insert a suppression name here>
+   Memcheck:Addr2
+   fun:getenv
+   fun:curl_getenv
+   obj:/usr/lib/libcurl.so.4.0.0
+   obj:/usr/lib/libcurl.so.4.0.0
+   fun:_ZN2s37requestESsSsSslPKcmPKNS_9s3headersE
+   fun:_ZN9S3Backend5adminERKSsS1_
+   fun:_ZN16DistStoreHandler5adminERSsRKSsS2_
+   fun:_ZN9diststore18DistStoreProcessor13process_adminEiPN8facebook6thrift8protocol9TProtocolES5_
+   fun:_ZN9diststore18DistStoreProcessor10process_fnEPN8facebook6thrift8protocol9TProtocolES5_RSsi
+   fun:_ZN9diststore18DistStoreProcessor7processEN5boost10shared_ptrIN8facebook6thrift8protocol9TProtocolEEES7_
+   fun:_ZN8facebook6thrift6server11TConnection4Task3runEv
+   fun:_ZN8facebook6thrift11concurrency13ThreadManager4Task3runEv
+}
+{
+   <insert a suppression name here>
+   Memcheck:Addr2
+   fun:getenv
+   fun:curl_getenv
+   obj:/usr/lib/libcurl.so.4.0.0
+   obj:/usr/lib/libcurl.so.4.0.0
+   fun:_ZN2s37requestESsSsSslPKcmPKNS_9s3headersE
+   fun:_ZN9S3Backend5adminERKSsS1_
+   fun:_ZN16DistStoreHandler5adminERSsRKSsS2_
+   fun:_ZN9diststore18DistStoreProcessor13process_adminEiPN8facebook6thrift8protocol9TProtocolES5_
+   fun:_ZN9diststore18DistStoreProcessor10process_fnEPN8facebook6thrift8protocol9TProtocolES5_RSsi
+   fun:_ZN9diststore18DistStoreProcessor7processEN5boost10shared_ptrIN8facebook6thrift8protocol9TProtocolEEES7_
+   fun:_ZN8facebook6thrift6server11TConnection4Task3runEv
+   fun:_ZN8facebook6thrift11concurrency13ThreadManager4Task3runEv
+}
+{
+   <insert a suppression name here>
+   Memcheck:Addr2
+   fun:getenv
+   fun:curl_getenv
+   obj:/usr/lib/libcurl.so.4.0.0
+   obj:/usr/lib/libcurl.so.4.0.0
+   fun:_ZN2s37requestESsSsSslPKcmPKNS_9s3headersE
+   fun:_ZN9S3Backend5adminERKSsS1_
+   fun:_ZN16DistStoreHandler5adminERSsRKSsS2_
+   fun:_ZN9diststore18DistStoreProcessor13process_adminEiPN8facebook6thrift8protocol9TProtocolES5_
+   fun:_ZN9diststore18DistStoreProcessor10process_fnEPN8facebook6thrift8protocol9TProtocolES5_RSsi
+   fun:_ZN9diststore18DistStoreProcessor7processEN5boost10shared_ptrIN8facebook6thrift8protocol9TProtocolEEES7_
+   fun:_ZN8facebook6thrift6server11TConnection4Task3runEv
+   fun:_ZN8facebook6thrift11concurrency13ThreadManager4Task3runEv
+}
+{
+   <insert a suppression name here>
+   Memcheck:Addr2
+   fun:getenv
+   fun:__res_vinit
+   fun:__res_maybe_init
+   fun:gaih_inet
+   fun:getaddrinfo
+   obj:/usr/lib/libcurl.so.4.0.0
+   obj:/usr/lib/libcurl.so.4.0.0
+   obj:/usr/lib/libcurl.so.4.0.0
+   obj:/usr/lib/libcurl.so.4.0.0
+   fun:_ZN2s37requestESsSsSslPKcmPKNS_9s3headersE
+   fun:_ZN9S3Backend5adminERKSsS1_
+   fun:_ZN16DistStoreHandler5adminERSsRKSsS2_
+}
+{
+   <insert a suppression name here>
+   Memcheck:Addr2
+   fun:getenv
+   fun:__res_vinit
+   fun:__res_maybe_init
+   fun:gaih_inet
+   fun:getaddrinfo
+   obj:/usr/lib/libcurl.so.4.0.0
+   obj:/usr/lib/libcurl.so.4.0.0
+   obj:/usr/lib/libcurl.so.4.0.0
+   obj:/usr/lib/libcurl.so.4.0.0
+   fun:_ZN2s37requestESsSsSslPKcmPKNS_9s3headersE
+   fun:_ZN9S3Backend5adminERKSsS1_
+   fun:_ZN16DistStoreHandler5adminERSsRKSsS2_
+}
+{
+   <insert a suppression name here>
+   Memcheck:Addr2
+   fun:getenv
+   fun:__res_vinit
+   fun:__res_maybe_init
+   fun:_nss_dns_gethostbyname3_r
+   fun:_nss_dns_gethostbyname2_r
+   fun:gaih_inet
+   fun:getaddrinfo
+   obj:/usr/lib/libcurl.so.4.0.0
+   obj:/usr/lib/libcurl.so.4.0.0
+   obj:/usr/lib/libcurl.so.4.0.0
+   obj:/usr/lib/libcurl.so.4.0.0
+   fun:_ZN2s37requestESsSsSslPKcmPKNS_9s3headersE
+}
+{
+   <insert a suppression name here>
+   Memcheck:Addr2
+   fun:getenv
+   fun:__res_vinit
+   fun:__res_maybe_init
+   fun:_nss_dns_gethostbyname3_r
+   fun:_nss_dns_gethostbyname2_r
+   fun:gaih_inet
+   fun:getaddrinfo
+   obj:/usr/lib/libcurl.so.4.0.0
+   obj:/usr/lib/libcurl.so.4.0.0
+   obj:/usr/lib/libcurl.so.4.0.0
+   obj:/usr/lib/libcurl.so.4.0.0
+   fun:_ZN2s37requestESsSsSslPKcmPKNS_9s3headersE
+}
+{
+   <insert a suppression name here>
+   Memcheck:Addr2
+   fun:getenv
+   fun:my_init
+   fun:mysql_server_init
+   fun:mysql_init
+   fun:_ZN5mysql10ConnectionC1EPKcsS2_sS2_S2_S2_
+   fun:_ZN5mysql17ConnectionFactory14get_connectionEPKcsS2_sS2_S2_S2_
+   fun:_ZN12MySQLBackend15load_partitionsERKSs
+   fun:_ZN12MySQLBackend17find_and_checkoutERKSsS1_
+   fun:_ZN12MySQLBackend3getERKSsS1_
+   fun:_ZN16MemcachedBackend3getERKSsS1_
+   fun:_ZN16DistStoreHandler3getERSsRKSsS2_
+   fun:_ZN9diststore18DistStoreProcessor11process_getEiPN8facebook6thrift8protocol9TProtocolES5_
+}
+{
+   <insert a suppression name here>
+   Memcheck:Addr2
+   fun:getenv
+   fun:my_init
+   fun:mysql_server_init
+   fun:mysql_init
+   fun:_ZN5mysql10ConnectionC1EPKcsS2_sS2_S2_S2_
+   fun:_ZN5mysql17ConnectionFactory14get_connectionEPKcsS2_sS2_S2_S2_
+   fun:_ZN12MySQLBackend15load_partitionsERKSs
+   fun:_ZN12MySQLBackend17find_and_checkoutERKSsS1_
+   fun:_ZN12MySQLBackend3getERKSsS1_
+   fun:_ZN16MemcachedBackend3getERKSsS1_
+   fun:_ZN16DistStoreHandler3getERSsRKSsS2_
+   fun:_ZN9diststore18DistStoreProcessor11process_getEiPN8facebook6thrift8protocol9TProtocolES5_
+}
+{
+   <insert a suppression name here>
+   Memcheck:Addr2
+   fun:getenv
+   fun:mysql_server_init
+   fun:mysql_init
+   fun:_ZN5mysql10ConnectionC1EPKcsS2_sS2_S2_S2_
+   fun:_ZN5mysql17ConnectionFactory14get_connectionEPKcsS2_sS2_S2_S2_
+   fun:_ZN12MySQLBackend15load_partitionsERKSs
+   fun:_ZN12MySQLBackend17find_and_checkoutERKSsS1_
+   fun:_ZN12MySQLBackend3getERKSsS1_
+   fun:_ZN16MemcachedBackend3getERKSsS1_
+   fun:_ZN16DistStoreHandler3getERSsRKSsS2_
+   fun:_ZN9diststore18DistStoreProcessor11process_getEiPN8facebook6thrift8protocol9TProtocolES5_
+   fun:_ZN9diststore18DistStoreProcessor10process_fnEPN8facebook6thrift8protocol9TProtocolES5_RSsi
+}
+{
+   <insert a suppression name here>
+   Memcheck:Addr2
+   fun:getenv
+   fun:mysql_server_init
+   fun:mysql_init
+   fun:_ZN5mysql10ConnectionC1EPKcsS2_sS2_S2_S2_
+   fun:_ZN5mysql17ConnectionFactory14get_connectionEPKcsS2_sS2_S2_S2_
+   fun:_ZN12MySQLBackend15load_partitionsERKSs
+   fun:_ZN12MySQLBackend17find_and_checkoutERKSsS1_
+   fun:_ZN12MySQLBackend3getERKSsS1_
+   fun:_ZN16MemcachedBackend3getERKSsS1_
+   fun:_ZN16DistStoreHandler3getERSsRKSsS2_
+   fun:_ZN9diststore18DistStoreProcessor11process_getEiPN8facebook6thrift8protocol9TProtocolES5_
+   fun:_ZN9diststore18DistStoreProcessor10process_fnEPN8facebook6thrift8protocol9TProtocolES5_RSsi
+}
+{
+   <insert a suppression name here>
+   Memcheck:Addr2
+   fun:getenv
+   fun:do_init
+   fun:pthread_once
+   fun:gethostbyname_r@@GLIBC_2.2.5
+   fun:my_gethostbyname_r
+   fun:mysql_real_connect
+   fun:_ZN5mysql10ConnectionC1EPKcsS2_sS2_S2_S2_
+   fun:_ZN5mysql17ConnectionFactory14get_connectionEPKcsS2_sS2_S2_S2_
+   fun:_ZN12MySQLBackend15load_partitionsERKSs
+   fun:_ZN12MySQLBackend17find_and_checkoutERKSsS1_
+   fun:_ZN12MySQLBackend3getERKSsS1_
+   fun:_ZN16MemcachedBackend3getERKSsS1_
+}
+{
+   <insert a suppression name here>
+   Memcheck:Addr2
+   fun:getenv
+   fun:do_init
+   fun:pthread_once
+   fun:gethostbyname_r@@GLIBC_2.2.5
+   fun:my_gethostbyname_r
+   fun:mysql_real_connect
+   fun:_ZN5mysql10ConnectionC1EPKcsS2_sS2_S2_S2_
+   fun:_ZN5mysql17ConnectionFactory14get_connectionEPKcsS2_sS2_S2_S2_
+   fun:_ZN12MySQLBackend15load_partitionsERKSs
+   fun:_ZN12MySQLBackend17find_and_checkoutERKSsS1_
+   fun:_ZN12MySQLBackend3getERKSsS1_
+   fun:_ZN16MemcachedBackend3getERKSsS1_
+}
+{
+   <insert a suppression name here>
+   Memcheck:Addr2
+   fun:getenv
+   fun:do_init
+   fun:pthread_once
+   fun:gethostbyname_r@@GLIBC_2.2.5
+   fun:my_gethostbyname_r
+   fun:mysql_real_connect
+   fun:_ZN5mysql10ConnectionC1EPKcsS2_sS2_S2_S2_
+   fun:_ZN5mysql17ConnectionFactory14get_connectionEPKcsS2_sS2_S2_S2_
+   fun:_ZN12MySQLBackend15load_partitionsERKSs
+   fun:_ZN12MySQLBackend17find_and_checkoutERKSsS1_
+   fun:_ZN12MySQLBackend3getERKSsS1_
+   fun:_ZN16MemcachedBackend3getERKSsS1_
+}
+{
+   <insert a suppression name here>
+   Memcheck:Addr2
+   fun:getenv
+   fun:do_init
+   fun:pthread_once
+   fun:gethostbyname_r@@GLIBC_2.2.5
+   fun:my_gethostbyname_r
+   fun:mysql_real_connect
+   fun:_ZN5mysql10ConnectionC1EPKcsS2_sS2_S2_S2_
+   fun:_ZN5mysql17ConnectionFactory14get_connectionEPKcsS2_sS2_S2_S2_
+   fun:_ZN12MySQLBackend15load_partitionsERKSs
+   fun:_ZN12MySQLBackend17find_and_checkoutERKSsS1_
+   fun:_ZN12MySQLBackend3getERKSsS1_
+   fun:_ZN16MemcachedBackend3getERKSsS1_
+}
+{
+   <insert a suppression name here>
+   Memcheck:Addr2
+   fun:getenv
+   fun:do_init
+   fun:pthread_once
+   fun:gethostbyname_r@@GLIBC_2.2.5
+   fun:my_gethostbyname_r
+   fun:mysql_real_connect
+   fun:_ZN5mysql10ConnectionC1EPKcsS2_sS2_S2_S2_
+   fun:_ZN5mysql17ConnectionFactory14get_connectionEPKcsS2_sS2_S2_S2_
+   fun:_ZN12MySQLBackend15load_partitionsERKSs
+   fun:_ZN12MySQLBackend17find_and_checkoutERKSsS1_
+   fun:_ZN12MySQLBackend3getERKSsS1_
+   fun:_ZN16MemcachedBackend3getERKSsS1_
+}
+{
+   <insert a suppression name here>
+   Memcheck:Addr2
+   fun:getenv
+   fun:do_init
+   fun:pthread_once
+   fun:gethostbyname_r@@GLIBC_2.2.5
+   fun:my_gethostbyname_r
+   fun:mysql_real_connect
+   fun:_ZN5mysql10ConnectionC1EPKcsS2_sS2_S2_S2_
+   fun:_ZN5mysql17ConnectionFactory14get_connectionEPKcsS2_sS2_S2_S2_
+   fun:_ZN12MySQLBackend15load_partitionsERKSs
+   fun:_ZN12MySQLBackend17find_and_checkoutERKSsS1_
+   fun:_ZN12MySQLBackend3getERKSsS1_
+   fun:_ZN16MemcachedBackend3getERKSsS1_
+}
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZN7log4cxx6Logger9forcedLogERKNS_7helpers10ObjectPtrTINS_5LevelEEERKSsPKci
+   fun:_ZN16DistStoreHandler3getERSsRKSsS2_
+   fun:_ZN9diststore18DistStoreProcessor11process_getEiPN8facebook6thrift8protocol9TProtocolES5_
+   fun:_ZN9diststore18DistStoreProcessor10process_fnEPN8facebook6thrift8protocol9TProtocolES5_RSsi
+   fun:_ZN9diststore18DistStoreProcessor7processEN5boost10shared_ptrIN8facebook6thrift8protocol9TProtocolEEES7_
+   fun:_ZN8facebook6thrift6server11TConnection4Task3runEv
+   fun:_ZN8facebook6thrift11concurrency13ThreadManager4Task3runEv
+   fun:_ZN8facebook6thrift11concurrency13ThreadManager6Worker3runEv
+   fun:_ZN8facebook6thrift11concurrency13PthreadThread10threadMainEPv
+   fun:start_thread
+   fun:clone
+}
+{
+   <insert a suppression name here>
+   Memcheck:Addr2
+   fun:getenv
+   fun:__dcigettext
+   fun:strerror_r
+   fun:strerror
+   fun:connect_nointr_timeout
+   fun:SP_connect_timeout
+   fun:SP_connect
+   fun:_ZN13SpreadBackendC1ERKSsS1_S1_N5boost10shared_ptrI16DistStoreBackendEE
+   fun:main
+}
+{
+   <insert a suppression name here>
+   Memcheck:Addr2
+   fun:getenv
+   fun:__dcigettext
+   fun:strerror_r
+   fun:strerror
+   fun:connect_nointr_timeout
+   fun:SP_connect_timeout
+   fun:SP_connect
+   fun:_ZN13SpreadBackendC1ERKSsS1_S1_N5boost10shared_ptrI16DistStoreBackendEE
+   fun:main
+}
+{
+   <insert a suppression name here>
+   Memcheck:Addr2
+   fun:getenv
+   fun:my_init
+   fun:mysql_server_init
+   fun:mysql_init
+   fun:_ZN5mysql10ConnectionC1EPKcsS2_sS2_S2_S2_
+   fun:_ZN5mysql17ConnectionFactory14get_connectionEPKcsS2_sS2_S2_S2_
+   fun:_ZN12MySQLBackend15load_partitionsERKSs
+   fun:_ZN12MySQLBackend17find_and_checkoutERKSsS1_
+   fun:_ZN12MySQLBackend3getERKSsS1_
+   fun:_ZN13SpreadBackend3getERKSsS1_
+   fun:_ZN16DistStoreHandler3getERSsRKSsS2_
+   fun:_ZN9diststore18DistStoreProcessor11process_getEiPN8facebook6thrift8protocol9TProtocolES5_
+}
+{
+   <insert a suppression name here>
+   Memcheck:Addr2
+   fun:getenv
+   fun:my_init
+   fun:mysql_server_init
+   fun:mysql_init
+   fun:_ZN5mysql10ConnectionC1EPKcsS2_sS2_S2_S2_
+   fun:_ZN5mysql17ConnectionFactory14get_connectionEPKcsS2_sS2_S2_S2_
+   fun:_ZN12MySQLBackend15load_partitionsERKSs
+   fun:_ZN12MySQLBackend17find_and_checkoutERKSsS1_
+   fun:_ZN12MySQLBackend3getERKSsS1_
+   fun:_ZN13SpreadBackend3getERKSsS1_
+   fun:_ZN16DistStoreHandler3getERSsRKSsS2_
+   fun:_ZN9diststore18DistStoreProcessor11process_getEiPN8facebook6thrift8protocol9TProtocolES5_
+}
+{
+   <insert a suppression name here>
+   Memcheck:Addr2
+   fun:getenv
+   fun:mysql_server_init
+   fun:mysql_init
+   fun:_ZN5mysql10ConnectionC1EPKcsS2_sS2_S2_S2_
+   fun:_ZN5mysql17ConnectionFactory14get_connectionEPKcsS2_sS2_S2_S2_
+   fun:_ZN12MySQLBackend15load_partitionsERKSs
+   fun:_ZN12MySQLBackend17find_and_checkoutERKSsS1_
+   fun:_ZN12MySQLBackend3getERKSsS1_
+   fun:_ZN13SpreadBackend3getERKSsS1_
+   fun:_ZN16DistStoreHandler3getERSsRKSsS2_
+   fun:_ZN9diststore18DistStoreProcessor11process_getEiPN8facebook6thrift8protocol9TProtocolES5_
+   fun:_ZN9diststore18DistStoreProcessor10process_fnEPN8facebook6thrift8protocol9TProtocolES5_RSsi
+}
+{
+   <insert a suppression name here>
+   Memcheck:Addr2
+   fun:getenv
+   fun:mysql_server_init
+   fun:mysql_init
+   fun:_ZN5mysql10ConnectionC1EPKcsS2_sS2_S2_S2_
+   fun:_ZN5mysql17ConnectionFactory14get_connectionEPKcsS2_sS2_S2_S2_
+   fun:_ZN12MySQLBackend15load_partitionsERKSs
+   fun:_ZN12MySQLBackend17find_and_checkoutERKSsS1_
+   fun:_ZN12MySQLBackend3getERKSsS1_
+   fun:_ZN13SpreadBackend3getERKSsS1_
+   fun:_ZN16DistStoreHandler3getERSsRKSsS2_
+   fun:_ZN9diststore18DistStoreProcessor11process_getEiPN8facebook6thrift8protocol9TProtocolES5_
+   fun:_ZN9diststore18DistStoreProcessor10process_fnEPN8facebook6thrift8protocol9TProtocolES5_RSsi
+}
+{
+   <insert a suppression name here>
+   Memcheck:Addr2
+   fun:getenv
+   fun:do_init
+   fun:pthread_once
+   fun:gethostbyname_r@@GLIBC_2.2.5
+   fun:my_gethostbyname_r
+   fun:mysql_real_connect
+   fun:_ZN5mysql10ConnectionC1EPKcsS2_sS2_S2_S2_
+   fun:_ZN5mysql17ConnectionFactory14get_connectionEPKcsS2_sS2_S2_S2_
+   fun:_ZN12MySQLBackend15load_partitionsERKSs
+   fun:_ZN12MySQLBackend17find_and_checkoutERKSsS1_
+   fun:_ZN12MySQLBackend3getERKSsS1_
+   fun:_ZN13SpreadBackend3getERKSsS1_
+}
+{
+   <insert a suppression name here>
+   Memcheck:Addr2
+   fun:getenv
+   fun:do_init
+   fun:pthread_once
+   fun:gethostbyname_r@@GLIBC_2.2.5
+   fun:my_gethostbyname_r
+   fun:mysql_real_connect
+   fun:_ZN5mysql10ConnectionC1EPKcsS2_sS2_S2_S2_
+   fun:_ZN5mysql17ConnectionFactory14get_connectionEPKcsS2_sS2_S2_S2_
+   fun:_ZN12MySQLBackend15load_partitionsERKSs
+   fun:_ZN12MySQLBackend17find_and_checkoutERKSsS1_
+   fun:_ZN12MySQLBackend3getERKSsS1_
+   fun:_ZN13SpreadBackend3getERKSsS1_
+}
+{
+   <insert a suppression name here>
+   Memcheck:Addr2
+   fun:getenv
+   fun:do_init
+   fun:pthread_once
+   fun:gethostbyname_r@@GLIBC_2.2.5
+   fun:my_gethostbyname_r
+   fun:mysql_real_connect
+   fun:_ZN5mysql10ConnectionC1EPKcsS2_sS2_S2_S2_
+   fun:_ZN5mysql17ConnectionFactory14get_connectionEPKcsS2_sS2_S2_S2_
+   fun:_ZN12MySQLBackend15load_partitionsERKSs
+   fun:_ZN12MySQLBackend17find_and_checkoutERKSsS1_
+   fun:_ZN12MySQLBackend3getERKSsS1_
+   fun:_ZN13SpreadBackend3getERKSsS1_
+}
+{
+   <insert a suppression name here>
+   Memcheck:Addr2
+   fun:getenv
+   fun:do_init
+   fun:pthread_once
+   fun:gethostbyname_r@@GLIBC_2.2.5
+   fun:my_gethostbyname_r
+   fun:mysql_real_connect
+   fun:_ZN5mysql10ConnectionC1EPKcsS2_sS2_S2_S2_
+   fun:_ZN5mysql17ConnectionFactory14get_connectionEPKcsS2_sS2_S2_S2_
+   fun:_ZN12MySQLBackend15load_partitionsERKSs
+   fun:_ZN12MySQLBackend17find_and_checkoutERKSsS1_
+   fun:_ZN12MySQLBackend3getERKSsS1_
+   fun:_ZN13SpreadBackend3getERKSsS1_
+}
+{
+   <insert a suppression name here>
+   Memcheck:Addr2
+   fun:getenv
+   fun:do_init
+   fun:pthread_once
+   fun:gethostbyname_r@@GLIBC_2.2.5
+   fun:my_gethostbyname_r
+   fun:mysql_real_connect
+   fun:_ZN5mysql10ConnectionC1EPKcsS2_sS2_S2_S2_
+   fun:_ZN5mysql17ConnectionFactory14get_connectionEPKcsS2_sS2_S2_S2_
+   fun:_ZN12MySQLBackend15load_partitionsERKSs
+   fun:_ZN12MySQLBackend17find_and_checkoutERKSsS1_
+   fun:_ZN12MySQLBackend3getERKSsS1_
+   fun:_ZN13SpreadBackend3getERKSsS1_
+}
+{
+   <insert a suppression name here>
+   Memcheck:Addr2
+   fun:getenv
+   fun:do_init
+   fun:pthread_once
+   fun:gethostbyname_r@@GLIBC_2.2.5
+   fun:my_gethostbyname_r
+   fun:mysql_real_connect
+   fun:_ZN5mysql10ConnectionC1EPKcsS2_sS2_S2_S2_
+   fun:_ZN5mysql17ConnectionFactory14get_connectionEPKcsS2_sS2_S2_S2_
+   fun:_ZN12MySQLBackend15load_partitionsERKSs
+   fun:_ZN12MySQLBackend17find_and_checkoutERKSsS1_
+   fun:_ZN12MySQLBackend3getERKSsS1_
+   fun:_ZN13SpreadBackend3getERKSsS1_
+}

@@ -47,7 +47,7 @@ vector<string> S3Backend::getTablenames ()
     if (!result)
     {
         DistStoreException e;
-        e.what = "HTTP error";
+        e.what = "S3Backend error";
         throw e;
     }
 
@@ -57,6 +57,8 @@ vector<string> S3Backend::getTablenames ()
     {
         tablenames.push_back ((*i)->Name);
     }
+
+    delete result;
 
     return tablenames;
 }
@@ -69,11 +71,12 @@ string S3Backend::get (const string & tablename, const string & key)
 
     if(b == NULL){
         DistStoreException e;
-        e.what = "HTTP transport error";
+        e.what = "S3Backend error";
         throw e;
     }
 
     if(b->result != 200) {
+        delete b;
         DistStoreException e;
         e.what = "S3: " + key + " not found";
         throw e;
@@ -95,7 +98,7 @@ void S3Backend::put (const string & tablename, const string & key,
 
     if(r == -1){
         DistStoreException e;
-        e.what = "HTTP error";
+        e.what = "S3Backend error";
         throw e;
     }
 }
@@ -106,7 +109,7 @@ void S3Backend::remove (const string & tablename, const string & key)
 
     if(r == -1){
         DistStoreException e;
-        e.what = "HTTP error";
+        e.what = "S3Backend error";
         throw e;
     }
 }
@@ -121,7 +124,7 @@ ScanResponse S3Backend::scan (const string & tablename, const string & seed,
     if (!result)
     {
         DistStoreException e;
-        e.what = "HTTP error";
+        e.what = "S3Backend error";
         throw e;
     }
 
@@ -142,6 +145,8 @@ ScanResponse S3Backend::scan (const string & tablename, const string & seed,
 
     scan_response.seed = scan_response.elements.size () > 0 ?
         scan_response.elements.back ().key : "";
+
+    delete result;
 
     return scan_response;
 }

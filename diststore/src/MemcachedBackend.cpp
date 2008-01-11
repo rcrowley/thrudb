@@ -26,6 +26,7 @@ MemcachedBackend::MemcachedBackend (const string & memcached_servers,
 
 MemcachedBackend::~MemcachedBackend ()
 {
+    // TODO: how do i call memcached_free on each of the thread's objects?
     pthread_key_delete (memcached_key);
 }
 
@@ -41,9 +42,9 @@ string MemcachedBackend::get (const string & tablename, const string & key )
     memcached_return rc;
     uint16_t opt_flags = 0;
     size_t str_length;
-    const char * str = memcached_get(cache, (char*)cache_key.c_str (),
-                                     cache_key.length (), &str_length,
-                                     &opt_flags, &rc);
+    char * str = memcached_get(cache, (char*)cache_key.c_str (),
+                               cache_key.length (), &str_length,
+                               &opt_flags, &rc);
     string value;
     if (rc == MEMCACHED_SUCCESS)
     {
@@ -62,6 +63,9 @@ string MemcachedBackend::get (const string & tablename, const string & key )
                 memcached_strerror(cache, rc));
         LOG4CXX_WARN (logger, buf);
     }
+
+    if (str)
+        free (str);
 
     if (value.empty ())
     {
