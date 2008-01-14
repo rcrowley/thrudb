@@ -76,6 +76,7 @@ void DistStoreHandler::remove (const string & tablename, const string & key)
 void DistStoreHandler::scan (ScanResponse & _return, const string & tablename,
                              const string & seed, int32_t count)
 {
+    if (logger->isDebugEnabled())
     {
         char buf[256];
         sprintf (buf, "scan: tablename=%s, seed=%s, count=%d",

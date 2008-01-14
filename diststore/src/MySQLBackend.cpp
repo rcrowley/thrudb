@@ -312,6 +312,7 @@ FindReturn MySQLBackend::find_and_checkout (const string & tablename,
         point = hash / (double)0xffffffffffffffffLL;
     }
 
+    if (logger->isDebugEnabled())
     {
         char buf[128];
         sprintf (buf, "key=%s -> point=%f", key.c_str (), point);
