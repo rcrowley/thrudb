@@ -41,7 +41,6 @@ vector<string> NBackend::getTablenames ()
 
 string NBackend::get (const string & tablename, const string & key )
 {
-    vector<shared_ptr<DistStoreBackend> >::iterator i;
     return (*backends.begin ())->get (tablename, key);
 }
 
