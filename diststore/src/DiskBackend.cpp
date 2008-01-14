@@ -31,6 +31,13 @@ using namespace diststore;
 using namespace log4cxx;
 using namespace std;
 
+// defines the safety of seed, how many "back-keys" we'll use in case the seed
+// key has been deleted. since things are md5'd the likelihood of several in a
+// row being deleted between to calls to scan is low, but unfortunatly
+// possible.
+#define SEED_SEP ';'
+#define SEED_SIZE 3
+
 LoggerPtr DiskBackend::logger (Logger::getLogger ("DiskBackend"));
 
 DiskBackend::DiskBackend (const string & doc_root)
@@ -172,10 +179,30 @@ ScanResponse DiskBackend::scan (const string & tablename, const string & seed,
     }
     else
     {
-        string d1, d2, d3;
-        get_dir_pieces (d1, d2, d3, tablename, seed);
+        string d1, d2, d3, key;
+        {
+            // Skip delimiters at beginning.
+            string::size_type lastPos = seed.find_first_not_of(SEED_SEP, 0);
+            // Find first "non-delimiter".
+            string::size_type pos     = seed.find_first_of(SEED_SEP, lastPos);
 
-        // TODO: fix this if seed doesn't exist
+            key = seed.substr(lastPos, pos - lastPos);
+            get_dir_pieces (d1, d2, d3, tablename, key);
+            string file = build_filename (tablename, d1, d2, d3, key);
+            while ((string::npos != pos || string::npos != lastPos) &&
+                   !fs::is_regular (file))
+            {
+                key = seed.substr(lastPos, pos - lastPos);
+                get_dir_pieces (d1, d2, d3, tablename, key);
+                file = build_filename (tablename, d1, d2, d3, key);
+
+                // Skip delimiters.  Note the "not_of"
+                lastPos = seed.find_first_not_of(SEED_SEP, pos);
+                // Find next "non-delimiter"
+                pos = seed.find_first_of(SEED_SEP, lastPos);
+            }
+            LOG4CXX_DEBUG (logger, "scan: using key=" + key);
+        }
 
         i = new fs::directory_iterator (base);
         dir_stack.push (i);
@@ -198,7 +225,7 @@ ScanResponse DiskBackend::scan (const string & tablename, const string & seed,
         i = new fs::directory_iterator (base + d1 + "/" + d2 + "/" + d3);
         dir_stack.push (i);
         // pre-wind to seed 
-        while ((*i) != end && (*i)->path ().leaf () != seed)
+        while ((*i) != end && (*i)->path ().leaf () != key)
             ++(*i);
 
         // move past seed 
@@ -257,8 +284,16 @@ ScanResponse DiskBackend::scan (const string & tablename, const string & seed,
         dir_stack.pop ();
     }
 
-    scan_response.seed = scan_response.elements.size () > 0 ?
-        scan_response.elements.back ().key : "";
+    // calculate our new seed
+    vector<Element>::reverse_iterator j;
+    int size = 0;
+    scan_response.seed = "";
+    for (j = scan_response.elements.rbegin ();
+         size < SEED_SIZE && j != scan_response.elements.rend (); j++, size++)
+    {
+        scan_response.seed += (*j).key + SEED_SEP;
+    }
+    LOG4CXX_DEBUG (logger, "scan: scan_response.seed=" + scan_response.seed);
 
     return scan_response;
 }
@@ -311,11 +346,20 @@ void DiskBackend::validate (const string & tablename, const string * key,
         e.what = "tablename too long";
         throw e;
     }
-    else if (key && (*key).length () > DISK_BACKEND_MAX_KEY_SIZE)
+    if (key)
     {
-        DistStoreException e;
-        e.what = "key too long";
-        throw e;
+        if ((*key).length () > DISK_BACKEND_MAX_KEY_SIZE)
+        {
+            DistStoreException e;
+            e.what = "key too long";
+            throw e;
+        }
+        else if (key->find (";") != string::npos)
+        {
+            DistStoreException e;
+            e.what = "invalid key";
+            throw e;
+        }
     }
     /* values can be whatever they want to be */
 }
