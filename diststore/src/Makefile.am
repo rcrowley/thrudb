@@ -13,7 +13,6 @@ diststore_SOURCES = \
 		  MySQLBackend.cpp			\
 		  MemcachedBackend.cpp			\
 		  NBackend.cpp				\
-		  RedoLogBackend.cpp			\
 		  S3Backend.cpp				\
 		  SpreadBackend.cpp			\
 		  base64.cpp				\
