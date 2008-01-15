@@ -101,3 +101,89 @@ void DistStoreHandler::admin (string & _return, const string & op, const string 
         _return = this->backend->admin (op, data);
     }
 }
+
+void DistStoreHandler::putList(vector<DistStoreException> & _return, 
+                               const vector<Element> & elements)
+{
+    DistStoreException none;
+    vector<Element> e = (vector<Element>)elements;
+    vector<Element>::iterator i;
+    for (i = e.begin (); i != e.end (); i++)
+    {
+        try
+        {
+            put ((*i).tablename, (*i).key, (*i).value);
+            _return.push_back (none);
+        }
+        catch (DistStoreException e)
+        {
+            _return.push_back (e);
+        }
+    }
+}
+
+void DistStoreHandler::getList(vector<ListResponse> & _return, 
+                               const vector<Element> & elements)
+{
+    vector<Element> e = (vector<Element>)elements;
+    vector<Element>::iterator i;
+    for (i = e.begin (); i != e.end (); i++)
+    {
+        ListResponse list_response;
+        try
+        {
+            list_response.element.tablename = (*i).tablename;
+            list_response.element.key = (*i).key;
+            get (list_response.element.value, (*i).tablename, (*i).key);
+        }
+        catch (DistStoreException e)
+        {
+            list_response.ex = e;
+        }
+        _return.push_back (list_response);
+    }
+}
+
+void DistStoreHandler::removeList(vector<DistStoreException> & _return, 
+                                  const vector<Element> & elements)
+{
+    DistStoreException none;
+    vector<Element> e = (vector<Element>)elements;
+    vector<Element>::iterator i;
+    for (i = e.begin (); i != e.end (); i++)
+    {
+        try
+        {
+            remove ((*i).tablename, (*i).key);
+            _return.push_back (none);
+        }
+        catch (DistStoreException e)
+        {
+            _return.push_back (e);
+        }
+    }
+}
+
+void DistStoreHandler::putValueList(vector<ListResponse> & _return, 
+                                    const vector<Element> & elements)
+{
+    vector<Element> e = (vector<Element>)elements;
+    vector<Element>::iterator i;
+    for (i = e.begin (); i != e.end (); i++)
+    {
+        ListResponse list_response;
+        try
+        {
+            list_response.element.tablename = (*i).tablename;
+            list_response.element.value = (*i).value;
+            putValue (list_response.element.key, (*i).tablename, 
+                      (*i).value);
+        }
+        catch (DistStoreException e)
+        {
+            list_response.ex = e;
+        }
+        _return.push_back (list_response);
+    }
+}
+

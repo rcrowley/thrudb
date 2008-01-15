@@ -27,6 +27,16 @@ class DistStoreHandler : virtual public diststore::DistStoreIf {
         void scan (diststore::ScanResponse & _return,
                    const std::string & tablename,
                    const std::string & seed, int32_t count);
+
+        void putList(std::vector<diststore::DistStoreException> & _return, 
+                     const std::vector<diststore::Element> & elements);
+        void getList(std::vector<diststore::ListResponse> & _return, 
+                     const std::vector<diststore::Element> & elements);
+        void removeList(std::vector<diststore::DistStoreException> & _return, 
+                        const std::vector<diststore::Element> & elements);
+        void putValueList(std::vector<diststore::ListResponse> & _return, 
+                          const std::vector<diststore::Element> & elements);
+
         void admin (std::string & _return, const std::string & op,
                     const std::string & data);
 
