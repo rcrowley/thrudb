@@ -6,12 +6,14 @@ diststore_SOURCES = \
 		  gen-cpp/DistStore_types.cpp		\
 		  gen-cpp/DistStore_constants.cpp	\
 		  ConfigFile.cpp			\
+		  DistStoreBackend.cpp			\
 		  DistStoreHandler.cpp			\
 		  BDBBackend.cpp			\
 		  DiskBackend.cpp			\
 		  MySQLBackend.cpp			\
 		  MemcachedBackend.cpp			\
 		  NBackend.cpp				\
+		  RedoLogBackend.cpp			\
 		  S3Backend.cpp				\
 		  SpreadBackend.cpp			\
 		  base64.cpp				\
@@ -19,8 +21,8 @@ diststore_SOURCES = \
 		  mysql_glue.cpp			\
 		  main.cpp
 
-diststore_CXXFLAGS = -Wall -Igen-cpp
-diststore_LDFLAGS = -Wall 
+diststore_CXXFLAGS = -Wall $(CFLAGS) -Igen-cpp
+diststore_LDFLAGS = -Wall $(CFLAGS)
 
 diststore_bench_SOURCES = \
 			gen-cpp/DistStore.cpp		\
@@ -28,8 +30,8 @@ diststore_bench_SOURCES = \
 			gen-cpp/DistStore_constants.cpp	\
 			bench.cpp
 
-diststore_bench_CXXFLAGS = -Wall -Igen-cpp
-diststore_bench_LDFLAGS = -Wall
+diststore_bench_CXXFLAGS = -Wall $(CFLAGS) -Igen-cpp
+diststore_bench_LDFLAGS = -Wall $(CFLAGS) 
 
 gen-cpp/DistStore.cpp: DistStore.thrift
 	${THRIFT} -cpp DistStore.thrift
