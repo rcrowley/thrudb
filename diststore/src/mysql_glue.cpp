@@ -260,7 +260,7 @@ void PreparedStatement::init (Connection * connection, const char * query,
         // with the connection object yet so it can't have been deleted and
         // cleaned up as the others are in lost_connection (). at this point
         // we "own" bind_params and bind_results so we need to get rid of them
-        // i don't really like this, but it's necessary. might be a sign that 
+        // i don't really like this, but it's necessary. might be a sign that
         // something's not quite right about how my prepared statement stuff
         // is laid out.
         if (bind_params)
@@ -307,7 +307,7 @@ void PreparedStatement::execute ()
     LOG4CXX_DEBUG (logger, "execute");
 
     // if this statements writes and we're a read only connection, fail
-    
+
     if (this->connection->get_read_only ())
     {
         if (this->writes)
@@ -358,10 +358,10 @@ void Connection::reset_connection ()
 {
     LOG4CXX_DEBUG (logger, "reset_connection");
 
-    // TODO: figure out how to get .clear () to do the deletes for us if 
+    // TODO: figure out how to get .clear () to do the deletes for us if
     // possible?
 
-    // get rid of all of it's prepared statements, we'll reconnect, 
+    // get rid of all of it's prepared statements, we'll reconnect,
     // but they'll be bad now
     map<string, PreparedStatement *>::iterator i;
     for (i = partitions_statements.begin ();
@@ -433,7 +433,7 @@ void Connection::check_master ()
 void Connection::lost_connection ()
 {
     LOG4CXX_INFO (logger, "lost_connection");
-    
+
     // if we lost the connection, we always have to reset
     reset_connection ();
 
@@ -504,7 +504,7 @@ Connection::Connection (const char * hostname, const short port,
     this->db = db;
     this->read_only = 0;
 
-    LOG4CXX_DEBUG (logger, string ("Connection: setting up master hostname=") + 
+    LOG4CXX_DEBUG (logger, string ("Connection: setting up master hostname=") +
                    hostname);
 
     if (!mysql_init (&this->mysql))
@@ -515,7 +515,7 @@ Connection::Connection (const char * hostname, const short port,
 
     if (!mysql_real_connect (&this->mysql, hostname, username, password, db,
                              port, NULL, 0))
-        LOG4CXX_ERROR (logger, 
+        LOG4CXX_ERROR (logger,
                        string ("mysql_real_connect master failed: host=") +
                        string (hostname) + string (", db=") + string (db) +
                        string (", username=") + string (username));
@@ -529,7 +529,7 @@ Connection::Connection (const char * hostname, const short port,
         this->slave_hostname = slave_hostname;
         this->slave_port = slave_port;
 
-        LOG4CXX_DEBUG (logger, 
+        LOG4CXX_DEBUG (logger,
                        string ("Connection: setting up slave hostname=") +
                        slave_hostname);
 
@@ -539,9 +539,9 @@ Connection::Connection (const char * hostname, const short port,
         my_bool val = true;
         mysql_options (&this->slave_mysql, MYSQL_OPT_RECONNECT, &val);
 
-        if (!mysql_real_connect (&this->slave_mysql, slave_hostname, 
+        if (!mysql_real_connect (&this->slave_mysql, slave_hostname,
                                  username, password, db, slave_port, NULL, 0))
-            LOG4CXX_ERROR (logger, 
+            LOG4CXX_ERROR (logger,
                            string ("mysql_real_connect slave failed: host=") +
                            string (hostname) + string (", db=") + string (db) +
                            string (", username=") + string (username));
@@ -662,14 +662,6 @@ PreparedStatement * Connection::find_scan_statement (const char * tablename,
     return stmt;
 }
 
-#define HOST_PORT_DB_KEY(key, hostname, port, slave_hostname, slave_port, db)   \
-{                                                           \
-    char buf[200];                                          \
-    sprintf (buf, "%s:%d:%s:%d:%s", hostname, port,         \
-             slave_hostname, slave_port, db);               \
-    key = string (buf);                                     \
-}
-
 ConnectionFactory::ConnectionFactory ()
 {
     // init the per-thread connections key
@@ -700,7 +692,13 @@ Connection * ConnectionFactory::get_connection
     }
 
     string key;
-    HOST_PORT_DB_KEY (key, hostname, port, slave_hostname, slave_port, db);
+    {
+        char buf[200];
+        sprintf (buf, "%s:%d:%s:%d:%s", hostname, port,
+                 slave_hostname, slave_port, db);
+        key = string (buf);
+    }
+
     LOG4CXX_DEBUG (logger, string ("get_connection: key=") + key);
     // get the connection for this host/db
     Connection * connection = (*connections)[key];
@@ -708,7 +706,7 @@ Connection * ConnectionFactory::get_connection
     if (!connection)
     {
         LOG4CXX_DEBUG (logger, string ("get_connection create: key=") + key);
-        connection = new Connection (hostname, port, slave_hostname, 
+        connection = new Connection (hostname, port, slave_hostname,
                                      slave_port, db, username, password);
         (*connections)[key] = connection;
     }

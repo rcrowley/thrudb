@@ -32,30 +32,37 @@ class Partition
         Partition (const double & end)
         {
             this->end = end;
+            this->hostname = NULL;
+            this->slave_hostname = NULL;
+            this->db = NULL;
+            this->datatable = NULL;
         }
 
         Partition (mysql::PartitionResults * partition_results)
         {
             this->end = partition_results->get_end ();
-            strncpy (this->hostname, partition_results->get_hostname (),
-                     sizeof (this->hostname));
+            this->hostname = strdup (partition_results->get_hostname ());
             this->port = partition_results->get_port ();
-            if (partition_results->get_slave_hostname () != NULL)
-            {
-                strncpy (this->slave_hostname,
-                         partition_results->get_slave_hostname (),
-                         sizeof (this->slave_hostname));
-                this->slave_port = partition_results->get_slave_port ();
-            }
+            const char * tmp = partition_results->get_slave_hostname ();
+            if (tmp)
+                this->slave_hostname = strdup (tmp);
             else
-            {
-                this->slave_hostname[0] = '\0';
-                this->slave_port = 0;
-            }
-            strncpy (this->db, partition_results->get_db (),
-                     sizeof (this->db));
-            strncpy (this->datatable, partition_results->get_datatable (),
-                     sizeof (this->datatable));
+                this->slave_hostname = NULL;
+            this->slave_port = partition_results->get_slave_port ();
+            this->db = strdup (partition_results->get_db ());
+            this->datatable = strdup (partition_results->get_datatable ());
+        }
+
+        ~Partition ()
+        {
+            if (hostname)
+                free (hostname);
+            if (slave_hostname)
+                free (slave_hostname);
+            if (db)
+                free (db);
+            if (datatable)
+                free (datatable);
         }
 
         double get_end ()
@@ -95,12 +102,12 @@ class Partition
 
     protected:
         double end;
-        char hostname[MYSQL_BACKEND_MAX_HOSTNAME_SIZE + 1];
+        char * hostname;
         short port;
-        char slave_hostname[MYSQL_BACKEND_MAX_HOSTNAME_SIZE + 1];
+        char * slave_hostname;
         short slave_port;
-        char db[MYSQL_BACKEND_MAX_DB_SIZE + 1];
-        char datatable[MYSQL_BACKEND_MAX_DATATABLE_SIZE + 1];
+        char * db;
+        char * datatable;
 };
 
 class MySQLBackend : public DistStoreBackend
