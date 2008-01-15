@@ -293,23 +293,25 @@ more:
 }
 
 // copied from libmemcached_hash until it's librarizied
-static uint64_t FNV_64_INIT= 0xcbf29ce484222325LL;
-static uint64_t FNV_64_PRIME= 0x100000001b3LL;
+static uint32_t FNV_32_INIT= 2166136261UL;
+static uint32_t FNV_32_PRIME= 16777619;
 
 FindReturn MySQLBackend::find_and_checkout (const string & tablename,
                                             const string & key)
 {
     double point;
     {
-        uint64_t hash;
-        /* Thanks to pierre@demartines.com for the pointer */
-        hash= FNV_64_INIT;
+        uint32_t hash;
+        /* this is a modified fvn algorithm, i'm seeing much better behavior 
+         * with small keys when i do the xor before and after the multiply */
+        hash= FNV_32_INIT;
         for (unsigned int x = 0; x < key.length (); x++) 
         {
-            hash *= FNV_64_PRIME;
+            hash ^= key[x];
+            hash *= FNV_32_PRIME;
             hash ^= key[x];
         }
-        point = hash / (double)0xffffffffffffffffLL;
+        point = hash / (double)UINT_MAX;
     }
 
     if (logger->isDebugEnabled())
