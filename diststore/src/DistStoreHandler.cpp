@@ -6,7 +6,6 @@
 #undef HAVE_CONFIG_H
 
 #include "DistStoreHandler.h"
-#include "ConfigFile.h"
 
 #if HAVE_LIBUUID
 #include <uuid/uuid.h>

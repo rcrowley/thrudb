@@ -27,9 +27,6 @@ using namespace s3;
 using namespace std;
 using namespace diststore;
 using namespace log4cxx;
-using namespace facebook::thrift::transport;
-using namespace facebook::thrift::protocol;
-using namespace facebook::thrift::concurrency;
 
 LoggerPtr S3Backend::logger (Logger::getLogger ("S3Backend"));
 

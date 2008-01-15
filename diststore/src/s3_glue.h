@@ -20,7 +20,6 @@
 #include <map>
 #include <vector>
 
-#include "ConfigFile.h"
 #include "curl/curl.h"
 
 extern int s3_debug;
