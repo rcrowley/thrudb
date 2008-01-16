@@ -34,15 +34,15 @@ MemcachedBackend::~MemcachedBackend ()
     pthread_key_delete (memcached_key);
 }
 
-vector<string> MemcachedBackend::getTablenames ()
+vector<string> MemcachedBackend::getBuckets ()
 {
-    return this->backend->getTablenames ();
+    return this->backend->getBuckets ();
 }
 
-string MemcachedBackend::get (const string & tablename, const string & key )
+string MemcachedBackend::get (const string & bucket, const string & key )
 {
     memcached_st * cache = get_cache ();
-    string cache_key = (tablename + ":" + key);
+    string cache_key = (bucket + ":" + key);
     memcached_return rc;
     uint16_t opt_flags = 0;
     size_t str_length;
@@ -62,8 +62,8 @@ string MemcachedBackend::get (const string & tablename, const string & key )
     else
     {
         char buf[256];
-        sprintf(buf, "memcache get error: tablename=%s, key=%s, strerror=%s", 
-                tablename.c_str (), key.c_str (), 
+        sprintf(buf, "memcache get error: bucket=%s, key=%s, strerror=%s", 
+                bucket.c_str (), key.c_str (), 
                 memcached_strerror(cache, rc));
         LOG4CXX_WARN (logger, buf);
     }
@@ -73,27 +73,27 @@ string MemcachedBackend::get (const string & tablename, const string & key )
 
     if (value.empty ())
     {
-        value = this->backend->get (tablename, key);
+        value = this->backend->get (bucket, key);
         cache_put (cache_key, value);
     }
 
     return value;
 }
 
-void MemcachedBackend::put (const string & tablename, const string & key, 
+void MemcachedBackend::put (const string & bucket, const string & key, 
                             const string & value)
 {
-    this->backend->put (tablename, key, value);
-    string cache_key = (tablename + ":" + key);
+    this->backend->put (bucket, key, value);
+    string cache_key = (bucket + ":" + key);
     cache_put (cache_key, value);
 }
 
-void MemcachedBackend::remove (const string & tablename, const string & key )
+void MemcachedBackend::remove (const string & bucket, const string & key )
 {
-    this->backend->remove (tablename, key);
+    this->backend->remove (bucket, key);
 
     memcached_st * cache = get_cache ();
-    string cache_key = (tablename + ":" + key);
+    string cache_key = (bucket + ":" + key);
     memcached_return rc;
     time_t opt_expires= 0;
     rc = memcached_delete (cache, (char*)cache_key.c_str (), 
@@ -101,17 +101,17 @@ void MemcachedBackend::remove (const string & tablename, const string & key )
     if (rc != MEMCACHED_SUCCESS)
     {
         char buf[256];
-        sprintf(buf, "memcache remove error: tablename=%s, key=%s, strerror=%s", 
-                tablename.c_str (), key.c_str (), 
+        sprintf(buf, "memcache remove error: bucket=%s, key=%s, strerror=%s", 
+                bucket.c_str (), key.c_str (), 
                 memcached_strerror(cache, rc));
         LOG4CXX_WARN (logger, buf);
     }
 }
 
-ScanResponse MemcachedBackend::scan (const string & tablename,
+ScanResponse MemcachedBackend::scan (const string & bucket,
                                      const string & seed, int32_t count)
 {
-    return this->backend->scan (tablename, seed, count);
+    return this->backend->scan (bucket, seed, count);
 }
 
 string MemcachedBackend::admin (const string & op, const string & data)
@@ -119,14 +119,14 @@ string MemcachedBackend::admin (const string & op, const string & data)
     return this->backend->admin (op, data);
 }
 
-void MemcachedBackend::validate (const string & tablename, const string * key, 
+void MemcachedBackend::validate (const string & bucket, const string * key, 
                                  const string * value)
 {
-    this->backend->validate (tablename, key, value);
-    if (tablename.find (":") != string::npos)
+    this->backend->validate (bucket, key, value);
+    if (bucket.find (":") != string::npos)
     {
         ThrudocException e;
-        e.what = "invalid tablename";
+        e.what = "invalid bucket";
         throw e;
     }
 }

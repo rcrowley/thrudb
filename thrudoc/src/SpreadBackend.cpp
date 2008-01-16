@@ -8,7 +8,7 @@
 
 #if HAVE_LIBSPREAD
 
-// should be max expected key + max tablename + ~10. truncation will 
+// should be max expected key + max bucket + ~10. truncation will 
 // occur otherwise
 #define SPREAD_BACKEND_MAX_MESSAGE_SIZE 128
 
@@ -67,41 +67,41 @@ SpreadBackend::~SpreadBackend ()
     SP_disconnect (spread_mailbox);
 }
 
-vector<string> SpreadBackend::getTablenames ()
+vector<string> SpreadBackend::getBuckets ()
 {
-    return this->backend->getTablenames ();
+    return this->backend->getBuckets ();
 }
 
-string SpreadBackend::get (const string & tablename, const string & key )
+string SpreadBackend::get (const string & bucket, const string & key )
 {
-    return this->backend->get (tablename, key);
+    return this->backend->get (bucket, key);
 }
 
-void SpreadBackend::put (const string & tablename, const string & key, 
+void SpreadBackend::put (const string & bucket, const string & key, 
                          const string & value)
 {
-    this->backend->put (tablename, key, value);
+    this->backend->put (bucket, key, value);
     char msg[SPREAD_BACKEND_MAX_MESSAGE_SIZE];
     snprintf (msg, SPREAD_BACKEND_MAX_MESSAGE_SIZE, "put %s %s", 
-              tablename.c_str (), key.c_str ());
+              bucket.c_str (), key.c_str ());
     SP_multicast (this->spread_mailbox, SAFE_MESS | SELF_DISCARD, 
                   this->spread_group.c_str (), 0, strlen (msg), msg);
 }
 
-void SpreadBackend::remove (const string & tablename, const string & key )
+void SpreadBackend::remove (const string & bucket, const string & key )
 {
-    this->backend->remove (tablename, key);
+    this->backend->remove (bucket, key);
     char msg[SPREAD_BACKEND_MAX_MESSAGE_SIZE];
     snprintf (msg, SPREAD_BACKEND_MAX_MESSAGE_SIZE, "remove %s %s", 
-              tablename.c_str (), key.c_str ());
+              bucket.c_str (), key.c_str ());
     SP_multicast (this->spread_mailbox, SAFE_MESS | SELF_DISCARD, 
                   this->spread_group.c_str (), 0, strlen (msg), msg);
 }
 
-ScanResponse SpreadBackend::scan (const string & tablename,
+ScanResponse SpreadBackend::scan (const string & bucket,
                                   const string & seed, int32_t count)
 {
-    return this->backend->scan (tablename, seed, count);
+    return this->backend->scan (bucket, seed, count);
 }
 
 string SpreadBackend::admin (const string & op, const string & data)
@@ -109,10 +109,10 @@ string SpreadBackend::admin (const string & op, const string & data)
     return this->backend->admin (op, data);
 }
 
-void SpreadBackend::validate (const string & tablename, const string * key, 
+void SpreadBackend::validate (const string & bucket, const string * key, 
                               const string * value)
 {
-    this->backend->validate (tablename, key, value);
+    this->backend->validate (bucket, key, value);
 }
 
 // copied from sp.c, redic that it's a function that aborts in a library rather

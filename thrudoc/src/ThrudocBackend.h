@@ -17,15 +17,15 @@ class ThrudocBackend
     public:
         virtual ~ThrudocBackend () {};
 
-        virtual std::vector<std::string> getTablenames () = 0;
-        virtual std::string get (const std::string & tablename,
+        virtual std::vector<std::string> getBuckets () = 0;
+        virtual std::string get (const std::string & bucket,
                                  const std::string & key) = 0;
-        virtual void put (const std::string & tablename,
+        virtual void put (const std::string & bucket,
                           const std::string & key,
                           const std::string & value) = 0;
-        virtual void remove (const std::string & tablename,
+        virtual void remove (const std::string & bucket,
                              const std::string & key) = 0;
-        virtual thrudoc::ScanResponse scan (const std::string & tablename,
+        virtual thrudoc::ScanResponse scan (const std::string & bucket,
                                             const std::string & seed,
                                             int32_t count) = 0;
         virtual std::string admin (const std::string & op,
@@ -42,7 +42,7 @@ class ThrudocBackend
         // be able to handle NULL's approrpriately. all non,
         // wrapper/passthrough backends should call up to their parents for
         // validate.
-        virtual void validate (const std::string & tablename,
+        virtual void validate (const std::string & bucket,
                                const std::string * key,
                                const std::string * value);
 };

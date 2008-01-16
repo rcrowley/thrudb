@@ -9,9 +9,9 @@ use DBI;
 # create the database if not exist
 # create the user if not exist
 # create the directory if not exist
-# make sure tablename doesn't already exist
+# make sure bucket doesn't already exist
 # find the highest d_000...
-# create the tablename d_000...'s inserting their data in to the directory
+# create the bucket d_000...'s inserting their data in to the directory
 
 my $master_host = 'localhost';
 my $master_port = 3306;
@@ -22,7 +22,7 @@ my $svc_hosts = '%';
 my $user = 'thrudoc';
 my $pass = 'pass';
 
-my $tablename = 'data';
+my $bucket = 'data';
 my $hosts = 'localhost:3306';
 my $with_circular_slaves = undef;
 my $parts_per = 5;
@@ -35,7 +35,7 @@ GetOptions (
     'svc-hosts=s' => \$svc_hosts,
     'user=s' => \$user,
     'pass=s' => \$pass,
-    'tablename=s' => \$tablename,
+    'bucket=s' => \$bucket,
     'hosts=s' => \$hosts,
     'with-circular-slaves' => \$with_circular_slaves,
     'parts-per=s' => \$parts_per,
@@ -55,7 +55,7 @@ print Dumper (
         'svc-hosts=s' => $svc_hosts,
         'user=s' => $user,
         'pass=s' => $pass,
-        'tablename=s' => $tablename,
+        'bucket=s' => $bucket,
         'hosts=s' => $hosts,
         'with-circular-slaves' => $with_circular_slaves,
         'parts-per=s' => $parts_per,
@@ -96,7 +96,7 @@ $master_dbh->do ("create table if not exists `host` (
 
 $master_dbh->do ("create table if not exists `directory` (
   `id` bigint(20) unsigned NOT NULL auto_increment,
-  `tablename` char(32) NOT NULL,
+  `bucket` char(32) NOT NULL,
   `start` double NOT NULL,
   `end` double NOT NULL,
   `host_id` bigint(20) unsigned NOT NULL,
@@ -105,14 +105,14 @@ $master_dbh->do ("create table if not exists `directory` (
   `created_at` timestamp NOT NULL default CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP,
   `retired_at` datetime default NULL,
   PRIMARY KEY  (`id`),
-  UNIQUE KEY `UIDX_directory_tablename_datatable` (`tablename`,`datatable`),
-  UNIQUE KEY `UIDX_directory_tablename_retired_at_end` (`tablename`,`retired_at`,`end`),
+  UNIQUE KEY `UIDX_directory_bucket_datatable` (`bucket`,`datatable`),
+  UNIQUE KEY `UIDX_directory_bucket_retired_at_end` (`bucket`,`retired_at`,`end`),
   CONSTRAINT FOREIGN KEY `FK_directory_host_id` (`host_id`) REFERENCES `host` (`id`)
 ) ENGINE=innodb DEFAULT CHARSET=latin1");
 
-my $count = $master_dbh->selectrow_hashref (sprintf ("select count(`datatable`) as count from `directory` where `tablename` like '%s'", 
-        $tablename))->{count};
-die "tablename ($tablename) already exists\n" if ($count > 0);
+my $count = $master_dbh->selectrow_hashref (sprintf ("select count(`datatable`) as count from `directory` where `bucket` like '%s'", 
+        $bucket))->{count};
+die "bucket ($bucket) already exists\n" if ($count > 0);
 
 my $dbnum = $master_dbh->selectrow_hashref ('select max(`datatable`) as max from `directory` where `datatable` like "d\_%"')->{max};
 if ($dbnum)
@@ -165,8 +165,8 @@ foreach my $host (@$hosts)
 
         $end = $start + $range;
 
-        $cmd = sprintf ("insert into directory (`tablename`, `start`, `end`, `host_id`, `db`, `datatable`) values ('%s', %f, %f, %d, '%s', '%s')",
-            $tablename, $start, $end, $host->{id}, $database, $datatable);
+        $cmd = sprintf ("insert into directory (`bucket`, `start`, `end`, `host_id`, `db`, `datatable`) values ('%s', %f, %f, %d, '%s', '%s')",
+            $bucket, $start, $end, $host->{id}, $database, $datatable);
         $master_dbh->do ($cmd);
 
         $cmd = sprintf ("CREATE TABLE `%s` (

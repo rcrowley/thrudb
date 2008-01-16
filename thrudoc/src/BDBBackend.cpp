@@ -22,7 +22,7 @@ using namespace thrudoc;
 using namespace log4cxx;
 using namespace std;
 
-#define BDB_BACKEND_MAX_TABLENAME_SIZE 32
+#define BDB_BACKEND_MAX_BUCKET_SIZE 32
 #define BDB_BACKEND_MAX_KEY_SIZE 64
 #define BDB_BACKEND_MAX_VALUE_SIZE 4096
 
@@ -86,9 +86,9 @@ BDBBackend::~BDBBackend ()
     }
 }
 
-vector<string> BDBBackend::getTablenames ()
+vector<string> BDBBackend::getBuckets ()
 {
-    vector<string> tablenames;
+    vector<string> buckets;
     fs::directory_iterator end_iter;
     for (fs::directory_iterator dir_itr (this->bdb_home); dir_itr != end_iter;
          ++dir_itr)
@@ -96,14 +96,14 @@ vector<string> BDBBackend::getTablenames ()
         if ((fs::is_regular (dir_itr->status ())) && 
             (dir_itr->path ().leaf ().find ("log.") == string::npos))
         {
-            tablenames.push_back (dir_itr->path ().leaf ());
+            buckets.push_back (dir_itr->path ().leaf ());
         }
         // skipping anything that's not a file or log.*
     }
-    return tablenames;
+    return buckets;
 }
 
-string BDBBackend::get (const string & tablename, const string & key)
+string BDBBackend::get (const string & bucket, const string & key)
 {
     Dbt db_key;
     db_key.set_data ((char *)key.c_str ());
@@ -117,10 +117,10 @@ string BDBBackend::get (const string & tablename, const string & key)
 
     try
     {
-        if (get_db (tablename)->get (NULL, &db_key, &db_value, 0) != 0)
+        if (get_db (bucket)->get (NULL, &db_key, &db_value, 0) != 0)
         {
             ThrudocException e;
-            e.what = key + " not found in " + tablename;
+            e.what = key + " not found in " + bucket;
             LOG4CXX_DEBUG (logger, string ("get: exception=") + e.what);
             throw e;
         }
@@ -139,7 +139,7 @@ string BDBBackend::get (const string & tablename, const string & key)
     return string ((const char *)db_value.get_data (), db_value.get_size ());
 }
 
-void BDBBackend::put (const string & tablename, const string & key,
+void BDBBackend::put (const string & bucket, const string & key,
                       const string & value)
 {
     Dbt db_key;
@@ -152,7 +152,7 @@ void BDBBackend::put (const string & tablename, const string & key,
 
     try
     {
-        get_db (tablename)->put (NULL, &db_key, &db_value, 0);
+        get_db (bucket)->put (NULL, &db_key, &db_value, 0);
     }
     catch (DbDeadlockException & e)
     {
@@ -166,7 +166,7 @@ void BDBBackend::put (const string & tablename, const string & key,
     }
 }
 
-void BDBBackend::remove (const string & tablename, const string & key)
+void BDBBackend::remove (const string & bucket, const string & key)
 {
     Dbt db_key;
     db_key.set_data ((char *)key.c_str ());
@@ -174,7 +174,7 @@ void BDBBackend::remove (const string & tablename, const string & key)
 
     try
     {
-        get_db (tablename)->del (NULL, &db_key, 0);
+        get_db (bucket)->del (NULL, &db_key, 0);
     }
     catch (DbDeadlockException & e)
     {
@@ -188,7 +188,7 @@ void BDBBackend::remove (const string & tablename, const string & key)
     }
 }
 
-ScanResponse BDBBackend::scan (const string & tablename, const string & seed,
+ScanResponse BDBBackend::scan (const string & bucket, const string & seed,
                                int32_t count)
 {
     ScanResponse scan_response;
@@ -208,7 +208,7 @@ ScanResponse BDBBackend::scan (const string & tablename, const string & seed,
         db_value.set_ulen (BDB_BACKEND_MAX_VALUE_SIZE + 1);
         db_value.set_flags (DB_DBT_USERMEM);
 
-        get_db (tablename)->cursor (NULL, &dbc, 0);
+        get_db (bucket)->cursor (NULL, &dbc, 0);
 
         // this get positions us at the last key we grabbed or the one
         // imediately following it
@@ -266,7 +266,7 @@ ScanResponse BDBBackend::scan (const string & tablename, const string & seed,
 
 string BDBBackend::admin (const string & op, const string & data)
 {
-    if (op == "create_tablename")
+    if (op == "create_bucket")
     {
         Db * db = NULL;
         try
@@ -295,19 +295,19 @@ string BDBBackend::admin (const string & op, const string & data)
 
         return "done";
     }
-    // TODO delete_tablename, but have to figure out how to close the db 
+    // TODO delete_bucket, but have to figure out how to close the db 
     // handles across all of the threads first...
     return "";
 }
 
-void BDBBackend::validate (const string & tablename, const string * key,
+void BDBBackend::validate (const string & bucket, const string * key,
                            const string * value)
 {
-    ThrudocBackend::validate (tablename, key, value);
-    if (tablename.length () > BDB_BACKEND_MAX_TABLENAME_SIZE)
+    ThrudocBackend::validate (bucket, key, value);
+    if (bucket.length () > BDB_BACKEND_MAX_BUCKET_SIZE)
     {
         ThrudocException e;
-        e.what = "tablename too long";
+        e.what = "bucket too long";
         throw e;
     }
     else if (key && (*key).length () > BDB_BACKEND_MAX_KEY_SIZE)
@@ -324,9 +324,9 @@ void BDBBackend::validate (const string & tablename, const string * key,
     }
 }
 
-Db * BDBBackend::get_db (const string & tablename)
+Db * BDBBackend::get_db (const string & bucket)
 {
-    Db * db = dbs[tablename];
+    Db * db = dbs[bucket];
     if (!db)
     {
         u_int32_t db_flags = DB_AUTO_COMMIT; // allow auto-commit   
@@ -335,12 +335,12 @@ Db * BDBBackend::get_db (const string & tablename)
         try
         {
             db->open (NULL,                 // Txn pointer
-                      tablename.c_str (),   // file name
+                      bucket.c_str (),   // file name
                       NULL,                 // logical db name
                       DB_BTREE,             // database type
                       db_flags,             // open flags
                       0);                   // file mode, defaults
-            dbs[tablename] = db;
+            dbs[bucket] = db;
         }
         catch (DbException & e)
         {

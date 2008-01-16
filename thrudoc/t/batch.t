@@ -29,20 +29,20 @@ eval
 
     # this should be a no-op if the table already exists, not all engines will
     # support this call, so it can't guarantee success
-    unless ($client->admin ('create_tablename', $table) =~ /done/)
+    unless ($client->admin ('create_bucket', $table) =~ /done/)
     {
         $table = 'test';
     }
 
     my $element = new Thrudoc::Element ({
-            tablename => 'nonexistent_table',
+            bucket => 'nonexistent_table',
             key => 'nonexistent key',
         });
     my $res = $client->getList ([$element]);
     isnt ($res->[0]{ex}{what}, '', 'nonexistent table');
     $tests_left--;
 
-    $element->{tablename} = $table;
+    $element->{bucket} = $table;
     $res = $client->getList ([$element]);
     isnt ($res->[0]{ex}{what}, '', 'nonexistent key');
     $tests_left--;
@@ -51,7 +51,7 @@ eval
     foreach (0..9)
     {
         $element = new Thrudoc::Element ({
-                tablename => $table,
+                bucket => $table,
                 key => 'key.'.$key,
                 value => 'value.'.$value,
             });
@@ -92,7 +92,7 @@ eval
     # try and clean up after ourselves
     $client->removeList (\@elements);
 
-    $client->admin ('delete_tablename', $table) if ($table ne 'test');
+    $client->admin ('delete_bucket', $table) if ($table ne 'test');
 };
 if ($@)
 {

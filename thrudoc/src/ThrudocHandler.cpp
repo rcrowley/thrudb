@@ -23,22 +23,22 @@ ThrudocHandler::ThrudocHandler (shared_ptr<ThrudocBackend> backend)
     this->backend = backend;
 }
 
-void ThrudocHandler::getTablenames (vector<string> & _return)
+void ThrudocHandler::getBuckets (vector<string> & _return)
 {
-    LOG4CXX_DEBUG (logger, "getTablenames: ");
-    _return = this->backend->getTablenames ();
+    LOG4CXX_DEBUG (logger, "getBuckets: ");
+    _return = this->backend->getBuckets ();
 }
 
-void ThrudocHandler::put (const string & tablename, const string & key,
+void ThrudocHandler::put (const string & bucket, const string & key,
                           const string & value)
 {
-    LOG4CXX_DEBUG (logger, "put: tablename=" + tablename + ", key=" + key +
+    LOG4CXX_DEBUG (logger, "put: bucket=" + bucket + ", key=" + key +
                    ", value=" + value);
-    this->backend->validate (tablename, &key, &value);
-    this->backend->put (tablename, key, value);
+    this->backend->validate (bucket, &key, &value);
+    this->backend->put (bucket, key, value);
 }
 
-void ThrudocHandler::putValue (string & _return, const string & tablename,
+void ThrudocHandler::putValue (string & _return, const string & bucket,
                                const string & value)
 {
 #if HAVE_LIBUUID
@@ -47,9 +47,9 @@ void ThrudocHandler::putValue (string & _return, const string & tablename,
     char uuid_str[37];
     uuid_unparse_lower(uuid, uuid_str);
     _return = string (uuid_str);
-    LOG4CXX_DEBUG (logger, "putValue: tablename=" + tablename + ", value=" +
+    LOG4CXX_DEBUG (logger, "putValue: bucket=" + bucket + ", value=" +
                    value + ", uuid=" + _return);
-    this->backend->put (tablename, _return, value);
+    this->backend->put (bucket, _return, value);
 #else
     ThrudocException e;
     e.what = "putValue uuid generation not built";
@@ -57,33 +57,33 @@ void ThrudocHandler::putValue (string & _return, const string & tablename,
 #endif
 }
 
-void ThrudocHandler::get (string & _return, const string & tablename,
+void ThrudocHandler::get (string & _return, const string & bucket,
                           const string & key)
 {
-    LOG4CXX_DEBUG (logger, "get: tablename=" + tablename + ", key=" + key);
-    this->backend->validate (tablename, &key, NULL);
-    _return = this->backend->get (tablename, key);
+    LOG4CXX_DEBUG (logger, "get: bucket=" + bucket + ", key=" + key);
+    this->backend->validate (bucket, &key, NULL);
+    _return = this->backend->get (bucket, key);
 }
 
-void ThrudocHandler::remove (const string & tablename, const string & key)
+void ThrudocHandler::remove (const string & bucket, const string & key)
 {
-    LOG4CXX_DEBUG (logger, "remove: tablename=" + tablename + ", key=" + key);
-    this->backend->validate (tablename, &key, NULL);
-    this->backend->remove (tablename, key);
+    LOG4CXX_DEBUG (logger, "remove: bucket=" + bucket + ", key=" + key);
+    this->backend->validate (bucket, &key, NULL);
+    this->backend->remove (bucket, key);
 }
 
-void ThrudocHandler::scan (ScanResponse & _return, const string & tablename,
+void ThrudocHandler::scan (ScanResponse & _return, const string & bucket,
                            const string & seed, int32_t count)
 {
     if (logger->isDebugEnabled())
     {
         char buf[256];
-        sprintf (buf, "scan: tablename=%s, seed=%s, count=%d",
-                 tablename.c_str (), seed.c_str (), count);
+        sprintf (buf, "scan: bucket=%s, seed=%s, count=%d",
+                 bucket.c_str (), seed.c_str (), count);
         LOG4CXX_DEBUG (logger, buf);
     }
-    this->backend->validate (tablename, NULL, NULL);
-    _return = this->backend->scan (tablename, seed, count);
+    this->backend->validate (bucket, NULL, NULL);
+    _return = this->backend->scan (bucket, seed, count);
 }
 
 void ThrudocHandler::admin (string & _return, const string & op, const string & data)

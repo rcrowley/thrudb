@@ -124,25 +124,25 @@ class MySQLBackend : public ThrudocBackend
 
         ~MySQLBackend ();
 
-        std::vector<std::string> getTablenames ();
-        std::string get (const std::string & tablename,
+        std::vector<std::string> getBuckets ();
+        std::string get (const std::string & bucket,
                          const std::string & key);
-        void put (const std::string & tablename, const std::string & key,
+        void put (const std::string & bucket, const std::string & key,
                   const std::string & value);
-        void remove (const std::string & tablename, const std::string & key);
-        thrudoc::ScanResponse scan (const std::string & tablename,
+        void remove (const std::string & bucket, const std::string & key);
+        thrudoc::ScanResponse scan (const std::string & bucket,
                                     const std::string & seed, int32_t count);
         std::string admin (const std::string & op, const std::string & data);
-        void validate (const std::string & tablename, const std::string * key,
+        void validate (const std::string & bucket, const std::string * key,
                        const std::string * value);
 
     protected:
 
-        FindReturn find_and_checkout (const std::string & tablename,
+        FindReturn find_and_checkout (const std::string & bucket,
                                       const std::string & key);
         FindReturn find_next_and_checkout
-            (const std::string & tablename,
-             const std::string & current_datatablename);
+            (const std::string & bucket,
+             const std::string & current_databucket);
 
     private:
         static log4cxx::LoggerPtr logger;
@@ -160,7 +160,7 @@ class MySQLBackend : public ThrudocBackend
         int max_value_size;
 
         std::set<Partition*, bool(*)(Partition*, Partition*)> *
-            load_partitions (const std::string & tablename);
+            load_partitions (const std::string & bucket);
 
         FindReturn and_checkout (mysql::Connection * connection,
                                  mysql::PreparedStatement * statement);

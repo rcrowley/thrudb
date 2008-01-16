@@ -16,16 +16,16 @@ class ThrudocHandler : virtual public thrudoc::ThrudocIf {
     public:
         ThrudocHandler (boost::shared_ptr<ThrudocBackend> backend);
 
-        void getTablenames (std::vector<std::string> & _return);
-        void put (const std::string & tablename, const std::string & key,
+        void getBuckets (std::vector<std::string> & _return);
+        void put (const std::string & bucket, const std::string & key,
                   const std::string & value);
-        void putValue (std::string & _return, const std::string & tablename,
+        void putValue (std::string & _return, const std::string & bucket,
                        const std::string & value);
-        void get (std::string & _return, const std::string & tablename,
+        void get (std::string & _return, const std::string & bucket,
                   const std::string & key);
-        void remove (const std::string & tablename, const std::string & key);
+        void remove (const std::string & bucket, const std::string & key);
         void scan (thrudoc::ScanResponse & _return,
-                   const std::string & tablename,
+                   const std::string & bucket,
                    const std::string & seed, int32_t count);
 
         void putList(std::vector<thrudoc::ThrudocException> & _return, 

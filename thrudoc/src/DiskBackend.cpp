@@ -58,9 +58,9 @@ DiskBackend::DiskBackend (const string & doc_root)
     }
 }
 
-vector<string> DiskBackend::getTablenames ()
+vector<string> DiskBackend::getBuckets ()
 {
-    vector<string> tablenames;
+    vector<string> buckets;
     fs::directory_iterator end_iter;
     for (fs::directory_iterator dir_itr (doc_root); dir_itr != end_iter;
          ++dir_itr)
@@ -68,15 +68,15 @@ vector<string> DiskBackend::getTablenames ()
         if (fs::is_directory (dir_itr->status()) &&
             (dir_itr->path ().leaf ().find ("-del_") == string::npos))
         {
-            tablenames.push_back (dir_itr->path ().leaf ());
+            buckets.push_back (dir_itr->path ().leaf ());
         }
     }
-    return tablenames;
+    return buckets;
 }
 
-string DiskBackend::get (const string & tablename, const string & key)
+string DiskBackend::get (const string & bucket, const string & key)
 {
-    string file = build_filename (tablename, key);
+    string file = build_filename (bucket, key);
 
     fs::ifstream infile;
     infile.open (file, ios::in | ios::binary | ios::ate);
@@ -84,7 +84,7 @@ string DiskBackend::get (const string & tablename, const string & key)
     if (!infile.is_open ())
     {
         ThrudocException e;
-        e.what = "Error: can't read " + tablename + "/" + key;
+        e.what = "Error: can't read " + bucket + "/" + key;
         throw e;
     }
 
@@ -103,21 +103,21 @@ string DiskBackend::get (const string & tablename, const string & key)
     return obj;
 }
 
-void DiskBackend::put (const string & tablename, const string & key,
+void DiskBackend::put (const string & bucket, const string & key,
                        const string & value)
 {
     string d1;
     string d2;
     string d3;
-    get_dir_pieces (d1, d2, d3, tablename, key);
+    get_dir_pieces (d1, d2, d3, bucket, key);
 
-    string loc = doc_root + "/" + tablename + "/" + d1 + "/" + d2 + "/" + d3;
+    string loc = doc_root + "/" + bucket + "/" + d1 + "/" + d2 + "/" + d3;
     if (!fs::is_directory (loc))
     {
         fs::create_directories (loc);
     }
 
-    string file = build_filename (tablename, d1, d2, d3, key);
+    string file = build_filename (bucket, d1, d2, d3, key);
 
     fs::ofstream outfile;
     outfile.open (file.c_str (), ios::out | ios::binary | ios::trunc);
@@ -125,7 +125,7 @@ void DiskBackend::put (const string & tablename, const string & key,
     if (!outfile.is_open ())
     {
         ThrudocException e;
-        e.what = "Can't write " + tablename + "/" + key;
+        e.what = "Can't write " + bucket + "/" + key;
         throw e;
     }
 
@@ -134,29 +134,29 @@ void DiskBackend::put (const string & tablename, const string & key,
     outfile.close ();
 }
 
-void DiskBackend::remove (const string & tablename, const string & key)
+void DiskBackend::remove (const string & bucket, const string & key)
 {
-    string file = build_filename (tablename, key);
+    string file = build_filename (bucket, key);
 
     if (fs::is_regular (file))
     {
         if (!fs::remove (file.c_str ()))
         {
             ThrudocException e;
-            e.what = "Can't remove " + tablename + "/" + key;
+            e.what = "Can't remove " + bucket + "/" + key;
             throw e;
         }
     }
 }
 
-ScanResponse DiskBackend::scan (const string & tablename, const string & seed,
+ScanResponse DiskBackend::scan (const string & bucket, const string & seed,
                                 int32_t count)
 {
     stack<fs::directory_iterator *> dir_stack;
     fs::directory_iterator * i;
     fs::directory_iterator end;
 
-    string base = doc_root + "/" + tablename + "/";
+    string base = doc_root + "/" + bucket + "/";
     if (seed.empty ())
     {
         i = new fs::directory_iterator (base);
@@ -187,14 +187,14 @@ ScanResponse DiskBackend::scan (const string & tablename, const string & seed,
             string::size_type pos     = seed.find_first_of(SEED_SEP, lastPos);
 
             key = seed.substr(lastPos, pos - lastPos);
-            get_dir_pieces (d1, d2, d3, tablename, key);
-            string file = build_filename (tablename, d1, d2, d3, key);
+            get_dir_pieces (d1, d2, d3, bucket, key);
+            string file = build_filename (bucket, d1, d2, d3, key);
             while ((string::npos != pos || string::npos != lastPos) &&
                    !fs::is_regular (file))
             {
                 key = seed.substr(lastPos, pos - lastPos);
-                get_dir_pieces (d1, d2, d3, tablename, key);
-                file = build_filename (tablename, d1, d2, d3, key);
+                get_dir_pieces (d1, d2, d3, bucket, key);
+                file = build_filename (bucket, d1, d2, d3, key);
 
                 // Skip delimiters.  Note the "not_of"
                 lastPos = seed.find_first_not_of(SEED_SEP, pos);
@@ -257,7 +257,7 @@ ScanResponse DiskBackend::scan (const string & tablename, const string & seed,
             string ret = (*i)->path ().leaf ();
             Element e;
             e.key = ret;
-            e.value = get (tablename, ret);
+            e.value = get (bucket, ret);
             scan_response.elements.push_back (e);
             ++(*i);
         }
@@ -300,7 +300,7 @@ ScanResponse DiskBackend::scan (const string & tablename, const string & seed,
 
 string DiskBackend::admin (const string & op, const string & data)
 {
-    if (op == "create_tablename")
+    if (op == "create_bucket")
     {
         string base = doc_root + "/" + data;
         if (fs::is_directory (base))
@@ -309,7 +309,7 @@ string DiskBackend::admin (const string & op, const string & data)
         if (fs::create_directories (base))
             return "done";
     }
-    else if (op == "delete_tablename")
+    else if (op == "delete_bucket")
     {
         try
         {
@@ -325,7 +325,7 @@ string DiskBackend::admin (const string & op, const string & data)
         }
         catch (exception & e)
         {
-            LOG4CXX_WARN (logger, string ("admin: delete_tablename: what=") +
+            LOG4CXX_WARN (logger, string ("admin: delete_bucket: what=") +
                           e.what ());
             ThrudocException de;
             de.what = "DiskBackend error";
@@ -336,14 +336,14 @@ string DiskBackend::admin (const string & op, const string & data)
     return "";
 }
 
-void DiskBackend::validate (const string & tablename, const string * key,
+void DiskBackend::validate (const string & bucket, const string * key,
                             const string * value)
 {
-    ThrudocBackend::validate (tablename, key, value);
-    if (tablename.length () > DISK_BACKEND_MAX_TABLENAME_SIZE)
+    ThrudocBackend::validate (bucket, key, value);
+    if (bucket.length () > DISK_BACKEND_MAX_BUCKET_SIZE)
     {
         ThrudocException e;
-        e.what = "tablename too long";
+        e.what = "bucket too long";
         throw e;
     }
     if (key)
@@ -365,7 +365,7 @@ void DiskBackend::validate (const string & tablename, const string * key,
 }
 
 void DiskBackend::get_dir_pieces (string & d1, string & d2, string & d3, 
-                                  const string & tablename, const string & key)
+                                  const string & bucket, const string & key)
 {
     // we partition by the md5 of the key so that we'll get an even
     // distrobution of keys across partitions, we still store with key tho
@@ -383,21 +383,21 @@ void DiskBackend::get_dir_pieces (string & d1, string & d2, string & d3,
     d3 = d3_str;
 }
 
-string DiskBackend::build_filename(const string & tablename, 
+string DiskBackend::build_filename(const string & bucket, 
                                    const string & key)
 {
     string d1, d2, d3;
-    get_dir_pieces (d1, d2, d3, tablename, key);
-    return build_filename (tablename, d1, d2, d3, key);
+    get_dir_pieces (d1, d2, d3, bucket, key);
+    return build_filename (bucket, d1, d2, d3, key);
 }
 
-string DiskBackend::build_filename(const string & tablename, const string & d1,
+string DiskBackend::build_filename(const string & bucket, const string & d1,
                                    const string & d2, const string & d3,
                                    const string & key)
 {
     return 
         doc_root + "/" + 
-        tablename + "/" + 
+        bucket + "/" + 
         d1 + "/" +
         d2 + "/" + 
         d3 + "/" + 

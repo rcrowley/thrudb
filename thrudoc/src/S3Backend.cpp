@@ -35,9 +35,9 @@ S3Backend::S3Backend ()
     LOG4CXX_INFO (logger, "S3Backend");
 }
 
-vector<string> S3Backend::getTablenames ()
+vector<string> S3Backend::getBuckets ()
 {
-    vector<string> tablenames;
+    vector<string> buckets;
 
     s3_result * result = list_buckets ();
 
@@ -52,19 +52,19 @@ vector<string> S3Backend::getTablenames ()
     vector<Bucket *>::iterator i;
     for (i = contents.begin (); i != contents.end (); i++)
     {
-        tablenames.push_back ((*i)->Name);
+        buckets.push_back ((*i)->Name);
     }
 
     delete result;
 
-    return tablenames;
+    return buckets;
 }
 
-string S3Backend::get (const string & tablename, const string & key)
+string S3Backend::get (const string & bucket, const string & key)
 {
     class response_buffer *b = NULL;
 
-    b = object_get (tablename, key, 0);
+    b = object_get (bucket, key, 0);
 
     if(b == NULL){
         ThrudocException e;
@@ -85,12 +85,12 @@ string S3Backend::get (const string & tablename, const string & key)
     return result;
 }
 
-void S3Backend::put (const string & tablename, const string & key,
+void S3Backend::put (const string & bucket, const string & key,
                      const string & value)
 {
     struct s3headers meta[2] = {{0,0},{0,0}};
 
-    int r = object_put (tablename, key, value.c_str(), value.length(),
+    int r = object_put (bucket, key, value.c_str(), value.length(),
                         meta);
 
     if(r == -1){
@@ -100,9 +100,9 @@ void S3Backend::put (const string & tablename, const string & key,
     }
 }
 
-void S3Backend::remove (const string & tablename, const string & key)
+void S3Backend::remove (const string & bucket, const string & key)
 {
-    int r = object_rm (tablename, key);
+    int r = object_rm (bucket, key);
 
     if(r == -1){
         ThrudocException e;
@@ -111,12 +111,12 @@ void S3Backend::remove (const string & tablename, const string & key)
     }
 }
 
-ScanResponse S3Backend::scan (const string & tablename, const string & seed,
+ScanResponse S3Backend::scan (const string & bucket, const string & seed,
                               int32_t count)
 {
     ScanResponse scan_response;
 
-    s3_result * result = list_bucket (tablename, "", seed, count);
+    s3_result * result = list_bucket (bucket, "", seed, count);
 
     if (!result)
     {
@@ -136,7 +136,7 @@ ScanResponse S3Backend::scan (const string & tablename, const string & seed,
         // benefit in that it won't fill up the cache with stuff that's only
         // going to be fetched a single time for the scan. NOTE: if this isn't
         // the base persistent backend then this scan shouldn't be used.
-        e.value = get (tablename, e.key);
+        e.value = get (bucket, e.key);
         scan_response.elements.push_back (e);
     }
 
@@ -150,7 +150,7 @@ ScanResponse S3Backend::scan (const string & tablename, const string & seed,
 
 string S3Backend::admin (const string & op, const string & data)
 {
-    if (op == "create_tablename")
+    if (op == "create_bucket")
     {
         // will throw
         validate (data, NULL, NULL);
@@ -166,12 +166,12 @@ string S3Backend::admin (const string & op, const string & data)
             case 200:
                 return "done";
             case 409:
-                e.what = "tablename " + data + " already exists";
+                e.what = "bucket " + data + " already exists";
         }
         LOG4CXX_WARN (logger, e.what);
         throw e;
     }
-    else if (op == "delete_tablename")
+    else if (op == "delete_bucket")
     {
         // will throw
         validate (data, NULL, NULL);
@@ -202,14 +202,14 @@ string S3Backend::admin (const string & op, const string & data)
     return "";
 }
 
-void S3Backend::validate (const string & tablename, const string * key,
+void S3Backend::validate (const string & bucket, const string * key,
                           const string * value)
 {
-    ThrudocBackend::validate (tablename, key, value);
+    ThrudocBackend::validate (bucket, key, value);
 
     // NOTE: s3 is going to validate them for us so do we really need to?
 
-    // tablenames
+    // buckets
     // - lowercase letters, numbers, periods, underscores, and dashes
     // - start with a number or letter
     // - must be between 3 and 255 chars

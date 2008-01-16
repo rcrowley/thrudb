@@ -32,28 +32,28 @@ eval{
 
 eval {
 
-    my $tablename = 'data';
+    my $bucket = 'data';
 
-    my $id = $thrudoc->put ($tablename, "key3", "val-key4");
+    my $id = $thrudoc->put ($bucket, "key3", "val-key4");
     my $key = "key.".rand;
-    $thrudoc->put ($tablename, $key, "val.$key");
+    $thrudoc->put ($bucket, $key, "val.$key");
 
-    print Dumper ($thrudoc->get ($tablename, "key3"));
-    print Dumper ($thrudoc->get ($tablename, $key));
+    print Dumper ($thrudoc->get ($bucket, "key3"));
+    print Dumper ($thrudoc->get ($bucket, $key));
 
     if (rand (100) > 50)
     {
-#        $thrudoc->remove ($tablename, $key);
+#        $thrudoc->remove ($bucket, $key);
     }
     else
     {
-        print Dumper ($thrudoc->get ($tablename, $key));
+        print Dumper ($thrudoc->get ($bucket, $key));
     }
 
-    print Dumper ($thrudoc->get ($tablename, "key3"));
+    print Dumper ($thrudoc->get ($bucket, "key3"));
 
     my $batch_size = 13;
-    my $ret = $thrudoc->scan ($tablename, undef, $batch_size);
+    my $ret = $thrudoc->scan ($bucket, undef, $batch_size);
     my $count = 0;
     while (scalar (@{$ret->{elements}}) > 0)
     {
@@ -63,7 +63,7 @@ eval {
             printf "\t%s => %s\n", $_->{key}, $_->{value};
         }
         $count += scalar (@{$ret->{elements}});
-        $ret = $thrudoc->scan ($tablename, $ret->{seed}, $batch_size);
+        $ret = $thrudoc->scan ($bucket, $ret->{seed}, $batch_size);
     }
     printf "count: %d\n", $count;
 };

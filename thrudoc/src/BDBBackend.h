@@ -20,17 +20,17 @@ class BDBBackend : public ThrudocBackend
         BDBBackend (const std::string & bdb_root, const int & thread_count);
         ~BDBBackend ();
 
-        std::vector<std::string> getTablenames ();
-        std::string get (const std::string & tablename,
+        std::vector<std::string> getBuckets ();
+        std::string get (const std::string & bucket,
                          const std::string & key);
-        void put (const std::string & tablename, const std::string & key,
+        void put (const std::string & bucket, const std::string & key,
                   const std::string & value);
-        void remove (const std::string & tablename, const std::string & key);
-        thrudoc::ScanResponse scan (const std::string & tablename,
+        void remove (const std::string & bucket, const std::string & key);
+        thrudoc::ScanResponse scan (const std::string & bucket,
                                     const std::string & seed,
                                     int32_t count);
         std::string admin (const std::string & op, const std::string & data);
-        void validate (const std::string & tablename, const std::string * key,
+        void validate (const std::string & bucket, const std::string * key,
                        const std::string * value);
 
     protected:
@@ -40,7 +40,7 @@ class BDBBackend : public ThrudocBackend
         DbEnv * db_env;
         std::map<std::string, Db *> dbs;
 
-        Db * get_db (const std::string & tablename);
+        Db * get_db (const std::string & bucket);
 };
 
 #endif /* HAVE_LIBDB_CXX && HAVE_LIBBOOST_FILESYSTEM */

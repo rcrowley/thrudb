@@ -29,7 +29,7 @@ eval
 
     # this should be a no-op if the table already exists, not all engines will
     # support this call, so it can't guarantee success
-    unless ($client->admin ('create_tablename', $table) =~ /done/)
+    unless ($client->admin ('create_bucket', $table) =~ /done/)
     {
         $table = 'test';
     }
@@ -53,7 +53,7 @@ eval
         $client->get ('this_table_name_is_way_too_long_and_should_err_out',
             'key');
     };
-    ok ($@->{what}, 'tablename length');
+    ok ($@->{what}, 'bucket length');
     $tests_left--;
 
     eval
@@ -118,10 +118,10 @@ eval
     # just try and delete this one too
     $client->remove ($table, $id);
 
-    ok (scalar (@{$client->getTablenames ()}) > 0, 'getTablenames');
+    ok (scalar (@{$client->getBuckets ()}) > 0, 'getBuckets');
     $tests_left--;
 
-    $client->admin ('delete_tablename', $table) if ($table ne 'test');
+    $client->admin ('delete_bucket', $table) if ($table ne 'test');
 };
 if ($@)
 {

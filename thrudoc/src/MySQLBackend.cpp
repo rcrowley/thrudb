@@ -66,9 +66,9 @@ MySQLBackend::~MySQLBackend ()
 }
 
 set<Partition*, bool(*)(Partition*, Partition*)> * 
-MySQLBackend::load_partitions (const string & tablename)
+MySQLBackend::load_partitions (const string & bucket)
 {
-    LOG4CXX_INFO (logger, string ("load_partitions: tablename=") + tablename);
+    LOG4CXX_INFO (logger, string ("load_partitions: bucket=") + bucket);
 
     Connection * connection = connection_factory->get_connection
         (this->master_hostname.c_str (), this->master_port, 
@@ -80,7 +80,7 @@ MySQLBackend::load_partitions (const string & tablename)
         connection->find_partitions_statement ();
 
     StringParams * fp = (StringParams*)partitions_statement->get_bind_params ();
-    fp->set_str (tablename.c_str ());
+    fp->set_str (bucket.c_str ());
 
     partitions_statement->execute ();
 
@@ -103,7 +103,7 @@ MySQLBackend::load_partitions (const string & tablename)
     if (new_partitions->size () > 0)
     {
         set<Partition*, bool(*)(Partition*, Partition*)> * old_partitions = 
-            partitions[tablename];
+            partitions[bucket];
         if (old_partitions)
         {
             set<Partition*, bool(*)(Partition*, Partition*)>::iterator i;
@@ -112,12 +112,12 @@ MySQLBackend::load_partitions (const string & tablename)
                 delete (*i);  // each partition
             delete old_partitions; // the set
         }
-        partitions[tablename] = new_partitions;
+        partitions[bucket] = new_partitions;
     }
     else
     {
         LOG4CXX_WARN (logger, string ("load_partitions: request to load ") + 
-                      tablename + string (" with no partitions"));
+                      bucket + string (" with no partitions"));
         delete new_partitions;
         new_partitions = NULL;
     }
@@ -125,20 +125,20 @@ MySQLBackend::load_partitions (const string & tablename)
     return new_partitions;
 }
 
-vector<string> MySQLBackend::getTablenames ()
+vector<string> MySQLBackend::getBuckets ()
 {
-    vector<string> tablenames;
+    vector<string> buckets;
     map<string, set<Partition*, bool(*)(Partition*, Partition*)>* >::iterator i;
     for (i = partitions.begin (); i != partitions.end (); i++)
     {
-        tablenames.push_back ((*i).first);
+        buckets.push_back ((*i).first);
     }
-    return tablenames;
+    return buckets;
 }
 
-string MySQLBackend::get (const string & tablename, const string & key )
+string MySQLBackend::get (const string & bucket, const string & key )
 {
-    FindReturn find_return = this->find_and_checkout (tablename, key);
+    FindReturn find_return = this->find_and_checkout (bucket, key);
 
     PreparedStatement * get_statement =
         find_return.connection->find_get_statement
@@ -153,7 +153,7 @@ string MySQLBackend::get (const string & tablename, const string & key )
     if (get_statement->fetch () == MYSQL_NO_DATA)
     {
         ThrudocException e;
-        e.what = key + " not found in " + tablename;
+        e.what = key + " not found in " + bucket;
         LOG4CXX_DEBUG (logger, string ("get: ") + e.what);
         throw e;
     }
@@ -169,9 +169,9 @@ string MySQLBackend::get (const string & tablename, const string & key )
     return value;
 }
 
-void MySQLBackend::put (const string & tablename, const string & key, const string & value)
+void MySQLBackend::put (const string & bucket, const string & key, const string & value)
 {
-    FindReturn find_return = this->find_and_checkout (tablename, key);
+    FindReturn find_return = this->find_and_checkout (bucket, key);
 
     PreparedStatement * put_statement =
         find_return.connection->find_put_statement
@@ -184,9 +184,9 @@ void MySQLBackend::put (const string & tablename, const string & key, const stri
     put_statement->execute ();
 }
 
-void MySQLBackend::remove (const string & tablename, const string & key )
+void MySQLBackend::remove (const string & bucket, const string & key )
 {
-    FindReturn find_return = this->find_and_checkout (tablename, key);
+    FindReturn find_return = this->find_and_checkout (bucket, key);
 
     PreparedStatement * delete_statement =
         find_return.connection->find_delete_statement
@@ -236,7 +236,7 @@ string MySQLBackend::scan_helper (ScanResponse & scan_response,
  * our seed will just be the last key returned. that's enough for us to find
  * the partition used last
  */
-ScanResponse MySQLBackend::scan (const string & tablename, const string & seed,
+ScanResponse MySQLBackend::scan (const string & bucket, const string & seed,
                                  int32_t count)
 {
     // base datatable should be > "0"
@@ -244,12 +244,12 @@ ScanResponse MySQLBackend::scan (const string & tablename, const string & seed,
     if (seed != "")
     {
         // subsequent call, use the normal find method
-        find_return = this->find_and_checkout (tablename, seed);
+        find_return = this->find_and_checkout (bucket, seed);
     }
     else
     {
         // first call, get the first datatable
-        find_return = this->find_next_and_checkout (tablename, "0");
+        find_return = this->find_next_and_checkout (bucket, "0");
     }
     LOG4CXX_DEBUG (logger, 
                    string ("scan: hostname=") + 
@@ -274,7 +274,7 @@ more:
     if (scan_response.elements.size () < (unsigned int)count)
     {
         // try to find the next partition
-        find_return = this->find_next_and_checkout (tablename,
+        find_return = this->find_next_and_checkout (bucket,
                                                     find_return.datatable);
         if (find_return.connection != NULL)
         {
@@ -296,7 +296,7 @@ more:
 static uint32_t FNV_32_INIT= 2166136261UL;
 static uint32_t FNV_32_PRIME= 16777619;
 
-FindReturn MySQLBackend::find_and_checkout (const string & tablename,
+FindReturn MySQLBackend::find_and_checkout (const string & bucket,
                                             const string & key)
 {
     double point;
@@ -328,15 +328,15 @@ FindReturn MySQLBackend::find_and_checkout (const string & tablename,
     // if what you're looking for doesn't exists, who the fuck came up with
     // this shit.
     set<Partition*, bool(*)(Partition*, Partition*)> * partitions_set = NULL;
-    if (partitions.find (tablename) != partitions.end ())
+    if (partitions.find (bucket) != partitions.end ())
     {
-        partitions_set = partitions[tablename];
+        partitions_set = partitions[bucket];
     }
 
     if (partitions_set == NULL)
     {
         // we didn't find it, try loading
-        partitions_set = this->load_partitions (tablename);
+        partitions_set = this->load_partitions (bucket);
     }
 
     if (partitions_set != NULL)
@@ -360,7 +360,7 @@ FindReturn MySQLBackend::find_and_checkout (const string & tablename,
         }
         else
         {
-            LOG4CXX_ERROR (logger, string ("table ") + tablename + 
+            LOG4CXX_ERROR (logger, string ("table ") + bucket + 
                            string (" has a partitioning problem for key ") + 
                            key);
             ThrudocException e;
@@ -371,7 +371,7 @@ FindReturn MySQLBackend::find_and_checkout (const string & tablename,
     else
     {
         ThrudocException e;
-        e.what = tablename + " not found in directory";
+        e.what = bucket + " not found in directory";
         LOG4CXX_WARN (logger, string ("find_and_checkout: ") + e.what);
         throw e;
     }
@@ -379,7 +379,7 @@ FindReturn MySQLBackend::find_and_checkout (const string & tablename,
     return find_return;
 }
 
-FindReturn MySQLBackend::find_next_and_checkout (const string & tablename,
+FindReturn MySQLBackend::find_next_and_checkout (const string & bucket,
                                                  const string & current_datatable)
 {
     Connection * connection = connection_factory->get_connection 
@@ -393,7 +393,7 @@ FindReturn MySQLBackend::find_next_and_checkout (const string & tablename,
 
     StringStringParams * fpp = 
         (StringStringParams*)next_statement->get_bind_params ();
-    fpp->set_str1 (tablename.c_str ());
+    fpp->set_str1 (bucket.c_str ());
     fpp->set_str2 (current_datatable.c_str ());
 
     next_statement->execute ();
@@ -450,14 +450,14 @@ string MySQLBackend::admin (const string & op, const string & data)
     return "";
 }
 
-void MySQLBackend::validate (const string & tablename, const string * key, 
+void MySQLBackend::validate (const string & bucket, const string * key, 
                              const string * value)
 {
-    ThrudocBackend::validate (tablename, key, value);
-    if (tablename.length () > MYSQL_BACKEND_MAX_TABLENAME_SIZE)
+    ThrudocBackend::validate (bucket, key, value);
+    if (bucket.length () > MYSQL_BACKEND_MAX_BUCKET_SIZE)
     {
         ThrudocException e;
-        e.what = "tablename too long";
+        e.what = "bucket too long";
         throw e;
     }
     else if (key && (*key).length () > MYSQL_BACKEND_MAX_KEY_SIZE)

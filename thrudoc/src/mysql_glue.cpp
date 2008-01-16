@@ -88,11 +88,11 @@ PartitionResults::PartitionResults ()
     this->results[0].length = &this->id_length;
     this->results[0].error = &this->id_error;
     this->results[1].buffer_type = MYSQL_TYPE_STRING;
-    this->results[1].buffer = this->tablename;
-    this->results[1].buffer_length = sizeof (this->tablename);
-    this->results[1].is_null = &this->tablename_is_null;
-    this->results[1].length = &this->tablename_length;
-    this->results[1].error = &this->tablename_error;
+    this->results[1].buffer = this->bucket;
+    this->results[1].buffer_length = sizeof (this->bucket);
+    this->results[1].is_null = &this->bucket_is_null;
+    this->results[1].length = &this->bucket_length;
+    this->results[1].error = &this->bucket_error;
     this->results[2].buffer_type = MYSQL_TYPE_DOUBLE;
     this->results[2].buffer = &this->start;
     this->results[2].is_null = &this->start_is_null;
@@ -567,7 +567,7 @@ PreparedStatement * Connection::find_partitions_statement ()
     {
         BindParams * bind_params = new StringParams ();
         BindResults * bind_results = new PartitionResults ();
-        const char query[] = "select d.id, tablename, start, end, h.hostname, h.port, s.hostname, s.port, db, datatable, created_at, retired_at from directory d join host h on d.host_id = h.id left join host s on h.slave_id = s.id where tablename = ? and retired_at is null order by end asc";
+        const char query[] = "select d.id, bucket, start, end, h.hostname, h.port, s.hostname, s.port, db, datatable, created_at, retired_at from directory d join host h on d.host_id = h.id left join host s on h.slave_id = s.id where bucket = ? and retired_at is null order by end asc";
         stmt = new PreparedStatement (this, query, false,
                                       bind_params, bind_results);
         this->partitions_statements[key] = stmt;
@@ -583,7 +583,7 @@ PreparedStatement * Connection::find_next_statement ()
     {
         BindParams * bind_params = new StringStringParams ();
         BindResults * bind_results = new PartitionResults ();
-        const char query[] = "select d.id, tablename, start, end, h.hostname, h.port, s.hostname, s.port, db, datatable, created_at, retired_at from directory d join host h on d.host_id = h.id left join host s on h.slave_id = s.id where tablename = ? and datatable > ? and retired_at is null order by end asc limit 1";
+        const char query[] = "select d.id, bucket, start, end, h.hostname, h.port, s.hostname, s.port, db, datatable, created_at, retired_at from directory d join host h on d.host_id = h.id left join host s on h.slave_id = s.id where bucket = ? and datatable > ? and retired_at is null order by end asc limit 1";
         stmt = new PreparedStatement (this, query, false,
                                       bind_params, bind_results);
         this->next_statements[key] = stmt;
@@ -591,10 +591,10 @@ PreparedStatement * Connection::find_next_statement ()
     return stmt;
 }
 
-PreparedStatement * Connection::find_get_statement (const char * tablename,
+PreparedStatement * Connection::find_get_statement (const char * bucket,
                                                     int max_value_size)
 {
-    string key = string (tablename);
+    string key = string (bucket);
     PreparedStatement * stmt = this->get_statements[key];
     if (!stmt)
     {
@@ -602,7 +602,7 @@ PreparedStatement * Connection::find_get_statement (const char * tablename,
         BindResults * bind_results = new KeyValueResults (max_value_size);
         char query[256];
         sprintf (query, "select k, v, created_at, modified_at from %s where k = ?",
-                 tablename);
+                 bucket);
         stmt = new PreparedStatement (this, query, false,
                                       bind_params, bind_results);
         this->get_statements[key] = stmt;
@@ -610,16 +610,16 @@ PreparedStatement * Connection::find_get_statement (const char * tablename,
     return stmt;
 }
 
-PreparedStatement * Connection::find_put_statement (const char * tablename)
+PreparedStatement * Connection::find_put_statement (const char * bucket)
 {
-    string key = string (tablename);
+    string key = string (bucket);
     PreparedStatement * stmt = this->put_statements[key];
     if (!stmt)
     {
         BindParams * bind_params = new StringStringParams ();
         char query[256];
         sprintf (query, "insert into %s (k, v, created_at) values (?, ?, now()) on duplicate key update v = values (v)",
-                 tablename);
+                 bucket);
         stmt = new PreparedStatement (this, query, true,
                                       bind_params);
         this->put_statements[key] = stmt;
@@ -627,15 +627,15 @@ PreparedStatement * Connection::find_put_statement (const char * tablename)
     return stmt;
 }
 
-PreparedStatement * Connection::find_delete_statement (const char * tablename)
+PreparedStatement * Connection::find_delete_statement (const char * bucket)
 {
-    string key = string (tablename);
+    string key = string (bucket);
     PreparedStatement * stmt = this->delete_statements[key];
     if (!stmt)
     {
         BindParams * bind_params = new StringParams ();
         char query[128];
-        sprintf (query, "delete from %s where k = ?", tablename);
+        sprintf (query, "delete from %s where k = ?", bucket);
         stmt = new PreparedStatement (this, query, true,
                                       bind_params);
         this->delete_statements[key] = stmt;
@@ -643,10 +643,10 @@ PreparedStatement * Connection::find_delete_statement (const char * tablename)
     return stmt;
 }
 
-PreparedStatement * Connection::find_scan_statement (const char * tablename,
+PreparedStatement * Connection::find_scan_statement (const char * bucket,
                                                      int max_value_size)
 {
-    string key = string (tablename);
+    string key = string (bucket);
     PreparedStatement * stmt = this->scan_statements[key];
     if (!stmt)
     {
@@ -654,7 +654,7 @@ PreparedStatement * Connection::find_scan_statement (const char * tablename,
         BindResults * bind_results = new KeyValueResults (max_value_size);
         char query[256];
         sprintf (query, "select k, v, created_at, modified_at from %s where k > ? order by k asc limit ?",
-                 tablename);
+                 bucket);
         stmt = new PreparedStatement (this, query, false,
                                       bind_params, bind_results);
         this->scan_statements[key] = stmt;

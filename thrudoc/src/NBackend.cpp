@@ -26,47 +26,47 @@ NBackend::~NBackend ()
 {
 }
 
-vector<string> NBackend::getTablenames ()
+vector<string> NBackend::getBuckets ()
 {
-    vector<string> tablenames;
+    vector<string> buckets;
     vector<shared_ptr<ThrudocBackend> >::iterator i;
     // TODO: might be nice to do a union of all the backends...
     for (i = backends.begin (); i != backends.end (); i++)
     {
-        vector<string> tns = (*i)->getTablenames ();
-        tablenames.insert (tablenames.end (), tns.begin (), tns.end ());
+        vector<string> tns = (*i)->getBuckets ();
+        buckets.insert (buckets.end (), tns.begin (), tns.end ());
     }
-    return tablenames;
+    return buckets;
 }
 
-string NBackend::get (const string & tablename, const string & key )
+string NBackend::get (const string & bucket, const string & key )
 {
-    return (*backends.begin ())->get (tablename, key);
+    return (*backends.begin ())->get (bucket, key);
 }
 
-void NBackend::put (const string & tablename, const string & key, 
+void NBackend::put (const string & bucket, const string & key, 
                     const string & value)
 {
     vector<shared_ptr<ThrudocBackend> >::iterator i;
     for (i = backends.begin (); i != backends.end (); i++)
     {
-        (*i)->put (tablename, key, value);
+        (*i)->put (bucket, key, value);
     }
 }
 
-void NBackend::remove (const string & tablename, const string & key )
+void NBackend::remove (const string & bucket, const string & key )
 {
     vector<shared_ptr<ThrudocBackend> >::iterator i;
     for (i = backends.begin (); i != backends.end (); i++)
     {
-        (*i)->remove (tablename, key);
+        (*i)->remove (bucket, key);
     }
 }
 
-ScanResponse NBackend::scan (const string & tablename,
+ScanResponse NBackend::scan (const string & bucket,
                              const string & seed, int32_t count)
 {
-    return (*backends.begin ())->scan (tablename, seed, count);
+    return (*backends.begin ())->scan (bucket, seed, count);
 }
 
 string NBackend::admin (const string & op, const string & data)
@@ -80,13 +80,13 @@ string NBackend::admin (const string & op, const string & data)
     return ret;
 }
 
-void NBackend::validate (const string & tablename, const string * key, 
+void NBackend::validate (const string & bucket, const string * key, 
                          const string * value)
 {
     vector<shared_ptr<ThrudocBackend> >::iterator i;
     for (i = backends.begin (); i != backends.end (); i++)
     {
-        (*i)->validate (tablename, key, value);
+        (*i)->validate (bucket, key, value);
     }
 }
 

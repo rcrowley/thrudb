@@ -21,7 +21,7 @@ vector<ThrudocException> ThrudocBackend::putList
     {
         try
         {
-            put ((*i).tablename, (*i).key, (*i).value);
+            put ((*i).bucket, (*i).key, (*i).value);
             exceptions.push_back (none);
         }
         catch (ThrudocException e)
@@ -43,9 +43,9 @@ vector<ListResponse> ThrudocBackend::getList
         ListResponse list_response;
         try
         {
-            list_response.element.tablename = (*i).tablename;
+            list_response.element.bucket = (*i).bucket;
             list_response.element.key = (*i).key;
-            list_response.element.value = get ((*i).tablename, (*i).key);
+            list_response.element.value = get ((*i).bucket, (*i).key);
         }
         catch (ThrudocException e)
         {
@@ -67,7 +67,7 @@ vector<ThrudocException> ThrudocBackend::removeList
     {
         try
         {
-            remove ((*i).tablename, (*i).key);
+            remove ((*i).bucket, (*i).key);
             exceptions.push_back (none);
         }
         catch (ThrudocException e)
@@ -78,15 +78,15 @@ vector<ThrudocException> ThrudocBackend::removeList
     return exceptions;
 }
 
-void ThrudocBackend::validate (const std::string & tablename,
+void ThrudocBackend::validate (const std::string & bucket,
                                const std::string * key,
                                const std::string * value)
 {
-    if (tablename.empty () || (tablename.find (" ") !=
+    if (bucket.empty () || (bucket.find (" ") !=
                                std::string::npos))
     {
         thrudoc::ThrudocException e;
-        e.what = "invalid tablename";
+        e.what = "invalid bucket";
         throw e;
     }
     else if (key && (*key) == "")

@@ -16,7 +16,7 @@ namespace mysql {
 
     #define MYSQL_BACKEND_MAX_STRING_SIZE 64
 
-    #define MYSQL_BACKEND_MAX_TABLENAME_SIZE 32
+    #define MYSQL_BACKEND_MAX_BUCKET_SIZE 32
     #define MYSQL_BACKEND_MAX_HOSTNAME_SIZE 128
     #define MYSQL_BACKEND_MAX_DB_SIZE 14
     #define MYSQL_BACKEND_MAX_DATATABLE_SIZE 14
@@ -227,9 +227,9 @@ namespace mysql {
                 return this->id;
             }
 
-            const char * get_tablename ()
+            const char * get_bucket ()
             {
-                return this->tablename;
+                return this->bucket;
             }
 
             double get_start ()
@@ -293,11 +293,11 @@ namespace mysql {
             my_bool id_error;
 
             /* 1 */
-            char tablename[MYSQL_BACKEND_MAX_TABLENAME_SIZE + 1];
-            //MYSQL_TYPE tablename_type = MYSQL_TYPE_STRING;
-            unsigned long tablename_length;
-            my_bool tablename_is_null;
-            my_bool tablename_error;
+            char bucket[MYSQL_BACKEND_MAX_BUCKET_SIZE + 1];
+            //MYSQL_TYPE bucket_type = MYSQL_TYPE_STRING;
+            unsigned long bucket_length;
+            my_bool bucket_is_null;
+            my_bool bucket_error;
 
             /* 2 */
             double start;
@@ -503,11 +503,11 @@ namespace mysql {
 
         PreparedStatement * find_partitions_statement ();
         PreparedStatement * find_next_statement ();
-        PreparedStatement * find_get_statement (const char * tablename,
+        PreparedStatement * find_get_statement (const char * bucket,
                                                 int max_value_size);
-        PreparedStatement * find_put_statement (const char * tablename);
-        PreparedStatement * find_delete_statement (const char * tablename);
-        PreparedStatement * find_scan_statement (const char * tablename,
+        PreparedStatement * find_put_statement (const char * bucket);
+        PreparedStatement * find_delete_statement (const char * bucket);
+        PreparedStatement * find_scan_statement (const char * bucket,
                                                  int max_value_size);
 
         std::string get_hostname ()
