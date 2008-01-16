@@ -1,13 +1,13 @@
-bin_PROGRAMS = diststore
-noinst_PROGRAMS = diststore_bench
+bin_PROGRAMS = thrudoc
+noinst_PROGRAMS = thrudoc_bench
 
-diststore_SOURCES = \
-		  gen-cpp/DistStore.cpp			\
-		  gen-cpp/DistStore_types.cpp		\
-		  gen-cpp/DistStore_constants.cpp	\
+thrudoc_SOURCES = \
+		  gen-cpp/Thrudoc.cpp			\
+		  gen-cpp/Thrudoc_types.cpp		\
+		  gen-cpp/Thrudoc_constants.cpp		\
 		  ConfigFile.cpp			\
-		  DistStoreBackend.cpp			\
-		  DistStoreHandler.cpp			\
+		  ThrudocBackend.cpp			\
+		  ThrudocHandler.cpp			\
 		  BDBBackend.cpp			\
 		  DiskBackend.cpp			\
 		  MySQLBackend.cpp			\
@@ -20,20 +20,20 @@ diststore_SOURCES = \
 		  mysql_glue.cpp			\
 		  main.cpp
 
-diststore_CXXFLAGS = -Wall $(CFLAGS) -Igen-cpp
-diststore_LDFLAGS = -Wall $(CFLAGS)
+thrudoc_CXXFLAGS = -Wall $(CFLAGS) -Igen-cpp
+thrudoc_LDFLAGS = -Wall $(CFLAGS)
 
-diststore_bench_SOURCES = \
-			gen-cpp/DistStore.cpp		\
-			gen-cpp/DistStore_types.cpp	\
-			gen-cpp/DistStore_constants.cpp	\
+thrudoc_bench_SOURCES = \
+			gen-cpp/Thrudoc.cpp		\
+			gen-cpp/Thrudoc_types.cpp	\
+			gen-cpp/Thrudoc_constants.cpp	\
 			bench.cpp
 
-diststore_bench_CXXFLAGS = -Wall $(CFLAGS) -Igen-cpp
-diststore_bench_LDFLAGS = -Wall $(CFLAGS) 
+thrudoc_bench_CXXFLAGS = -Wall $(CFLAGS) -Igen-cpp
+thrudoc_bench_LDFLAGS = -Wall $(CFLAGS) 
 
-gen-cpp/DistStore.cpp: DistStore.thrift
-	${THRIFT} -cpp DistStore.thrift
+gen-cpp/Thrudoc.cpp: Thrudoc.thrift
+	${THRIFT} -cpp Thrudoc.thrift
 
 clean-local:
 	rm -fr gen-cpp

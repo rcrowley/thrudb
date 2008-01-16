@@ -12,9 +12,9 @@ use Thrift::BinaryProtocol;
 use Thrift::Socket;
 use Thrift::FramedTransport;
 
-use DistStore;
+use Thrudoc;
 
-use constant DISTSTORE_PORT    => 9091;
+use constant THRUDOC_PORT    => 9091;
 
 use threads;
 
@@ -23,17 +23,17 @@ my $num_calls = 500;
 
 # load up data
 eval{
-    my $socket    = new Thrift::Socket("localhost",DISTSTORE_PORT());
+    my $socket    = new Thrift::Socket("localhost",THRUDOC_PORT());
     my $transport = new Thrift::FramedTransport($socket);
     my $protocol  = new Thrift::BinaryProtocol($transport);
 
-    my $diststore  = new DistStoreClient($protocol);
+    my $thrudoc  = new ThrudocClient($protocol);
 
     $transport->open();
 
     foreach (0..($num_calls - 1))
     {
-        $diststore->put ("data", "key.$_", "value_$_");
+        $thrudoc->put ("data", "key.$_", "value_$_");
     }
 };
 if($@) {
@@ -63,17 +63,17 @@ printf "%d / %f = %f\n", $total_calls, $dur, $tps;
 sub make_calls
 {
     eval{
-        my $socket    = new Thrift::Socket("localhost",DISTSTORE_PORT());
+        my $socket    = new Thrift::Socket("localhost",THRUDOC_PORT());
         my $transport = new Thrift::FramedTransport($socket);
         my $protocol  = new Thrift::BinaryProtocol($transport);
 
-        my $diststore  = new DistStoreClient($protocol);
+        my $thrudoc  = new ThrudocClient($protocol);
 
         $transport->open();
 
         foreach (0..(($num_calls - 1) * 10))
         {
-            $diststore->get ("data", 'key.'.int (rand ($num_calls)));
+            $thrudoc->get ("data", 'key.'.int (rand ($num_calls)));
         }
     };
     if($@) {

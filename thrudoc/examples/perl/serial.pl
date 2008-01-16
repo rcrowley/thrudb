@@ -11,18 +11,18 @@ use Thrift::BinaryProtocol;
 use Thrift::Socket;
 use Thrift::FramedTransport;
 
-use DistStore;
+use Thrudoc;
 
 #Config
-use constant DISTSTORE_PORT    => 9091;
+use constant THRUDOC_PORT    => 9091;
 
-my $diststore;
+my $thrudoc;
 eval{
-    my $socket    = new Thrift::Socket("localhost",DISTSTORE_PORT());
+    my $socket    = new Thrift::Socket("localhost",THRUDOC_PORT());
     my $transport = new Thrift::FramedTransport($socket);
     my $protocol  = new Thrift::BinaryProtocol($transport);
 
-    $diststore  = new DistStoreClient($protocol);
+    $thrudoc  = new ThrudocClient($protocol);
 
     $transport->open();
 }; if($@) {
@@ -42,9 +42,9 @@ eval {
     my $rev = Obj::load ($ser);
     print Dumper ($rev, $rev->get ('foo'), $rev->get ('baz'));
 
-    # now through diststore
-    $diststore->put ("partitions", "obj", $ser);
-    $rev = Obj::load ($diststore->get ("partitions", "obj"));
+    # now through thrudoc
+    $thrudoc->put ("partitions", "obj", $ser);
+    $rev = Obj::load ($thrudoc->get ("partitions", "obj"));
     print Dumper ($rev, $rev->get ('foo'), $rev->get ('baz'));
 };
 if($@) {

@@ -1,20 +1,20 @@
 
 #ifdef HAVE_CONFIG_H
-#include "diststore_config.h"
+#include "thrudoc_config.h"
 #endif
 /* hack to work around thrift and log4cxx installing config.h's */
 #undef HAVE_CONFIG_H
 
-#include "DistStoreBackend.h"
+#include "ThrudocBackend.h"
 
-using namespace diststore;
+using namespace thrudoc;
 using namespace std;
 
-vector<DistStoreException> DistStoreBackend::putList 
+vector<ThrudocException> ThrudocBackend::putList 
 (const vector<Element> & elements)
 {
-    vector<DistStoreException> exceptions;
-    DistStoreException none;
+    vector<ThrudocException> exceptions;
+    ThrudocException none;
     vector<Element> e = (vector<Element>)elements;
     vector<Element>::iterator i;
     for (i = e.begin (); i != e.end (); i++)
@@ -24,7 +24,7 @@ vector<DistStoreException> DistStoreBackend::putList
             put ((*i).tablename, (*i).key, (*i).value);
             exceptions.push_back (none);
         }
-        catch (DistStoreException e)
+        catch (ThrudocException e)
         {
             exceptions.push_back (e);
         }
@@ -32,7 +32,7 @@ vector<DistStoreException> DistStoreBackend::putList
     return exceptions;
 }
 
-vector<ListResponse> DistStoreBackend::getList 
+vector<ListResponse> ThrudocBackend::getList 
 (const vector<Element> & elements)
 {
     vector<ListResponse> list_responses;
@@ -47,7 +47,7 @@ vector<ListResponse> DistStoreBackend::getList
             list_response.element.key = (*i).key;
             list_response.element.value = get ((*i).tablename, (*i).key);
         }
-        catch (DistStoreException e)
+        catch (ThrudocException e)
         {
             list_response.ex = e;
         }
@@ -56,11 +56,11 @@ vector<ListResponse> DistStoreBackend::getList
     return list_responses;
 }
 
-vector<DistStoreException> DistStoreBackend::removeList 
+vector<ThrudocException> ThrudocBackend::removeList 
 (const vector<Element> & elements)
 {
-    vector<DistStoreException> exceptions;
-    DistStoreException none;
+    vector<ThrudocException> exceptions;
+    ThrudocException none;
     vector<Element> e = (vector<Element>)elements;
     vector<Element>::iterator i;
     for (i = e.begin (); i != e.end (); i++)
@@ -70,7 +70,7 @@ vector<DistStoreException> DistStoreBackend::removeList
             remove ((*i).tablename, (*i).key);
             exceptions.push_back (none);
         }
-        catch (DistStoreException e)
+        catch (ThrudocException e)
         {
             exceptions.push_back (e);
         }
@@ -78,20 +78,20 @@ vector<DistStoreException> DistStoreBackend::removeList
     return exceptions;
 }
 
-void DistStoreBackend::validate (const std::string & tablename,
-                                 const std::string * key,
-                                 const std::string * value)
+void ThrudocBackend::validate (const std::string & tablename,
+                               const std::string * key,
+                               const std::string * value)
 {
     if (tablename.empty () || (tablename.find (" ") !=
                                std::string::npos))
     {
-        diststore::DistStoreException e;
+        thrudoc::ThrudocException e;
         e.what = "invalid tablename";
         throw e;
     }
     else if (key && (*key) == "")
     {
-        diststore::DistStoreException e;
+        ThrudocException e;
         e.what = "invalid key";
         throw e;
     }

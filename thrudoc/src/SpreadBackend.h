@@ -13,16 +13,16 @@
 #include <string>
 #include <thrift/protocol/TBinaryProtocol.h>
 #include <thrift/transport/TTransportUtils.h>
-#include "DistStore.h"
-#include "DistStoreBackend.h"
+#include "Thrudoc.h"
+#include "ThrudocBackend.h"
 
-class SpreadBackend : public DistStoreBackend
+class SpreadBackend : public ThrudocBackend
 {
     public:
         SpreadBackend (const std::string & spread_name, 
                        const std::string & spread_private_name,
                        const std::string & spread_group,
-                       boost::shared_ptr<DistStoreBackend> backend);
+                       boost::shared_ptr<ThrudocBackend> backend);
         ~SpreadBackend ();
 
         std::vector<std::string> getTablenames ();
@@ -31,8 +31,8 @@ class SpreadBackend : public DistStoreBackend
         void put (const std::string & tablename, const std::string & key, 
                   const std::string & value);
         void remove (const std::string & tablename, const std::string & key);
-        diststore::ScanResponse scan (const std::string & tablename, 
-                                      const std::string & seed, int32_t count);
+        thrudoc::ScanResponse scan (const std::string & tablename, 
+                                    const std::string & seed, int32_t count);
         std::string admin (const std::string & op, const std::string & data);
         void validate (const std::string & tablename, const std::string * key,
                        const std::string * value);
@@ -45,7 +45,7 @@ class SpreadBackend : public DistStoreBackend
         std::string spread_group;
         std::string spread_private_group;
         mailbox spread_mailbox;
-        boost::shared_ptr<DistStoreBackend> backend;
+        boost::shared_ptr<ThrudocBackend> backend;
 };
 
 #endif /* HAVE_LIBSPREAD */

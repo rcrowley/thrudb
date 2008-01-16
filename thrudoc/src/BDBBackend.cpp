@@ -3,7 +3,7 @@
  **/
 
 #ifdef HAVE_CONFIG_H
-#include "diststore_config.h"
+#include "thrudoc_config.h"
 #endif
 /* hack to work around thrift and log4cxx installing config.h's */
 #undef HAVE_CONFIG_H 
@@ -12,13 +12,13 @@
 
 #include "BDBBackend.h"
 
-#include "DistStore.h"
+#include "Thrudoc.h"
 
 #include <stdexcept>
 #include <boost/filesystem.hpp>
 
 namespace fs = boost::filesystem;
-using namespace diststore;
+using namespace thrudoc;
 using namespace log4cxx;
 using namespace std;
 
@@ -119,7 +119,7 @@ string BDBBackend::get (const string & tablename, const string & key)
     {
         if (get_db (tablename)->get (NULL, &db_key, &db_value, 0) != 0)
         {
-            DistStoreException e;
+            ThrudocException e;
             e.what = key + " not found in " + tablename;
             LOG4CXX_DEBUG (logger, string ("get: exception=") + e.what);
             throw e;
@@ -273,7 +273,7 @@ string BDBBackend::admin (const string & op, const string & data)
         {
             db = get_db (data);
         }
-        catch (DistStoreException e) {}
+        catch (ThrudocException e) {}
 
         if (!db)
         {
@@ -303,22 +303,22 @@ string BDBBackend::admin (const string & op, const string & data)
 void BDBBackend::validate (const string & tablename, const string * key,
                            const string * value)
 {
-    DistStoreBackend::validate (tablename, key, value);
+    ThrudocBackend::validate (tablename, key, value);
     if (tablename.length () > BDB_BACKEND_MAX_TABLENAME_SIZE)
     {
-        DistStoreException e;
+        ThrudocException e;
         e.what = "tablename too long";
         throw e;
     }
     else if (key && (*key).length () > BDB_BACKEND_MAX_KEY_SIZE)
     {
-        DistStoreException e;
+        ThrudocException e;
         e.what = "key too long";
         throw e;
     }
     else if (value && (*value).length () > BDB_BACKEND_MAX_VALUE_SIZE)
     {
-        DistStoreException e;
+        ThrudocException e;
         e.what = "value too long";
         throw e;
     }
@@ -346,7 +346,7 @@ Db * BDBBackend::get_db (const string & tablename)
         {
             delete db;
             LOG4CXX_WARN (logger, string ("get_open: exception=") + e.what ());
-            DistStoreException de;
+            ThrudocException de;
             de.what = "BDBBackend error";
             throw de;
         }

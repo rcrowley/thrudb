@@ -6,8 +6,8 @@
  * http://thrudb.googlecode.com
  *
  **/
-#ifndef _DISTSTORE_DISK_BACKEND_H_
-#define _DISTSTORE_DISK_BACKEND_H_
+#ifndef _THRUDOC_DISK_BACKEND_H_
+#define _THRUDOC_DISK_BACKEND_H_
 
 #if HAVE_LIBBOOST_FILESYSTEM && HAVE_LIBCRYPTO
 
@@ -18,13 +18,13 @@
 #include <thrift/transport/TTransportUtils.h>
 #include <thrift/protocol/TBinaryProtocol.h>
 
-#include "DistStore.h"
-#include "DistStoreBackend.h"
+#include "Thrudoc.h"
+#include "ThrudocBackend.h"
 
 #define DISK_BACKEND_MAX_TABLENAME_SIZE 64
 #define DISK_BACKEND_MAX_KEY_SIZE 64
 
-class DiskBackend : public DistStoreBackend
+class DiskBackend : public ThrudocBackend
 {
     public:
         DiskBackend(const std::string & doc_root);
@@ -35,8 +35,8 @@ class DiskBackend : public DistStoreBackend
         void put (const std::string & tablename, const std::string & key,
                   const std::string & value);
         void remove (const std::string & tablename, const std::string & key);
-        diststore::ScanResponse scan (const std::string & tablename,
-                                      const std::string & seed, int32_t count);
+        thrudoc::ScanResponse scan (const std::string & tablename,
+                                    const std::string & seed, int32_t count);
         std::string admin (const std::string & op, const std::string & data);
         void validate (const std::string & tablename, const std::string * key,
                        const std::string * value);

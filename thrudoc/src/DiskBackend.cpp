@@ -8,7 +8,7 @@
  **/
 
 #ifdef HAVE_CONFIG_H
-#include "diststore_config.h"
+#include "thrudoc_config.h"
 #endif
 /* hack to work around thrift and log4cxx installing config.h's */
 #undef HAVE_CONFIG_H 
@@ -23,11 +23,11 @@
 #include <stack>
 #include <boost/filesystem.hpp>
 #include <boost/filesystem/fstream.hpp>
-#include "DistStore.h"
+#include "Thrudoc.h"
 
 namespace fs = boost::filesystem;
 using namespace boost;
-using namespace diststore;
+using namespace thrudoc;
 using namespace log4cxx;
 using namespace std;
 
@@ -83,7 +83,7 @@ string DiskBackend::get (const string & tablename, const string & key)
 
     if (!infile.is_open ())
     {
-        DistStoreException e;
+        ThrudocException e;
         e.what = "Error: can't read " + tablename + "/" + key;
         throw e;
     }
@@ -124,7 +124,7 @@ void DiskBackend::put (const string & tablename, const string & key,
 
     if (!outfile.is_open ())
     {
-        DistStoreException e;
+        ThrudocException e;
         e.what = "Can't write " + tablename + "/" + key;
         throw e;
     }
@@ -142,7 +142,7 @@ void DiskBackend::remove (const string & tablename, const string & key)
     {
         if (!fs::remove (file.c_str ()))
         {
-            DistStoreException e;
+            ThrudocException e;
             e.what = "Can't remove " + tablename + "/" + key;
             throw e;
         }
@@ -327,7 +327,7 @@ string DiskBackend::admin (const string & op, const string & data)
         {
             LOG4CXX_WARN (logger, string ("admin: delete_tablename: what=") +
                           e.what ());
-            DistStoreException de;
+            ThrudocException de;
             de.what = "DiskBackend error";
             throw de;
         }
@@ -339,10 +339,10 @@ string DiskBackend::admin (const string & op, const string & data)
 void DiskBackend::validate (const string & tablename, const string * key,
                             const string * value)
 {
-    DistStoreBackend::validate (tablename, key, value);
+    ThrudocBackend::validate (tablename, key, value);
     if (tablename.length () > DISK_BACKEND_MAX_TABLENAME_SIZE)
     {
-        DistStoreException e;
+        ThrudocException e;
         e.what = "tablename too long";
         throw e;
     }
@@ -350,13 +350,13 @@ void DiskBackend::validate (const string & tablename, const string * key,
     {
         if ((*key).length () > DISK_BACKEND_MAX_KEY_SIZE)
         {
-            DistStoreException e;
+            ThrudocException e;
             e.what = "key too long";
             throw e;
         }
         else if (key->find (";") != string::npos)
         {
-            DistStoreException e;
+            ThrudocException e;
             e.what = "invalid key";
             throw e;
         }

@@ -8,7 +8,7 @@
  **/
 
 #ifdef HAVE_CONFIG_H
-#include "diststore_config.h"
+#include "thrudoc_config.h"
 #endif
 /* hack to work around thrift and log4cxx installing config.h's */
 #undef HAVE_CONFIG_H
@@ -17,7 +17,7 @@
 
 #include "S3Backend.h"
 
-#include "DistStore.h"
+#include "Thrudoc.h"
 #include "s3_glue.h"
 
 #include <fstream>
@@ -25,7 +25,7 @@
 
 using namespace s3;
 using namespace std;
-using namespace diststore;
+using namespace thrudoc;
 using namespace log4cxx;
 
 LoggerPtr S3Backend::logger (Logger::getLogger ("S3Backend"));
@@ -43,7 +43,7 @@ vector<string> S3Backend::getTablenames ()
 
     if (!result)
     {
-        DistStoreException e;
+        ThrudocException e;
         e.what = "S3Backend error";
         throw e;
     }
@@ -67,14 +67,14 @@ string S3Backend::get (const string & tablename, const string & key)
     b = object_get (tablename, key, 0);
 
     if(b == NULL){
-        DistStoreException e;
+        ThrudocException e;
         e.what = "S3Backend error";
         throw e;
     }
 
     if(b->result != 200) {
         delete b;
-        DistStoreException e;
+        ThrudocException e;
         e.what = "S3: " + key + " not found";
         throw e;
     }
@@ -94,7 +94,7 @@ void S3Backend::put (const string & tablename, const string & key,
                         meta);
 
     if(r == -1){
-        DistStoreException e;
+        ThrudocException e;
         e.what = "S3Backend error";
         throw e;
     }
@@ -105,7 +105,7 @@ void S3Backend::remove (const string & tablename, const string & key)
     int r = object_rm (tablename, key);
 
     if(r == -1){
-        DistStoreException e;
+        ThrudocException e;
         e.what = "S3Backend error";
         throw e;
     }
@@ -120,7 +120,7 @@ ScanResponse S3Backend::scan (const string & tablename, const string & seed,
 
     if (!result)
     {
-        DistStoreException e;
+        ThrudocException e;
         e.what = "S3Backend error";
         throw e;
     }
@@ -155,7 +155,7 @@ string S3Backend::admin (const string & op, const string & data)
         // will throw
         validate (data, NULL, NULL);
 
-        DistStoreException e;
+        ThrudocException e;
         class response_buffer * b =  request ("PUT", data, "", 0, 0, 0, 0);
         if( b == NULL )
             e.what = "S3Backend error";
@@ -180,7 +180,7 @@ string S3Backend::admin (const string & op, const string & data)
         class response_buffer * b = request ("DELETE", data, "", 0, 0, 0, 0);
         int result = b->result;
         delete b;
-        DistStoreException e;
+        ThrudocException e;
         switch(result)
         {
             case 204:
@@ -205,7 +205,7 @@ string S3Backend::admin (const string & op, const string & data)
 void S3Backend::validate (const string & tablename, const string * key,
                           const string * value)
 {
-    DistStoreBackend::validate (tablename, key, value);
+    ThrudocBackend::validate (tablename, key, value);
 
     // NOTE: s3 is going to validate them for us so do we really need to?
 

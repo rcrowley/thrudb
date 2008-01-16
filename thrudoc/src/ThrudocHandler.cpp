@@ -1,36 +1,36 @@
 
 #ifdef HAVE_CONFIG_H
-#include "diststore_config.h"
+#include "thrudoc_config.h"
 #endif
 /* hack to work around thrift and log4cxx installing config.h's */
 #undef HAVE_CONFIG_H
 
-#include "DistStoreHandler.h"
+#include "ThrudocHandler.h"
 
 #if HAVE_LIBUUID
 #include <uuid/uuid.h>
 #endif
 
 using namespace boost;
-using namespace diststore;
+using namespace thrudoc;
 using namespace log4cxx;
 using namespace std;
 
-LoggerPtr DistStoreHandler::logger (Logger::getLogger ("DistStoreHandler"));
+LoggerPtr ThrudocHandler::logger (Logger::getLogger ("ThrudocHandler"));
 
-DistStoreHandler::DistStoreHandler (shared_ptr<DistStoreBackend> backend)
+ThrudocHandler::ThrudocHandler (shared_ptr<ThrudocBackend> backend)
 {
     this->backend = backend;
 }
 
-void DistStoreHandler::getTablenames (vector<string> & _return)
+void ThrudocHandler::getTablenames (vector<string> & _return)
 {
     LOG4CXX_DEBUG (logger, "getTablenames: ");
     _return = this->backend->getTablenames ();
 }
 
-void DistStoreHandler::put (const string & tablename, const string & key,
-                            const string & value)
+void ThrudocHandler::put (const string & tablename, const string & key,
+                          const string & value)
 {
     LOG4CXX_DEBUG (logger, "put: tablename=" + tablename + ", key=" + key +
                    ", value=" + value);
@@ -38,8 +38,8 @@ void DistStoreHandler::put (const string & tablename, const string & key,
     this->backend->put (tablename, key, value);
 }
 
-void DistStoreHandler::putValue (string & _return, const string & tablename,
-                                 const string & value)
+void ThrudocHandler::putValue (string & _return, const string & tablename,
+                               const string & value)
 {
 #if HAVE_LIBUUID
     uuid_t uuid;
@@ -51,29 +51,29 @@ void DistStoreHandler::putValue (string & _return, const string & tablename,
                    value + ", uuid=" + _return);
     this->backend->put (tablename, _return, value);
 #else
-    DistStoreException e;
+    ThrudocException e;
     e.what = "putValue uuid generation not built";
     throw e;
 #endif
 }
 
-void DistStoreHandler::get (string & _return, const string & tablename,
-                            const string & key)
+void ThrudocHandler::get (string & _return, const string & tablename,
+                          const string & key)
 {
     LOG4CXX_DEBUG (logger, "get: tablename=" + tablename + ", key=" + key);
     this->backend->validate (tablename, &key, NULL);
     _return = this->backend->get (tablename, key);
 }
 
-void DistStoreHandler::remove (const string & tablename, const string & key)
+void ThrudocHandler::remove (const string & tablename, const string & key)
 {
     LOG4CXX_DEBUG (logger, "remove: tablename=" + tablename + ", key=" + key);
     this->backend->validate (tablename, &key, NULL);
     this->backend->remove (tablename, key);
 }
 
-void DistStoreHandler::scan (ScanResponse & _return, const string & tablename,
-                             const string & seed, int32_t count)
+void ThrudocHandler::scan (ScanResponse & _return, const string & tablename,
+                           const string & seed, int32_t count)
 {
     if (logger->isDebugEnabled())
     {
@@ -86,7 +86,7 @@ void DistStoreHandler::scan (ScanResponse & _return, const string & tablename,
     _return = this->backend->scan (tablename, seed, count);
 }
 
-void DistStoreHandler::admin (string & _return, const string & op, const string & data)
+void ThrudocHandler::admin (string & _return, const string & op, const string & data)
 {
     LOG4CXX_DEBUG (logger, "admin: op=" + op + ", data=" + data);
     if (op == "echo")
@@ -101,8 +101,8 @@ void DistStoreHandler::admin (string & _return, const string & op, const string 
     }
 }
 
-void DistStoreHandler::putList(vector<DistStoreException> & _return, 
-                               const vector<Element> & elements)
+void ThrudocHandler::putList(vector<ThrudocException> & _return, 
+                             const vector<Element> & elements)
 {
     if (logger->isDebugEnabled())
     {
@@ -113,8 +113,8 @@ void DistStoreHandler::putList(vector<DistStoreException> & _return,
     _return = this->backend->putList (elements);
 }
 
-void DistStoreHandler::getList(vector<ListResponse> & _return, 
-                               const vector<Element> & elements)
+void ThrudocHandler::getList(vector<ListResponse> & _return, 
+                             const vector<Element> & elements)
 {
     if (logger->isDebugEnabled())
     {
@@ -125,8 +125,8 @@ void DistStoreHandler::getList(vector<ListResponse> & _return,
     _return = this->backend->getList (elements);
 }
 
-void DistStoreHandler::removeList(vector<DistStoreException> & _return, 
-                                  const vector<Element> & elements)
+void ThrudocHandler::removeList(vector<ThrudocException> & _return, 
+                                const vector<Element> & elements)
 {
     if (logger->isDebugEnabled())
     {
@@ -137,8 +137,8 @@ void DistStoreHandler::removeList(vector<DistStoreException> & _return,
     _return = this->backend->removeList (elements);
 }
 
-void DistStoreHandler::putValueList(vector<ListResponse> & _return, 
-                                    const vector<Element> & elements)
+void ThrudocHandler::putValueList(vector<ListResponse> & _return, 
+                                  const vector<Element> & elements)
 {
 #if HAVE_LIBUUID
     if (logger->isDebugEnabled())
@@ -157,7 +157,7 @@ void DistStoreHandler::putValueList(vector<ListResponse> & _return,
         uuid_unparse_lower(uuid, uuid_str);
         (*i).key = uuid_str;
     }
-    vector<DistStoreException> exceptions = this->backend->putList (elements);
+    vector<ThrudocException> exceptions = this->backend->putList (elements);
     for (size_t j = 0; j < exceptions.size(); j++)
     {
         ListResponse list_response;
@@ -166,7 +166,7 @@ void DistStoreHandler::putValueList(vector<ListResponse> & _return,
         _return.push_back (list_response);
     }
 #else
-    DistStoreException e;
+    ThrudocException e;
     e.what = "putValue uuid generation not built";
     throw e;
 #endif

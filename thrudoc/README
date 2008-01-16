@@ -1,13 +1,13 @@
 Hi!
 
-DistStore is a distributed key/value store designed to be flexible, scalable,
-and reliable. DistStore is able to take your project from inception, through
+Thrudoc is a distributed key/value store designed to be flexible, scalable,
+and reliable. Thrudoc is able to take your project from inception, through
 development, all the way to scaled out production without changing a line of
 code.
 
 It has quite a few dependencies, but the good new is that you can
 avoid many (almost all) of them by using --without-<backend> options. The disk
-backend is a good place to start if you just want to try DistStore out. MySQL
+backend is a good place to start if you just want to try Thrudoc out. MySQL
 is a good backend to build a site on top of. If you're working in Amazon EC2
 you might want to take a look at the S3 backend. Regardless once you go in to
 production you'll want to take a look at the Memcached backend, but keep in
@@ -23,7 +23,7 @@ best,
 
 Info:
 
-    http://diststore.com/
+    http://thrudoc.org/
 
 Dependencies:
 
@@ -49,7 +49,7 @@ Installing:
     make all
 
     # optional, if you want to start a server up
-    ./diststore -f examples/diststore.conf
+    ./thrudoc -f examples/thrudoc.conf
     make test
 
     make install 

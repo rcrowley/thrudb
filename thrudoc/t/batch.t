@@ -9,7 +9,7 @@ use Thrift;
 use Thrift::Socket;
 use Thrift::FramedTransport;
 use Thrift::BinaryProtocol;
-use DistStore;
+use Thrudoc;
 
 my $tests_left = 35;
 plan tests => $tests_left;
@@ -19,7 +19,7 @@ eval
     my $socket = new Thrift::Socket ('localhost', 9091);
     my $transport = new Thrift::FramedTransport ($socket);
     my $protocol = new Thrift::BinaryProtocol ($transport);
-    my $client = new DistStoreClient ($protocol);
+    my $client = new ThrudocClient ($protocol);
     $transport->open;
 
     my $table = 'test.'.rand;
@@ -34,7 +34,7 @@ eval
         $table = 'test';
     }
 
-    my $element = new DistStore::Element ({
+    my $element = new Thrudoc::Element ({
             tablename => 'nonexistent_table',
             key => 'nonexistent key',
         });
@@ -50,7 +50,7 @@ eval
     my @elements;
     foreach (0..9)
     {
-        $element = new DistStore::Element ({
+        $element = new Thrudoc::Element ({
                 tablename => $table,
                 key => 'key.'.$key,
                 value => 'value.'.$value,

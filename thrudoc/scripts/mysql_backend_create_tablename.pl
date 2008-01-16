@@ -17,9 +17,9 @@ my $master_host = 'localhost';
 my $master_port = 3306;
 my $root_pass = 'mysqlpass';
 
-my $database = 'diststore';
+my $database = 'thrudoc';
 my $svc_hosts = '%';
-my $user = 'diststore';
+my $user = 'thrudoc';
 my $pass = 'pass';
 
 my $tablename = 'data';

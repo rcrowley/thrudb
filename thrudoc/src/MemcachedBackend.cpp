@@ -1,5 +1,5 @@
 #ifdef HAVE_CONFIG_H
-#include "diststore_config.h"
+#include "thrudoc_config.h"
 #endif
 /* hack to work around thrift and log4cxx installing config.h's */
 #undef HAVE_CONFIG_H 
@@ -9,7 +9,7 @@
 #if HAVE_LIBMEMCACHED
 
 using namespace boost;
-using namespace diststore;
+using namespace thrudoc;
 using namespace log4cxx;
 using namespace std;
 
@@ -17,7 +17,7 @@ using namespace std;
 LoggerPtr MemcachedBackend::logger (Logger::getLogger ("MemcachedBackend"));
 
 MemcachedBackend::MemcachedBackend (const string & memcached_servers, 
-                                    shared_ptr<DistStoreBackend> backend)
+                                    shared_ptr<ThrudocBackend> backend)
 {
     LOG4CXX_INFO (logger, string ("MemcachedBackend: memcached_servers=") + 
                   memcached_servers);
@@ -125,7 +125,7 @@ void MemcachedBackend::validate (const string & tablename, const string * key,
     this->backend->validate (tablename, key, value);
     if (tablename.find (":") != string::npos)
     {
-        DistStoreException e;
+        ThrudocException e;
         e.what = "invalid tablename";
         throw e;
     }

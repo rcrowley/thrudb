@@ -88,8 +88,8 @@
    fun:_ZN7log4cxx6Logger9getLoggerERKSs
    fun:_Z41__static_initialization_and_destruction_0ii
    fun:_GLOBAL__I_logger
-   obj:/home/rwmcfa1/lib/diststore/trunk/diststore/src/diststore
-   obj:/home/rwmcfa1/lib/diststore/trunk/diststore/src/diststore
+   obj:/home/rwmcfa1/lib/thrudoc/trunk/thrudoc/src/thrudoc
+   obj:/home/rwmcfa1/lib/thrudoc/trunk/thrudoc/src/thrudoc
    obj:*
    obj:*
 }
@@ -104,8 +104,8 @@
    fun:_ZN7log4cxx6Logger9getLoggerERKSs
    fun:_Z41__static_initialization_and_destruction_0ii
    fun:_GLOBAL__I_logger
-   obj:/home/rwmcfa1/lib/diststore/trunk/diststore/src/diststore
-   obj:/home/rwmcfa1/lib/diststore/trunk/diststore/src/diststore
+   obj:/home/rwmcfa1/lib/thrudoc/trunk/thrudoc/src/thrudoc
+   obj:/home/rwmcfa1/lib/thrudoc/trunk/thrudoc/src/thrudoc
    obj:*
    obj:*
 }
@@ -150,9 +150,9 @@
    fun:_ZN12MySQLBackend15load_partitionsERKSs
    fun:_ZN12MySQLBackend17find_and_checkoutERKSsS1_
    fun:_ZN12MySQLBackend3getERKSsS1_
-   fun:_ZN16DistStoreHandler3getERSsRKSsS2_
-   fun:_ZN9diststore18DistStoreProcessor11process_getEiPN8facebook6thrift8protocol9TProtocolES5_
-   fun:_ZN9diststore18DistStoreProcessor10process_fnEPN8facebook6thrift8protocol9TProtocolES5_RSsi
+   fun:_ZN16ThrudocHandler3getERSsRKSsS2_
+   fun:_ZN9thrudoc18ThrudocProcessor11process_getEiPN8facebook6thrift8protocol9TProtocolES5_
+   fun:_ZN9thrudoc18ThrudocProcessor10process_fnEPN8facebook6thrift8protocol9TProtocolES5_RSsi
 }
 {
    <insert a suppression name here>
@@ -166,9 +166,9 @@
    fun:_ZN12MySQLBackend15load_partitionsERKSs
    fun:_ZN12MySQLBackend17find_and_checkoutERKSsS1_
    fun:_ZN12MySQLBackend3getERKSsS1_
-   fun:_ZN16DistStoreHandler3getERSsRKSsS2_
-   fun:_ZN9diststore18DistStoreProcessor11process_getEiPN8facebook6thrift8protocol9TProtocolES5_
-   fun:_ZN9diststore18DistStoreProcessor10process_fnEPN8facebook6thrift8protocol9TProtocolES5_RSsi
+   fun:_ZN16ThrudocHandler3getERSsRKSsS2_
+   fun:_ZN9thrudoc18ThrudocProcessor11process_getEiPN8facebook6thrift8protocol9TProtocolES5_
+   fun:_ZN9thrudoc18ThrudocProcessor10process_fnEPN8facebook6thrift8protocol9TProtocolES5_RSsi
 }
 {
    <insert a suppression name here>
@@ -181,10 +181,10 @@
    fun:_ZN12MySQLBackend15load_partitionsERKSs
    fun:_ZN12MySQLBackend17find_and_checkoutERKSsS1_
    fun:_ZN12MySQLBackend3getERKSsS1_
-   fun:_ZN16DistStoreHandler3getERSsRKSsS2_
-   fun:_ZN9diststore18DistStoreProcessor11process_getEiPN8facebook6thrift8protocol9TProtocolES5_
-   fun:_ZN9diststore18DistStoreProcessor10process_fnEPN8facebook6thrift8protocol9TProtocolES5_RSsi
-   fun:_ZN9diststore18DistStoreProcessor7processEN5boost10shared_ptrIN8facebook6thrift8protocol9TProtocolEEES7_
+   fun:_ZN16ThrudocHandler3getERSsRKSsS2_
+   fun:_ZN9thrudoc18ThrudocProcessor11process_getEiPN8facebook6thrift8protocol9TProtocolES5_
+   fun:_ZN9thrudoc18ThrudocProcessor10process_fnEPN8facebook6thrift8protocol9TProtocolES5_RSsi
+   fun:_ZN9thrudoc18ThrudocProcessor7processEN5boost10shared_ptrIN8facebook6thrift8protocol9TProtocolEEES7_
 }
 {
    <insert a suppression name here>
@@ -197,10 +197,10 @@
    fun:_ZN12MySQLBackend15load_partitionsERKSs
    fun:_ZN12MySQLBackend17find_and_checkoutERKSsS1_
    fun:_ZN12MySQLBackend3getERKSsS1_
-   fun:_ZN16DistStoreHandler3getERSsRKSsS2_
-   fun:_ZN9diststore18DistStoreProcessor11process_getEiPN8facebook6thrift8protocol9TProtocolES5_
-   fun:_ZN9diststore18DistStoreProcessor10process_fnEPN8facebook6thrift8protocol9TProtocolES5_RSsi
-   fun:_ZN9diststore18DistStoreProcessor7processEN5boost10shared_ptrIN8facebook6thrift8protocol9TProtocolEEES7_
+   fun:_ZN16ThrudocHandler3getERSsRKSsS2_
+   fun:_ZN9thrudoc18ThrudocProcessor11process_getEiPN8facebook6thrift8protocol9TProtocolES5_
+   fun:_ZN9thrudoc18ThrudocProcessor10process_fnEPN8facebook6thrift8protocol9TProtocolES5_RSsi
+   fun:_ZN9thrudoc18ThrudocProcessor7processEN5boost10shared_ptrIN8facebook6thrift8protocol9TProtocolEEES7_
 }
 {
    <insert a suppression name here>
@@ -248,7 +248,7 @@
    fun:_ZN12MySQLBackend15load_partitionsERKSs
    fun:_ZN12MySQLBackend17find_and_checkoutERKSsS1_
    fun:_ZN12MySQLBackend3getERKSsS1_
-   fun:_ZN16DistStoreHandler3getERSsRKSsS2_
+   fun:_ZN16ThrudocHandler3getERSsRKSsS2_
 }
 {
    <insert a suppression name here>
@@ -264,7 +264,7 @@
    fun:_ZN12MySQLBackend15load_partitionsERKSs
    fun:_ZN12MySQLBackend17find_and_checkoutERKSsS1_
    fun:_ZN12MySQLBackend3getERKSsS1_
-   fun:_ZN16DistStoreHandler3getERSsRKSsS2_
+   fun:_ZN16ThrudocHandler3getERSsRKSsS2_
 }
 {
    <insert a suppression name here>
@@ -280,7 +280,7 @@
    fun:_ZN12MySQLBackend15load_partitionsERKSs
    fun:_ZN12MySQLBackend17find_and_checkoutERKSsS1_
    fun:_ZN12MySQLBackend3getERKSsS1_
-   fun:_ZN16DistStoreHandler3getERSsRKSsS2_
+   fun:_ZN16ThrudocHandler3getERSsRKSsS2_
 }
 {
    <insert a suppression name here>
@@ -296,7 +296,7 @@
    fun:_ZN12MySQLBackend15load_partitionsERKSs
    fun:_ZN12MySQLBackend17find_and_checkoutERKSsS1_
    fun:_ZN12MySQLBackend3getERKSsS1_
-   fun:_ZN16DistStoreHandler3getERSsRKSsS2_
+   fun:_ZN16ThrudocHandler3getERSsRKSsS2_
 }
 {
    <insert a suppression name here>
@@ -312,7 +312,7 @@
    fun:_ZN12MySQLBackend15load_partitionsERKSs
    fun:_ZN12MySQLBackend17find_and_checkoutERKSsS1_
    fun:_ZN12MySQLBackend3getERKSsS1_
-   fun:_ZN16DistStoreHandler3getERSsRKSsS2_
+   fun:_ZN16ThrudocHandler3getERSsRKSsS2_
 }
 {
    <insert a suppression name here>
@@ -328,7 +328,7 @@
    fun:_ZN12MySQLBackend15load_partitionsERKSs
    fun:_ZN12MySQLBackend17find_and_checkoutERKSsS1_
    fun:_ZN12MySQLBackend3getERKSsS1_
-   fun:_ZN16DistStoreHandler3getERSsRKSsS2_
+   fun:_ZN16ThrudocHandler3getERSsRKSsS2_
 }
 {
    <insert a suppression name here>
@@ -378,10 +378,10 @@
    fun:_ZN12MySQLBackend15load_partitionsERKSs
    fun:_ZN12MySQLBackend17find_and_checkoutERKSsS1_
    fun:_ZN12MySQLBackend3getERKSsS1_
-   fun:_ZN16DistStoreHandler3getERSsRKSsS2_
-   fun:_ZN9diststore18DistStoreProcessor11process_getEiPN8facebook6thrift8protocol9TProtocolES5_
-   fun:_ZN9diststore18DistStoreProcessor10process_fnEPN8facebook6thrift8protocol9TProtocolES5_RSsi
-   fun:_ZN9diststore18DistStoreProcessor7processEN5boost10shared_ptrIN8facebook6thrift8protocol9TProtocolEEES7_
+   fun:_ZN16ThrudocHandler3getERSsRKSsS2_
+   fun:_ZN9thrudoc18ThrudocProcessor11process_getEiPN8facebook6thrift8protocol9TProtocolES5_
+   fun:_ZN9thrudoc18ThrudocProcessor10process_fnEPN8facebook6thrift8protocol9TProtocolES5_RSsi
+   fun:_ZN9thrudoc18ThrudocProcessor7processEN5boost10shared_ptrIN8facebook6thrift8protocol9TProtocolEEES7_
    fun:_ZN8facebook6thrift6server11TConnection4Task3runEv
    fun:_ZN8facebook6thrift11concurrency13ThreadManager4Task3runEv
    fun:_ZN8facebook6thrift11concurrency13ThreadManager6Worker3runEv
@@ -432,7 +432,7 @@
    fun:_ZN2Db4openEP5DbTxnPKcS3_6DBTYPEji
    fun:_ZN10BDBBackend6get_dbERKSs
    fun:_ZN10BDBBackend5adminERKSsS1_
-   fun:_ZN16DistStoreHandler5adminERSsRKSsS2_
+   fun:_ZN16ThrudocHandler5adminERSsRKSsS2_
 }
 {
    <insert a suppression name here>
@@ -508,10 +508,10 @@
    fun:strftime_l
    fun:_ZN2s37requestESsSsSslPKcmPKNS_9s3headersE
    fun:_ZN9S3Backend5adminERKSsS1_
-   fun:_ZN16DistStoreHandler5adminERSsRKSsS2_
-   fun:_ZN9diststore18DistStoreProcessor13process_adminEiPN8facebook6thrift8protocol9TProtocolES5_
-   fun:_ZN9diststore18DistStoreProcessor10process_fnEPN8facebook6thrift8protocol9TProtocolES5_RSsi
-   fun:_ZN9diststore18DistStoreProcessor7processEN5boost10shared_ptrIN8facebook6thrift8protocol9TProtocolEEES7_
+   fun:_ZN16ThrudocHandler5adminERSsRKSsS2_
+   fun:_ZN9thrudoc18ThrudocProcessor13process_adminEiPN8facebook6thrift8protocol9TProtocolES5_
+   fun:_ZN9thrudoc18ThrudocProcessor10process_fnEPN8facebook6thrift8protocol9TProtocolES5_RSsi
+   fun:_ZN9thrudoc18ThrudocProcessor7processEN5boost10shared_ptrIN8facebook6thrift8protocol9TProtocolEEES7_
    fun:_ZN8facebook6thrift6server11TConnection4Task3runEv
    fun:_ZN8facebook6thrift11concurrency13ThreadManager4Task3runEv
 }
@@ -524,10 +524,10 @@
    fun:strftime_l
    fun:_ZN2s37requestESsSsSslPKcmPKNS_9s3headersE
    fun:_ZN9S3Backend5adminERKSsS1_
-   fun:_ZN16DistStoreHandler5adminERSsRKSsS2_
-   fun:_ZN9diststore18DistStoreProcessor13process_adminEiPN8facebook6thrift8protocol9TProtocolES5_
-   fun:_ZN9diststore18DistStoreProcessor10process_fnEPN8facebook6thrift8protocol9TProtocolES5_RSsi
-   fun:_ZN9diststore18DistStoreProcessor7processEN5boost10shared_ptrIN8facebook6thrift8protocol9TProtocolEEES7_
+   fun:_ZN16ThrudocHandler5adminERSsRKSsS2_
+   fun:_ZN9thrudoc18ThrudocProcessor13process_adminEiPN8facebook6thrift8protocol9TProtocolES5_
+   fun:_ZN9thrudoc18ThrudocProcessor10process_fnEPN8facebook6thrift8protocol9TProtocolES5_RSsi
+   fun:_ZN9thrudoc18ThrudocProcessor7processEN5boost10shared_ptrIN8facebook6thrift8protocol9TProtocolEEES7_
    fun:_ZN8facebook6thrift6server11TConnection4Task3runEv
    fun:_ZN8facebook6thrift11concurrency13ThreadManager4Task3runEv
 }
@@ -539,10 +539,10 @@
    fun:strftime_l
    fun:_ZN2s37requestESsSsSslPKcmPKNS_9s3headersE
    fun:_ZN9S3Backend5adminERKSsS1_
-   fun:_ZN16DistStoreHandler5adminERSsRKSsS2_
-   fun:_ZN9diststore18DistStoreProcessor13process_adminEiPN8facebook6thrift8protocol9TProtocolES5_
-   fun:_ZN9diststore18DistStoreProcessor10process_fnEPN8facebook6thrift8protocol9TProtocolES5_RSsi
-   fun:_ZN9diststore18DistStoreProcessor7processEN5boost10shared_ptrIN8facebook6thrift8protocol9TProtocolEEES7_
+   fun:_ZN16ThrudocHandler5adminERSsRKSsS2_
+   fun:_ZN9thrudoc18ThrudocProcessor13process_adminEiPN8facebook6thrift8protocol9TProtocolES5_
+   fun:_ZN9thrudoc18ThrudocProcessor10process_fnEPN8facebook6thrift8protocol9TProtocolES5_RSsi
+   fun:_ZN9thrudoc18ThrudocProcessor7processEN5boost10shared_ptrIN8facebook6thrift8protocol9TProtocolEEES7_
    fun:_ZN8facebook6thrift6server11TConnection4Task3runEv
    fun:_ZN8facebook6thrift11concurrency13ThreadManager4Task3runEv
    fun:_ZN8facebook6thrift11concurrency13ThreadManager6Worker3runEv
@@ -556,10 +556,10 @@
    fun:strftime_l
    fun:_ZN2s37requestESsSsSslPKcmPKNS_9s3headersE
    fun:_ZN9S3Backend5adminERKSsS1_
-   fun:_ZN16DistStoreHandler5adminERSsRKSsS2_
-   fun:_ZN9diststore18DistStoreProcessor13process_adminEiPN8facebook6thrift8protocol9TProtocolES5_
-   fun:_ZN9diststore18DistStoreProcessor10process_fnEPN8facebook6thrift8protocol9TProtocolES5_RSsi
-   fun:_ZN9diststore18DistStoreProcessor7processEN5boost10shared_ptrIN8facebook6thrift8protocol9TProtocolEEES7_
+   fun:_ZN16ThrudocHandler5adminERSsRKSsS2_
+   fun:_ZN9thrudoc18ThrudocProcessor13process_adminEiPN8facebook6thrift8protocol9TProtocolES5_
+   fun:_ZN9thrudoc18ThrudocProcessor10process_fnEPN8facebook6thrift8protocol9TProtocolES5_RSsi
+   fun:_ZN9thrudoc18ThrudocProcessor7processEN5boost10shared_ptrIN8facebook6thrift8protocol9TProtocolEEES7_
    fun:_ZN8facebook6thrift6server11TConnection4Task3runEv
    fun:_ZN8facebook6thrift11concurrency13ThreadManager4Task3runEv
 }
@@ -572,10 +572,10 @@
    fun:strftime_l
    fun:_ZN2s37requestESsSsSslPKcmPKNS_9s3headersE
    fun:_ZN9S3Backend5adminERKSsS1_
-   fun:_ZN16DistStoreHandler5adminERSsRKSsS2_
-   fun:_ZN9diststore18DistStoreProcessor13process_adminEiPN8facebook6thrift8protocol9TProtocolES5_
-   fun:_ZN9diststore18DistStoreProcessor10process_fnEPN8facebook6thrift8protocol9TProtocolES5_RSsi
-   fun:_ZN9diststore18DistStoreProcessor7processEN5boost10shared_ptrIN8facebook6thrift8protocol9TProtocolEEES7_
+   fun:_ZN16ThrudocHandler5adminERSsRKSsS2_
+   fun:_ZN9thrudoc18ThrudocProcessor13process_adminEiPN8facebook6thrift8protocol9TProtocolES5_
+   fun:_ZN9thrudoc18ThrudocProcessor10process_fnEPN8facebook6thrift8protocol9TProtocolES5_RSsi
+   fun:_ZN9thrudoc18ThrudocProcessor7processEN5boost10shared_ptrIN8facebook6thrift8protocol9TProtocolEEES7_
    fun:_ZN8facebook6thrift6server11TConnection4Task3runEv
    fun:_ZN8facebook6thrift11concurrency13ThreadManager4Task3runEv
 }
@@ -588,10 +588,10 @@
    fun:strftime_l
    fun:_ZN2s37requestESsSsSslPKcmPKNS_9s3headersE
    fun:_ZN9S3Backend5adminERKSsS1_
-   fun:_ZN16DistStoreHandler5adminERSsRKSsS2_
-   fun:_ZN9diststore18DistStoreProcessor13process_adminEiPN8facebook6thrift8protocol9TProtocolES5_
-   fun:_ZN9diststore18DistStoreProcessor10process_fnEPN8facebook6thrift8protocol9TProtocolES5_RSsi
-   fun:_ZN9diststore18DistStoreProcessor7processEN5boost10shared_ptrIN8facebook6thrift8protocol9TProtocolEEES7_
+   fun:_ZN16ThrudocHandler5adminERSsRKSsS2_
+   fun:_ZN9thrudoc18ThrudocProcessor13process_adminEiPN8facebook6thrift8protocol9TProtocolES5_
+   fun:_ZN9thrudoc18ThrudocProcessor10process_fnEPN8facebook6thrift8protocol9TProtocolES5_RSsi
+   fun:_ZN9thrudoc18ThrudocProcessor7processEN5boost10shared_ptrIN8facebook6thrift8protocol9TProtocolEEES7_
    fun:_ZN8facebook6thrift6server11TConnection4Task3runEv
    fun:_ZN8facebook6thrift11concurrency13ThreadManager4Task3runEv
 }
@@ -604,10 +604,10 @@
    fun:strftime_l
    fun:_ZN2s37requestESsSsSslPKcmPKNS_9s3headersE
    fun:_ZN9S3Backend5adminERKSsS1_
-   fun:_ZN16DistStoreHandler5adminERSsRKSsS2_
-   fun:_ZN9diststore18DistStoreProcessor13process_adminEiPN8facebook6thrift8protocol9TProtocolES5_
-   fun:_ZN9diststore18DistStoreProcessor10process_fnEPN8facebook6thrift8protocol9TProtocolES5_RSsi
-   fun:_ZN9diststore18DistStoreProcessor7processEN5boost10shared_ptrIN8facebook6thrift8protocol9TProtocolEEES7_
+   fun:_ZN16ThrudocHandler5adminERSsRKSsS2_
+   fun:_ZN9thrudoc18ThrudocProcessor13process_adminEiPN8facebook6thrift8protocol9TProtocolES5_
+   fun:_ZN9thrudoc18ThrudocProcessor10process_fnEPN8facebook6thrift8protocol9TProtocolES5_RSsi
+   fun:_ZN9thrudoc18ThrudocProcessor7processEN5boost10shared_ptrIN8facebook6thrift8protocol9TProtocolEEES7_
    fun:_ZN8facebook6thrift6server11TConnection4Task3runEv
    fun:_ZN8facebook6thrift11concurrency13ThreadManager4Task3runEv
 }
@@ -620,10 +620,10 @@
    obj:/usr/lib/libcurl.so.4.0.0
    fun:_ZN2s37requestESsSsSslPKcmPKNS_9s3headersE
    fun:_ZN9S3Backend5adminERKSsS1_
-   fun:_ZN16DistStoreHandler5adminERSsRKSsS2_
-   fun:_ZN9diststore18DistStoreProcessor13process_adminEiPN8facebook6thrift8protocol9TProtocolES5_
-   fun:_ZN9diststore18DistStoreProcessor10process_fnEPN8facebook6thrift8protocol9TProtocolES5_RSsi
-   fun:_ZN9diststore18DistStoreProcessor7processEN5boost10shared_ptrIN8facebook6thrift8protocol9TProtocolEEES7_
+   fun:_ZN16ThrudocHandler5adminERSsRKSsS2_
+   fun:_ZN9thrudoc18ThrudocProcessor13process_adminEiPN8facebook6thrift8protocol9TProtocolES5_
+   fun:_ZN9thrudoc18ThrudocProcessor10process_fnEPN8facebook6thrift8protocol9TProtocolES5_RSsi
+   fun:_ZN9thrudoc18ThrudocProcessor7processEN5boost10shared_ptrIN8facebook6thrift8protocol9TProtocolEEES7_
    fun:_ZN8facebook6thrift6server11TConnection4Task3runEv
    fun:_ZN8facebook6thrift11concurrency13ThreadManager4Task3runEv
 }
@@ -636,10 +636,10 @@
    obj:/usr/lib/libcurl.so.4.0.0
    fun:_ZN2s37requestESsSsSslPKcmPKNS_9s3headersE
    fun:_ZN9S3Backend5adminERKSsS1_
-   fun:_ZN16DistStoreHandler5adminERSsRKSsS2_
-   fun:_ZN9diststore18DistStoreProcessor13process_adminEiPN8facebook6thrift8protocol9TProtocolES5_
-   fun:_ZN9diststore18DistStoreProcessor10process_fnEPN8facebook6thrift8protocol9TProtocolES5_RSsi
-   fun:_ZN9diststore18DistStoreProcessor7processEN5boost10shared_ptrIN8facebook6thrift8protocol9TProtocolEEES7_
+   fun:_ZN16ThrudocHandler5adminERSsRKSsS2_
+   fun:_ZN9thrudoc18ThrudocProcessor13process_adminEiPN8facebook6thrift8protocol9TProtocolES5_
+   fun:_ZN9thrudoc18ThrudocProcessor10process_fnEPN8facebook6thrift8protocol9TProtocolES5_RSsi
+   fun:_ZN9thrudoc18ThrudocProcessor7processEN5boost10shared_ptrIN8facebook6thrift8protocol9TProtocolEEES7_
    fun:_ZN8facebook6thrift6server11TConnection4Task3runEv
    fun:_ZN8facebook6thrift11concurrency13ThreadManager4Task3runEv
 }
@@ -652,10 +652,10 @@
    obj:/usr/lib/libcurl.so.4.0.0
    fun:_ZN2s37requestESsSsSslPKcmPKNS_9s3headersE
    fun:_ZN9S3Backend5adminERKSsS1_
-   fun:_ZN16DistStoreHandler5adminERSsRKSsS2_
-   fun:_ZN9diststore18DistStoreProcessor13process_adminEiPN8facebook6thrift8protocol9TProtocolES5_
-   fun:_ZN9diststore18DistStoreProcessor10process_fnEPN8facebook6thrift8protocol9TProtocolES5_RSsi
-   fun:_ZN9diststore18DistStoreProcessor7processEN5boost10shared_ptrIN8facebook6thrift8protocol9TProtocolEEES7_
+   fun:_ZN16ThrudocHandler5adminERSsRKSsS2_
+   fun:_ZN9thrudoc18ThrudocProcessor13process_adminEiPN8facebook6thrift8protocol9TProtocolES5_
+   fun:_ZN9thrudoc18ThrudocProcessor10process_fnEPN8facebook6thrift8protocol9TProtocolES5_RSsi
+   fun:_ZN9thrudoc18ThrudocProcessor7processEN5boost10shared_ptrIN8facebook6thrift8protocol9TProtocolEEES7_
    fun:_ZN8facebook6thrift6server11TConnection4Task3runEv
    fun:_ZN8facebook6thrift11concurrency13ThreadManager4Task3runEv
 }
@@ -668,10 +668,10 @@
    obj:/usr/lib/libcurl.so.4.0.0
    fun:_ZN2s37requestESsSsSslPKcmPKNS_9s3headersE
    fun:_ZN9S3Backend5adminERKSsS1_
-   fun:_ZN16DistStoreHandler5adminERSsRKSsS2_
-   fun:_ZN9diststore18DistStoreProcessor13process_adminEiPN8facebook6thrift8protocol9TProtocolES5_
-   fun:_ZN9diststore18DistStoreProcessor10process_fnEPN8facebook6thrift8protocol9TProtocolES5_RSsi
-   fun:_ZN9diststore18DistStoreProcessor7processEN5boost10shared_ptrIN8facebook6thrift8protocol9TProtocolEEES7_
+   fun:_ZN16ThrudocHandler5adminERSsRKSsS2_
+   fun:_ZN9thrudoc18ThrudocProcessor13process_adminEiPN8facebook6thrift8protocol9TProtocolES5_
+   fun:_ZN9thrudoc18ThrudocProcessor10process_fnEPN8facebook6thrift8protocol9TProtocolES5_RSsi
+   fun:_ZN9thrudoc18ThrudocProcessor7processEN5boost10shared_ptrIN8facebook6thrift8protocol9TProtocolEEES7_
    fun:_ZN8facebook6thrift6server11TConnection4Task3runEv
    fun:_ZN8facebook6thrift11concurrency13ThreadManager4Task3runEv
 }
@@ -684,10 +684,10 @@
    obj:/usr/lib/libcurl.so.4.0.0
    fun:_ZN2s37requestESsSsSslPKcmPKNS_9s3headersE
    fun:_ZN9S3Backend5adminERKSsS1_
-   fun:_ZN16DistStoreHandler5adminERSsRKSsS2_
-   fun:_ZN9diststore18DistStoreProcessor13process_adminEiPN8facebook6thrift8protocol9TProtocolES5_
-   fun:_ZN9diststore18DistStoreProcessor10process_fnEPN8facebook6thrift8protocol9TProtocolES5_RSsi
-   fun:_ZN9diststore18DistStoreProcessor7processEN5boost10shared_ptrIN8facebook6thrift8protocol9TProtocolEEES7_
+   fun:_ZN16ThrudocHandler5adminERSsRKSsS2_
+   fun:_ZN9thrudoc18ThrudocProcessor13process_adminEiPN8facebook6thrift8protocol9TProtocolES5_
+   fun:_ZN9thrudoc18ThrudocProcessor10process_fnEPN8facebook6thrift8protocol9TProtocolES5_RSsi
+   fun:_ZN9thrudoc18ThrudocProcessor7processEN5boost10shared_ptrIN8facebook6thrift8protocol9TProtocolEEES7_
    fun:_ZN8facebook6thrift6server11TConnection4Task3runEv
    fun:_ZN8facebook6thrift11concurrency13ThreadManager4Task3runEv
 }
@@ -705,7 +705,7 @@
    obj:/usr/lib/libcurl.so.4.0.0
    fun:_ZN2s37requestESsSsSslPKcmPKNS_9s3headersE
    fun:_ZN9S3Backend5adminERKSsS1_
-   fun:_ZN16DistStoreHandler5adminERSsRKSsS2_
+   fun:_ZN16ThrudocHandler5adminERSsRKSsS2_
 }
 {
    <insert a suppression name here>
@@ -721,7 +721,7 @@
    obj:/usr/lib/libcurl.so.4.0.0
    fun:_ZN2s37requestESsSsSslPKcmPKNS_9s3headersE
    fun:_ZN9S3Backend5adminERKSsS1_
-   fun:_ZN16DistStoreHandler5adminERSsRKSsS2_
+   fun:_ZN16ThrudocHandler5adminERSsRKSsS2_
 }
 {
    <insert a suppression name here>
@@ -768,8 +768,8 @@
    fun:_ZN12MySQLBackend17find_and_checkoutERKSsS1_
    fun:_ZN12MySQLBackend3getERKSsS1_
    fun:_ZN16MemcachedBackend3getERKSsS1_
-   fun:_ZN16DistStoreHandler3getERSsRKSsS2_
-   fun:_ZN9diststore18DistStoreProcessor11process_getEiPN8facebook6thrift8protocol9TProtocolES5_
+   fun:_ZN16ThrudocHandler3getERSsRKSsS2_
+   fun:_ZN9thrudoc18ThrudocProcessor11process_getEiPN8facebook6thrift8protocol9TProtocolES5_
 }
 {
    <insert a suppression name here>
@@ -784,8 +784,8 @@
    fun:_ZN12MySQLBackend17find_and_checkoutERKSsS1_
    fun:_ZN12MySQLBackend3getERKSsS1_
    fun:_ZN16MemcachedBackend3getERKSsS1_
-   fun:_ZN16DistStoreHandler3getERSsRKSsS2_
-   fun:_ZN9diststore18DistStoreProcessor11process_getEiPN8facebook6thrift8protocol9TProtocolES5_
+   fun:_ZN16ThrudocHandler3getERSsRKSsS2_
+   fun:_ZN9thrudoc18ThrudocProcessor11process_getEiPN8facebook6thrift8protocol9TProtocolES5_
 }
 {
    <insert a suppression name here>
@@ -799,9 +799,9 @@
    fun:_ZN12MySQLBackend17find_and_checkoutERKSsS1_
    fun:_ZN12MySQLBackend3getERKSsS1_
    fun:_ZN16MemcachedBackend3getERKSsS1_
-   fun:_ZN16DistStoreHandler3getERSsRKSsS2_
-   fun:_ZN9diststore18DistStoreProcessor11process_getEiPN8facebook6thrift8protocol9TProtocolES5_
-   fun:_ZN9diststore18DistStoreProcessor10process_fnEPN8facebook6thrift8protocol9TProtocolES5_RSsi
+   fun:_ZN16ThrudocHandler3getERSsRKSsS2_
+   fun:_ZN9thrudoc18ThrudocProcessor11process_getEiPN8facebook6thrift8protocol9TProtocolES5_
+   fun:_ZN9thrudoc18ThrudocProcessor10process_fnEPN8facebook6thrift8protocol9TProtocolES5_RSsi
 }
 {
    <insert a suppression name here>
@@ -815,9 +815,9 @@
    fun:_ZN12MySQLBackend17find_and_checkoutERKSsS1_
    fun:_ZN12MySQLBackend3getERKSsS1_
    fun:_ZN16MemcachedBackend3getERKSsS1_
-   fun:_ZN16DistStoreHandler3getERSsRKSsS2_
-   fun:_ZN9diststore18DistStoreProcessor11process_getEiPN8facebook6thrift8protocol9TProtocolES5_
-   fun:_ZN9diststore18DistStoreProcessor10process_fnEPN8facebook6thrift8protocol9TProtocolES5_RSsi
+   fun:_ZN16ThrudocHandler3getERSsRKSsS2_
+   fun:_ZN9thrudoc18ThrudocProcessor11process_getEiPN8facebook6thrift8protocol9TProtocolES5_
+   fun:_ZN9thrudoc18ThrudocProcessor10process_fnEPN8facebook6thrift8protocol9TProtocolES5_RSsi
 }
 {
    <insert a suppression name here>
@@ -920,10 +920,10 @@
    Memcheck:Leak
    fun:_Znwm
    fun:_ZN7log4cxx6Logger9forcedLogERKNS_7helpers10ObjectPtrTINS_5LevelEEERKSsPKci
-   fun:_ZN16DistStoreHandler3getERSsRKSsS2_
-   fun:_ZN9diststore18DistStoreProcessor11process_getEiPN8facebook6thrift8protocol9TProtocolES5_
-   fun:_ZN9diststore18DistStoreProcessor10process_fnEPN8facebook6thrift8protocol9TProtocolES5_RSsi
-   fun:_ZN9diststore18DistStoreProcessor7processEN5boost10shared_ptrIN8facebook6thrift8protocol9TProtocolEEES7_
+   fun:_ZN16ThrudocHandler3getERSsRKSsS2_
+   fun:_ZN9thrudoc18ThrudocProcessor11process_getEiPN8facebook6thrift8protocol9TProtocolES5_
+   fun:_ZN9thrudoc18ThrudocProcessor10process_fnEPN8facebook6thrift8protocol9TProtocolES5_RSsi
+   fun:_ZN9thrudoc18ThrudocProcessor7processEN5boost10shared_ptrIN8facebook6thrift8protocol9TProtocolEEES7_
    fun:_ZN8facebook6thrift6server11TConnection4Task3runEv
    fun:_ZN8facebook6thrift11concurrency13ThreadManager4Task3runEv
    fun:_ZN8facebook6thrift11concurrency13ThreadManager6Worker3runEv
@@ -941,7 +941,7 @@
    fun:connect_nointr_timeout
    fun:SP_connect_timeout
    fun:SP_connect
-   fun:_ZN13SpreadBackendC1ERKSsS1_S1_N5boost10shared_ptrI16DistStoreBackendEE
+   fun:_ZN13SpreadBackendC1ERKSsS1_S1_N5boost10shared_ptrI16ThrudocBackendEE
    fun:main
 }
 {
@@ -954,7 +954,7 @@
    fun:connect_nointr_timeout
    fun:SP_connect_timeout
    fun:SP_connect
-   fun:_ZN13SpreadBackendC1ERKSsS1_S1_N5boost10shared_ptrI16DistStoreBackendEE
+   fun:_ZN13SpreadBackendC1ERKSsS1_S1_N5boost10shared_ptrI16ThrudocBackendEE
    fun:main
 }
 {
@@ -970,8 +970,8 @@
    fun:_ZN12MySQLBackend17find_and_checkoutERKSsS1_
    fun:_ZN12MySQLBackend3getERKSsS1_
    fun:_ZN13SpreadBackend3getERKSsS1_
-   fun:_ZN16DistStoreHandler3getERSsRKSsS2_
-   fun:_ZN9diststore18DistStoreProcessor11process_getEiPN8facebook6thrift8protocol9TProtocolES5_
+   fun:_ZN16ThrudocHandler3getERSsRKSsS2_
+   fun:_ZN9thrudoc18ThrudocProcessor11process_getEiPN8facebook6thrift8protocol9TProtocolES5_
 }
 {
    <insert a suppression name here>
@@ -986,8 +986,8 @@
    fun:_ZN12MySQLBackend17find_and_checkoutERKSsS1_
    fun:_ZN12MySQLBackend3getERKSsS1_
    fun:_ZN13SpreadBackend3getERKSsS1_
-   fun:_ZN16DistStoreHandler3getERSsRKSsS2_
-   fun:_ZN9diststore18DistStoreProcessor11process_getEiPN8facebook6thrift8protocol9TProtocolES5_
+   fun:_ZN16ThrudocHandler3getERSsRKSsS2_
+   fun:_ZN9thrudoc18ThrudocProcessor11process_getEiPN8facebook6thrift8protocol9TProtocolES5_
 }
 {
    <insert a suppression name here>
@@ -1001,9 +1001,9 @@
    fun:_ZN12MySQLBackend17find_and_checkoutERKSsS1_
    fun:_ZN12MySQLBackend3getERKSsS1_
    fun:_ZN13SpreadBackend3getERKSsS1_
-   fun:_ZN16DistStoreHandler3getERSsRKSsS2_
-   fun:_ZN9diststore18DistStoreProcessor11process_getEiPN8facebook6thrift8protocol9TProtocolES5_
-   fun:_ZN9diststore18DistStoreProcessor10process_fnEPN8facebook6thrift8protocol9TProtocolES5_RSsi
+   fun:_ZN16ThrudocHandler3getERSsRKSsS2_
+   fun:_ZN9thrudoc18ThrudocProcessor11process_getEiPN8facebook6thrift8protocol9TProtocolES5_
+   fun:_ZN9thrudoc18ThrudocProcessor10process_fnEPN8facebook6thrift8protocol9TProtocolES5_RSsi
 }
 {
    <insert a suppression name here>
@@ -1017,9 +1017,9 @@
    fun:_ZN12MySQLBackend17find_and_checkoutERKSsS1_
    fun:_ZN12MySQLBackend3getERKSsS1_
    fun:_ZN13SpreadBackend3getERKSsS1_
-   fun:_ZN16DistStoreHandler3getERSsRKSsS2_
-   fun:_ZN9diststore18DistStoreProcessor11process_getEiPN8facebook6thrift8protocol9TProtocolES5_
-   fun:_ZN9diststore18DistStoreProcessor10process_fnEPN8facebook6thrift8protocol9TProtocolES5_RSsi
+   fun:_ZN16ThrudocHandler3getERSsRKSsS2_
+   fun:_ZN9thrudoc18ThrudocProcessor11process_getEiPN8facebook6thrift8protocol9TProtocolES5_
+   fun:_ZN9thrudoc18ThrudocProcessor10process_fnEPN8facebook6thrift8protocol9TProtocolES5_RSsi
 }
 {
    <insert a suppression name here>

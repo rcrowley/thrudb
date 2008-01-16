@@ -1,5 +1,5 @@
 #ifdef HAVE_CONFIG_H
-#include "diststore_config.h"
+#include "thrudoc_config.h"
 #endif
 /* hack to work around thrift and log4cxx installing config.h's */
 #undef HAVE_CONFIG_H 
@@ -13,7 +13,7 @@
 #define SPREAD_BACKEND_MAX_MESSAGE_SIZE 128
 
 using namespace boost;
-using namespace diststore;
+using namespace thrudoc;
 using namespace log4cxx;
 using namespace std;
 
@@ -25,7 +25,7 @@ string SP_error_to_string (int error);
 SpreadBackend::SpreadBackend (const string & spread_name, 
                               const string & spread_private_name,
                               const string & spread_group,
-                              shared_ptr<DistStoreBackend> backend)
+                              shared_ptr<ThrudocBackend> backend)
 {
     LOG4CXX_INFO (logger, "SpreadBackend: spread_name=" + spread_name + 
                   ", spread_private_name=" + spread_private_name + 

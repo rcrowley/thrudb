@@ -11,10 +11,10 @@
 #include <log4cxx/logger.h>
 #include <db_cxx.h>
 
-#include "DistStore.h"
-#include "DistStoreBackend.h"
+#include "Thrudoc.h"
+#include "ThrudocBackend.h"
 
-class BDBBackend : public DistStoreBackend
+class BDBBackend : public ThrudocBackend
 {
     public:
         BDBBackend (const std::string & bdb_root, const int & thread_count);
@@ -26,9 +26,9 @@ class BDBBackend : public DistStoreBackend
         void put (const std::string & tablename, const std::string & key,
                   const std::string & value);
         void remove (const std::string & tablename, const std::string & key);
-        diststore::ScanResponse scan (const std::string & tablename,
-                                      const std::string & seed,
-                                      int32_t count);
+        thrudoc::ScanResponse scan (const std::string & tablename,
+                                    const std::string & seed,
+                                    int32_t count);
         std::string admin (const std::string & op, const std::string & data);
         void validate (const std::string & tablename, const std::string * key,
                        const std::string * value);

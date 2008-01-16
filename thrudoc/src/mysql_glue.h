@@ -10,7 +10,7 @@
 #include <map>
 #include <stack>
 #include <thrift/concurrency/Mutex.h>
-#include "DistStore.h"
+#include "Thrudoc.h"
 
 namespace mysql {
 
@@ -489,71 +489,71 @@ namespace mysql {
         friend class PreparedStatement;
 
         public:
-            Connection (const char * host, const short port,
-                        const char * slave_host, const short slave_port,
-                        const char * db, const char * username,
-                        const char * password);
-            ~Connection ();
+        Connection (const char * host, const short port,
+                    const char * slave_host, const short slave_port,
+                    const char * db, const char * username,
+                    const char * password);
+        ~Connection ();
 
-            void reset_connection ();
-            void check_master ();
-            void lost_connection ();
-            void switch_to_master ();
-            void switch_to_slave ();
+        void reset_connection ();
+        void check_master ();
+        void lost_connection ();
+        void switch_to_master ();
+        void switch_to_slave ();
 
-            PreparedStatement * find_partitions_statement ();
-            PreparedStatement * find_next_statement ();
-            PreparedStatement * find_get_statement (const char * tablename,
-                                                    int max_value_size);
-            PreparedStatement * find_put_statement (const char * tablename);
-            PreparedStatement * find_delete_statement (const char * tablename);
-            PreparedStatement * find_scan_statement (const char * tablename,
-                                                     int max_value_size);
+        PreparedStatement * find_partitions_statement ();
+        PreparedStatement * find_next_statement ();
+        PreparedStatement * find_get_statement (const char * tablename,
+                                                int max_value_size);
+        PreparedStatement * find_put_statement (const char * tablename);
+        PreparedStatement * find_delete_statement (const char * tablename);
+        PreparedStatement * find_scan_statement (const char * tablename,
+                                                 int max_value_size);
 
-            std::string get_hostname ()
-            {
-                return this->hostname;
-            }
+        std::string get_hostname ()
+        {
+            return this->hostname;
+        }
 
-            short get_port ()
-            {
-                return this->port;
-            }
+        short get_port ()
+        {
+            return this->port;
+        }
 
-            std::string get_db ()
-            {
-                return this->db;
-            }
+        std::string get_db ()
+        {
+            return this->db;
+        }
 
         protected:
-            MYSQL * get_mysql ()
-            {
-                check_master ();
-                return this->read_only ? &this->slave_mysql : &this->mysql;
-            }
+        MYSQL * get_mysql ()
+        {
+            check_master ();
+            return this->read_only ? &this->slave_mysql : &this->mysql;
+        }
 
-            time_t get_read_only ()
-            {
-                return this->read_only;
-            }
+        time_t get_read_only ()
+        {
+            return this->read_only;
+        }
 
         private:
-            static log4cxx::LoggerPtr logger;
+        static log4cxx::LoggerPtr logger;
 
-            std::string hostname;
-            int port;
-            MYSQL mysql;
-            std::string slave_hostname;
-            int slave_port;
-            MYSQL slave_mysql;
-            time_t read_only;
-            std::string db;
-            std::map<std::string, PreparedStatement *> partitions_statements;
-            std::map<std::string, PreparedStatement *> next_statements;
-            std::map<std::string, PreparedStatement *> get_statements;
-            std::map<std::string, PreparedStatement *> put_statements;
-            std::map<std::string, PreparedStatement *> delete_statements;
-            std::map<std::string, PreparedStatement *> scan_statements;
+        std::string hostname;
+        int port;
+        MYSQL mysql;
+        std::string slave_hostname;
+        int slave_port;
+        MYSQL slave_mysql;
+        time_t read_only;
+        std::string db;
+        std::map<std::string, PreparedStatement *> partitions_statements;
+        std::map<std::string, PreparedStatement *> next_statements;
+        std::map<std::string, PreparedStatement *> get_statements;
+        std::map<std::string, PreparedStatement *> put_statements;
+        std::map<std::string, PreparedStatement *> delete_statements;
+        std::map<std::string, PreparedStatement *> scan_statements;
     };
 
     class ConnectionFactory

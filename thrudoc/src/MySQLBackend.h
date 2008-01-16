@@ -10,8 +10,8 @@
 #include <string>
 #include <set>
 #include <log4cxx/logger.h>
-#include "DistStore.h"
-#include "DistStoreBackend.h"
+#include "Thrudoc.h"
+#include "ThrudocBackend.h"
 #include "mysql_glue.h"
 
 struct FindReturn
@@ -110,7 +110,7 @@ class Partition
         char * datatable;
 };
 
-class MySQLBackend : public DistStoreBackend
+class MySQLBackend : public ThrudocBackend
 {
     public:
         MySQLBackend (const std::string & master_hostname,
@@ -130,8 +130,8 @@ class MySQLBackend : public DistStoreBackend
         void put (const std::string & tablename, const std::string & key,
                   const std::string & value);
         void remove (const std::string & tablename, const std::string & key);
-        diststore::ScanResponse scan (const std::string & tablename,
-                                      const std::string & seed, int32_t count);
+        thrudoc::ScanResponse scan (const std::string & tablename,
+                                    const std::string & seed, int32_t count);
         std::string admin (const std::string & op, const std::string & data);
         void validate (const std::string & tablename, const std::string * key,
                        const std::string * value);
@@ -164,7 +164,7 @@ class MySQLBackend : public DistStoreBackend
 
         FindReturn and_checkout (mysql::Connection * connection,
                                  mysql::PreparedStatement * statement);
-        std::string scan_helper (diststore::ScanResponse & scan_response,
+        std::string scan_helper (thrudoc::ScanResponse & scan_response,
                                  FindReturn & find_return,
                                  const std::string & offset, int32_t count);
 };

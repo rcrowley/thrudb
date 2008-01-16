@@ -11,14 +11,14 @@
 #include <log4cxx/logger.h>
 #include <set>
 #include <string>
-#include "DistStore.h"
-#include "DistStoreBackend.h"
+#include "Thrudoc.h"
+#include "ThrudocBackend.h"
 
-class MemcachedBackend : public DistStoreBackend
+class MemcachedBackend : public ThrudocBackend
 {
     public:
         MemcachedBackend (const std::string & memcached_servers,
-                          boost::shared_ptr<DistStoreBackend> backend);
+                          boost::shared_ptr<ThrudocBackend> backend);
         ~MemcachedBackend ();
 
         std::vector<std::string> getTablenames ();
@@ -27,8 +27,8 @@ class MemcachedBackend : public DistStoreBackend
         void put (const std::string & tablename, const std::string & key,
                   const std::string & value);
         void remove (const std::string & tablename, const std::string & key);
-        diststore::ScanResponse scan (const std::string & tablename,
-                                      const std::string & seed, int32_t count);
+        thrudoc::ScanResponse scan (const std::string & tablename,
+                                    const std::string & seed, int32_t count);
         std::string admin (const std::string & op, const std::string & data);
         void validate (const std::string & tablename, const std::string * key,
                        const std::string * value);
@@ -44,7 +44,7 @@ class MemcachedBackend : public DistStoreBackend
 
         pthread_key_t memcached_key;
         std::string memcached_servers;
-        boost::shared_ptr<DistStoreBackend> backend;
+        boost::shared_ptr<ThrudocBackend> backend;
 };
 
 #endif /* HAVE_LIBMEMCACHED */

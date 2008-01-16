@@ -1,9 +1,9 @@
 
 THRIFT=`which thrift`
 
-all: gen-perl/DistStore.pm
+all: gen-perl/Thrudoc.pm
 
-gen-perl/DistStore.pm: $(top_srcdir)/src/DistStore.thrift
+gen-perl/Thrudoc.pm: $(top_srcdir)/src/Thrudoc.thrift
 	${THRIFT} -cpp -java -php -py -rb -xsd -perl $<
 
 clean:

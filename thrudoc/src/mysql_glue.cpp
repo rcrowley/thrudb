@@ -1,5 +1,5 @@
 #ifdef HAVE_CONFIG_H
-#include "diststore_config.h"
+#include "thrudoc_config.h"
 #endif
 /* hack to work around thrift and log4cxx installing config.h's */
 #undef HAVE_CONFIG_H
@@ -9,7 +9,7 @@
 #include "mysql_glue.h"
 #include <mysql/errmsg.h>
 
-using namespace diststore;
+using namespace thrudoc;
 using namespace facebook::thrift::concurrency;
 using namespace log4cxx;
 using namespace mysql;
@@ -234,7 +234,7 @@ void PreparedStatement::init (Connection * connection, const char * query,
         sprintf (buf, "mysql_stmt_init failed: %p - %d - %s - %s", this->stmt,
                  mysql_errno (mysql), mysql_error (mysql), query);
         LOG4CXX_ERROR (logger, buf);
-        DistStoreException e;
+        ThrudocException e;
         e.what = "MySQLBackend error";
         throw e;
     }
@@ -268,7 +268,7 @@ void PreparedStatement::init (Connection * connection, const char * query,
         if (bind_results)
             delete bind_results;
 
-        DistStoreException e;
+        ThrudocException e;
         e.what = "MySQLBackend error";
         throw e;
     }
@@ -279,7 +279,7 @@ void PreparedStatement::init (Connection * connection, const char * query,
                                    this->bind_params->get_params ()))
         {
             LOG4CXX_ERROR (logger, "mysql_stmt_bind_param failed");
-            DistStoreException e;
+            ThrudocException e;
             e.what = "MySQLBackend error";
             throw e;
         }
@@ -295,7 +295,7 @@ void PreparedStatement::init (Connection * connection, const char * query,
                      this->stmt, mysql_stmt_errno (this->stmt),
                      mysql_stmt_error (this->stmt));
             LOG4CXX_ERROR (logger, buf);
-            DistStoreException e;
+            ThrudocException e;
             e.what = "MySQLBackend error";
             throw e;
         }
@@ -312,7 +312,7 @@ void PreparedStatement::execute ()
     {
         if (this->writes)
         {
-            DistStoreException e;
+            ThrudocException e;
             e.what = "MySQLBackend read-only error";
             LOG4CXX_DEBUG (logger, "execute error: what=" + e.what);
             throw e;
@@ -335,7 +335,7 @@ void PreparedStatement::execute ()
             this->connection->lost_connection ();
         }
 
-        DistStoreException e;
+        ThrudocException e;
         e.what = "MySQLBackend error";
         throw e;
     }
@@ -348,7 +348,7 @@ void PreparedStatement::execute ()
                  this->stmt, mysql_stmt_errno (this->stmt),
                  mysql_stmt_error (this->stmt));
         LOG4CXX_ERROR (logger, buf);
-        DistStoreException e;
+        ThrudocException e;
         e.what = "MySQLBackend error";
         throw e;
     }
@@ -473,7 +473,7 @@ int PreparedStatement::fetch ()
                  ret, this->stmt, mysql_stmt_errno (this->stmt),
                  mysql_stmt_error (this->stmt));
         LOG4CXX_ERROR (logger,buf);
-        DistStoreException e;
+        ThrudocException e;
         e.what = "MySQLBackend error";
         throw e;
     }

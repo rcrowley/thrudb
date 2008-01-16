@@ -8,7 +8,7 @@
  **/
 
 #ifdef HAVE_CONFIG_H
-#include "diststore_config.h"
+#include "thrudoc_config.h"
 #endif
 /* hack to work around thrift and log4cxx installing config.h's */
 #undef HAVE_CONFIG_H 
@@ -36,7 +36,7 @@
 #include "log4cxx/helpers/exception.h"
 
 #include "ConfigFile.h"
-#include "DistStoreBackend.h"
+#include "ThrudocBackend.h"
 #include "BDBBackend.h"
 #include "DiskBackend.h"
 #include "MemcachedBackend.h"
@@ -45,10 +45,10 @@
 #include "S3Backend.h"
 #include "s3_glue.h"
 #include "SpreadBackend.h"
-#include "DistStoreHandler.h"
+#include "ThrudocHandler.h"
 
 using namespace boost;
-using namespace diststore;
+using namespace thrudoc;
 using namespace facebook::thrift;
 using namespace facebook::thrift::concurrency;
 using namespace facebook::thrift::protocol;
@@ -58,12 +58,12 @@ using namespace log4cxx;
 using namespace log4cxx::helpers;
 using namespace std;
 
-LoggerPtr logger (Logger::getLogger ("DistStore"));
+LoggerPtr logger (Logger::getLogger ("Thrudoc"));
 
 //print usage and die
 inline void usage ()
 {
-    cerr<<"thrudoc -f /path/to/diststore.conf"<<endl;
+    cerr<<"thrudoc -f /path/to/thrudoc.conf"<<endl;
     cerr<<"\tor create ~/.thrudoc"<<endl;
     cerr<<"\t-nb creates non-blocking server"<<endl;
     exit (-1);
@@ -120,7 +120,7 @@ int main (int argc, char **argv) {
         shared_ptr<TProtocolFactory>
             protocolFactory (new TBinaryProtocolFactory ());
 
-        vector<shared_ptr<DistStoreBackend> > backends;
+        vector<shared_ptr<ThrudocBackend> > backends;
 
         string which = ConfigManager->read<string> ("BACKEND", "mysql");
         vector<string> whiches = split (which);
@@ -134,8 +134,8 @@ int main (int argc, char **argv) {
                 string bdb_home =
                     ConfigManager->read<string>("BDB_HOME", "/tmp/bdbs");
                 backends.push_back 
-                    (shared_ptr<DistStoreBackend>(new BDBBackend (bdb_home,
-                                                                  thread_count)));
+                    (shared_ptr<ThrudocBackend>(new BDBBackend (bdb_home,
+                                                                thread_count)));
             }
 #endif /* HAVE_LIBDB_CXX */
 #if HAVE_LIBBOOST_FILESYSTEM
@@ -145,7 +145,7 @@ int main (int argc, char **argv) {
                 string doc_root =
                     ConfigManager->read<string>("DISK_DOC_ROOT", "/tmp/docs");
                 backends.push_back 
-                    (shared_ptr<DistStoreBackend>(new DiskBackend (doc_root)));
+                    (shared_ptr<ThrudocBackend>(new DiskBackend (doc_root)));
             }
 #endif /* HAVE_LIBBOOST_FILESYSTEM */
 #if HAVE_LIBEXPAT && HAVE_LIBCURL
@@ -160,7 +160,7 @@ int main (int argc, char **argv) {
                 aws_secret_access_key = ConfigManager->read<string>("AWS_SECRET_ACCESS_KEY").c_str();
 
                 backends.push_back 
-                    (shared_ptr<DistStoreBackend>(new S3Backend ()));
+                    (shared_ptr<ThrudocBackend>(new S3Backend ()));
             }
 #endif /* HAVE_LIBEXPAT && HAVE_LIBCURL */
 #if HAVE_LIBMYSQLCLIENT_R
@@ -177,14 +177,14 @@ int main (int argc, char **argv) {
                     ConfigManager->read<short>("MYSQL_SLAVE_PORT", 3306);
                 string directory_db = 
                     ConfigManager->read<string>("MYSQL_DIRECTORY_DB", 
-                                                "diststore");
+                                                "thrudoc");
                 string username = 
-                    ConfigManager->read<string>("MYSQL_USERNAME", "diststore");
+                    ConfigManager->read<string>("MYSQL_USERNAME", "thrudoc");
                 string password = 
-                    ConfigManager->read<string>("MYSQL_PASSWORD", "diststore");
+                    ConfigManager->read<string>("MYSQL_PASSWORD", "thrudoc");
                 int max_value_size = 
                     ConfigManager->read<int>("MYSQL_MAX_VALUES_SIZE", 1024);
-                backends.push_back (shared_ptr<DistStoreBackend>
+                backends.push_back (shared_ptr<ThrudocBackend>
                                     (new MySQLBackend (master_hostname, 
                                                        master_port, 
                                                        slave_hostname, 
@@ -196,7 +196,7 @@ int main (int argc, char **argv) {
 #endif /* HAVE_LIBMYSQLCLIENT_R */
         }
 
-        shared_ptr<DistStoreBackend> backend;
+        shared_ptr<ThrudocBackend> backend;
         if (backends.size () == 0)
         {
             LOG4CXX_ERROR (logger, string ("unknown or unbuilt backend=") + 
@@ -211,7 +211,7 @@ int main (int argc, char **argv) {
         }
         else
         {
-            backend = shared_ptr<DistStoreBackend> (new NBackend (backends));
+            backend = shared_ptr<ThrudocBackend> (new NBackend (backends));
         }
 
         // Memcached cache
@@ -219,7 +219,7 @@ int main (int argc, char **argv) {
             ConfigManager->read<string>("MEMCACHED_SERVERS", "");
 #if HAVE_LIBMEMCACHED
         if (!memcached_servers.empty ())
-            backend = shared_ptr<DistStoreBackend>
+            backend = shared_ptr<ThrudocBackend>
                 (new MemcachedBackend (memcached_servers, backend));
 #else
         if (!memcached_servers.empty ())
@@ -237,10 +237,10 @@ int main (int argc, char **argv) {
         string spread_name =
             ConfigManager->read<string>("SPREAD_NAME", "4803");
         string spread_group =
-            ConfigManager->read<string>("SPREAD_GROUP", "diststore");
+            ConfigManager->read<string>("SPREAD_GROUP", "thrudoc");
 
         if (!spread_private_name.empty ())
-            backend = shared_ptr<DistStoreBackend>
+            backend = shared_ptr<ThrudocBackend>
                 (new SpreadBackend (spread_name, spread_private_name,
                                     spread_group, backend));
 #else
@@ -252,8 +252,8 @@ int main (int argc, char **argv) {
         }
 #endif /* HAVE_LIBSPREAD */
 
-        shared_ptr<DistStoreHandler>   handler (new DistStoreHandler (backend));
-        shared_ptr<DistStoreProcessor> processor (new DistStoreProcessor (handler));
+        shared_ptr<ThrudocHandler>   handler (new ThrudocHandler (backend));
+        shared_ptr<ThrudocProcessor> processor (new ThrudocProcessor (handler));
 
         shared_ptr<ThreadManager> threadManager =
             ThreadManager::newSimpleThreadManager (thread_count);

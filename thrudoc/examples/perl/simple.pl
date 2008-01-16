@@ -11,18 +11,18 @@ use Thrift::BinaryProtocol;
 use Thrift::Socket;
 use Thrift::FramedTransport;
 
-use DistStore;
+use Thrudoc;
 
 #Config
-use constant DISTSTORE_PORT    => 9091;
+use constant THRUDOC_PORT    => 9091;
 
-my $diststore;
+my $thrudoc;
 eval{
-    my $socket    = new Thrift::Socket("localhost",DISTSTORE_PORT());
+    my $socket    = new Thrift::Socket("localhost",THRUDOC_PORT());
     my $transport = new Thrift::FramedTransport($socket);
     my $protocol  = new Thrift::BinaryProtocol($transport);
 
-    $diststore  = new DistStoreClient($protocol);
+    $thrudoc  = new ThrudocClient($protocol);
 
     $transport->open();
 }; if($@) {
@@ -34,26 +34,26 @@ eval {
 
     my $tablename = 'data';
 
-    my $id = $diststore->put ($tablename, "key3", "val-key4");
+    my $id = $thrudoc->put ($tablename, "key3", "val-key4");
     my $key = "key.".rand;
-    $diststore->put ($tablename, $key, "val.$key");
+    $thrudoc->put ($tablename, $key, "val.$key");
 
-    print Dumper ($diststore->get ($tablename, "key3"));
-    print Dumper ($diststore->get ($tablename, $key));
+    print Dumper ($thrudoc->get ($tablename, "key3"));
+    print Dumper ($thrudoc->get ($tablename, $key));
 
     if (rand (100) > 50)
     {
-#        $diststore->remove ($tablename, $key);
+#        $thrudoc->remove ($tablename, $key);
     }
     else
     {
-        print Dumper ($diststore->get ($tablename, $key));
+        print Dumper ($thrudoc->get ($tablename, $key));
     }
 
-    print Dumper ($diststore->get ($tablename, "key3"));
+    print Dumper ($thrudoc->get ($tablename, "key3"));
 
     my $batch_size = 13;
-    my $ret = $diststore->scan ($tablename, undef, $batch_size);
+    my $ret = $thrudoc->scan ($tablename, undef, $batch_size);
     my $count = 0;
     while (scalar (@{$ret->{elements}}) > 0)
     {
@@ -63,7 +63,7 @@ eval {
             printf "\t%s => %s\n", $_->{key}, $_->{value};
         }
         $count += scalar (@{$ret->{elements}});
-        $ret = $diststore->scan ($tablename, $ret->{seed}, $batch_size);
+        $ret = $thrudoc->scan ($tablename, $ret->{seed}, $batch_size);
     }
     printf "count: %d\n", $count;
 };

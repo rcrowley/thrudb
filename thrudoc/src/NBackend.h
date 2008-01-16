@@ -8,13 +8,13 @@
 #include <log4cxx/logger.h>
 #include <set>
 #include <string>
-#include "DistStore.h"
-#include "DistStoreBackend.h"
+#include "Thrudoc.h"
+#include "ThrudocBackend.h"
 
-class NBackend : public DistStoreBackend
+class NBackend : public ThrudocBackend
 {
     public:
-        NBackend (std::vector<boost::shared_ptr<DistStoreBackend> > backends);
+        NBackend (std::vector<boost::shared_ptr<ThrudocBackend> > backends);
         ~NBackend ();
 
         std::vector<std::string> getTablenames ();
@@ -23,8 +23,8 @@ class NBackend : public DistStoreBackend
         void put (const std::string & tablename, const std::string & key,
                   const std::string & value);
         void remove (const std::string & tablename, const std::string & key);
-        diststore::ScanResponse scan (const std::string & tablename,
-                                      const std::string & seed, int32_t count);
+        thrudoc::ScanResponse scan (const std::string & tablename,
+                                    const std::string & seed, int32_t count);
         std::string admin (const std::string & op, const std::string & data);
         void validate (const std::string & tablename, const std::string * key,
                        const std::string * value);
@@ -32,7 +32,7 @@ class NBackend : public DistStoreBackend
     private:
         static log4cxx::LoggerPtr logger;
 
-        std::vector<boost::shared_ptr<DistStoreBackend> > backends;
+        std::vector<boost::shared_ptr<ThrudocBackend> > backends;
 };
 
 #endif

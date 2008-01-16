@@ -1,5 +1,5 @@
 #ifdef HAVE_CONFIG_H
-#include "diststore_config.h"
+#include "thrudoc_config.h"
 #endif
 /* hack to work around thrift and log4cxx installing config.h's */
 #undef HAVE_CONFIG_H 
@@ -16,7 +16,7 @@
  * - rename master to directory where appropriate, code, script, doc, ...
  */
 
-using namespace diststore;
+using namespace thrudoc;
 using namespace log4cxx;
 using namespace mysql;
 using namespace std;
@@ -152,7 +152,7 @@ string MySQLBackend::get (const string & tablename, const string & key )
     string value;
     if (get_statement->fetch () == MYSQL_NO_DATA)
     {
-        DistStoreException e;
+        ThrudocException e;
         e.what = key + " not found in " + tablename;
         LOG4CXX_DEBUG (logger, string ("get: ") + e.what);
         throw e;
@@ -195,7 +195,7 @@ void MySQLBackend::remove (const string & tablename, const string & key )
     StringParams * kvp = (StringParams*)delete_statement->get_bind_params ();
     kvp->set_str (key.c_str ());
 
-        delete_statement->execute ();
+    delete_statement->execute ();
 }
 
 string MySQLBackend::scan_helper (ScanResponse & scan_response,
@@ -363,14 +363,14 @@ FindReturn MySQLBackend::find_and_checkout (const string & tablename,
             LOG4CXX_ERROR (logger, string ("table ") + tablename + 
                            string (" has a partitioning problem for key ") + 
                            key);
-            DistStoreException e;
+            ThrudocException e;
             e.what = "MySQLBackend error";
             throw e;
         }
     }
     else
     {
-        DistStoreException e;
+        ThrudocException e;
         e.what = tablename + " not found in directory";
         LOG4CXX_WARN (logger, string ("find_and_checkout: ") + e.what);
         throw e;
@@ -426,19 +426,19 @@ FindReturn MySQLBackend::find_next_and_checkout (const string & tablename,
 }
 
 
-    /* TODO: 
-void MySQLBackend::destroy_connection (Connection * connection)
-{
-    string key;
-    HOST_PORT_DB_KEY (key, connection->get_hostname ().c_str (),
-                      connection->get_port (), connection->get_db ().c_str ());
-    LOG4CXX_ERROR (logger, string ("destroy_connection: key=") + key);
-    map<string, Connection*> * connections = 
-        (map<string, Connection*>*) pthread_getspecific(connections_key);
-    (*connections)[key] = NULL;
-    delete connection;
-}
-    */
+/* TODO: 
+   void MySQLBackend::destroy_connection (Connection * connection)
+   {
+   string key;
+   HOST_PORT_DB_KEY (key, connection->get_hostname ().c_str (),
+   connection->get_port (), connection->get_db ().c_str ());
+   LOG4CXX_ERROR (logger, string ("destroy_connection: key=") + key);
+   map<string, Connection*> * connections = 
+   (map<string, Connection*>*) pthread_getspecific(connections_key);
+   (*connections)[key] = NULL;
+   delete connection;
+   }
+   */
 
 string MySQLBackend::admin (const string & op, const string & data)
 {
@@ -453,22 +453,22 @@ string MySQLBackend::admin (const string & op, const string & data)
 void MySQLBackend::validate (const string & tablename, const string * key, 
                              const string * value)
 {
-    DistStoreBackend::validate (tablename, key, value);
+    ThrudocBackend::validate (tablename, key, value);
     if (tablename.length () > MYSQL_BACKEND_MAX_TABLENAME_SIZE)
     {
-        DistStoreException e;
+        ThrudocException e;
         e.what = "tablename too long";
         throw e;
     }
     else if (key && (*key).length () > MYSQL_BACKEND_MAX_KEY_SIZE)
     {
-        DistStoreException e;
+        ThrudocException e;
         e.what = "key too long";
         throw e;
     }
     else if (value && (*value).length () > (unsigned int)this->max_value_size)
     {
-        DistStoreException e;
+        ThrudocException e;
         e.what = "value too long";
         throw e;
     }

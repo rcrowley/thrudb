@@ -1,11 +1,11 @@
 AC_PREREQ(2.59)
 
-AC_INIT([diststore], [0.1])
+AC_INIT([thrudoc], [0.1])
 AC_CONFIG_AUX_DIR(config)
-AC_CONFIG_HEADER(diststore_config.h)
+AC_CONFIG_HEADER(thrudoc_config.h)
 AM_INIT_AUTOMAKE
 
-AC_CONFIG_SRCDIR(src/DistStoreHandler.h)
+AC_CONFIG_SRCDIR(src/ThrudocHandler.h)
 
 
 # Checks for programs.
@@ -23,7 +23,7 @@ AC_CHECK_LIB(event, [exit], [],
 AC_CHECK_LIB(thrift, [exit], [],
              AC_MSG_ERROR([You must install thrift; please install libraries and development files with libevent support]))
 AC_CHECK_LIB(thriftnb, [exit], [],
-             AC_MSG_ERROR([You must install thrift; please install libraries and development files with libevent support]))
+             AC_MSG_ERROR([You must install thriftnb; please install libraries and development files with libevent support]))
 AC_CHECK_HEADERS([thrift/Thrift.h],,
                  AC_MSG_ERROR([thrift/Thrift.h missing; please add thrift development files]))
 

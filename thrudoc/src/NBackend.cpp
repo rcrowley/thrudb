@@ -1,5 +1,5 @@
 #ifdef HAVE_CONFIG_H
-#include "diststore_config.h"
+#include "thrudoc_config.h"
 #endif
 /* hack to work around thrift and log4cxx installing config.h's */
 #undef HAVE_CONFIG_H 
@@ -9,14 +9,14 @@
 #if HAVE_LIBMEMCACHED
 
 using namespace boost;
-using namespace diststore;
+using namespace thrudoc;
 using namespace log4cxx;
 using namespace std;
 
 // private
 LoggerPtr NBackend::logger (Logger::getLogger ("NBackend"));
 
-NBackend::NBackend (vector<shared_ptr<DistStoreBackend> > backends)
+NBackend::NBackend (vector<shared_ptr<ThrudocBackend> > backends)
 {
     LOG4CXX_INFO (logger, "NBackend");
     this->backends = backends;
@@ -29,7 +29,7 @@ NBackend::~NBackend ()
 vector<string> NBackend::getTablenames ()
 {
     vector<string> tablenames;
-    vector<shared_ptr<DistStoreBackend> >::iterator i;
+    vector<shared_ptr<ThrudocBackend> >::iterator i;
     // TODO: might be nice to do a union of all the backends...
     for (i = backends.begin (); i != backends.end (); i++)
     {
@@ -47,7 +47,7 @@ string NBackend::get (const string & tablename, const string & key )
 void NBackend::put (const string & tablename, const string & key, 
                     const string & value)
 {
-    vector<shared_ptr<DistStoreBackend> >::iterator i;
+    vector<shared_ptr<ThrudocBackend> >::iterator i;
     for (i = backends.begin (); i != backends.end (); i++)
     {
         (*i)->put (tablename, key, value);
@@ -56,7 +56,7 @@ void NBackend::put (const string & tablename, const string & key,
 
 void NBackend::remove (const string & tablename, const string & key )
 {
-    vector<shared_ptr<DistStoreBackend> >::iterator i;
+    vector<shared_ptr<ThrudocBackend> >::iterator i;
     for (i = backends.begin (); i != backends.end (); i++)
     {
         (*i)->remove (tablename, key);
@@ -72,7 +72,7 @@ ScanResponse NBackend::scan (const string & tablename,
 string NBackend::admin (const string & op, const string & data)
 {
     string ret;
-    vector<shared_ptr<DistStoreBackend> >::iterator i;
+    vector<shared_ptr<ThrudocBackend> >::iterator i;
     for (i = backends.begin (); i != backends.end (); i++)
     {
         ret += (*i)->admin (op, data) + ";";
@@ -83,7 +83,7 @@ string NBackend::admin (const string & op, const string & data)
 void NBackend::validate (const string & tablename, const string * key, 
                          const string * value)
 {
-    vector<shared_ptr<DistStoreBackend> >::iterator i;
+    vector<shared_ptr<ThrudocBackend> >::iterator i;
     for (i = backends.begin (); i != backends.end (); i++)
     {
         (*i)->validate (tablename, key, value);

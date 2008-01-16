@@ -8,7 +8,7 @@
  **/
 
 #ifdef HAVE_CONFIG_H
-#include "diststore_config.h"
+#include "thrudoc_config.h"
 #endif
 /* hack to work around thrift and log4cxx installing config.h's */
 #undef HAVE_CONFIG_H 
@@ -27,9 +27,9 @@
 #include <thrift/transport/TFileTransport.h>
 #include <stdexcept>
 #include <iostream>
-#include "DistStore.h"
+#include "Thrudoc.h"
 
-using namespace diststore;
+using namespace thrudoc;
 using namespace std;
 using namespace boost;
 
@@ -69,92 +69,92 @@ static const int64_t currentTime() {
 }
 
 class ClientThread: public Runnable {
-public:
+    public:
 
-    ClientThread(shared_ptr<TTransport>transport, shared_ptr<DistStoreClient> client, Monitor& monitor, size_t& threadCount, size_t loopCount, string loopType) :
-        _transport(transport),
-        _client(client),
-        _monitor(monitor),
-        _threadCount(threadCount),
-        _loopCount(loopCount),
-        _loopType(loopType)
+        ClientThread(shared_ptr<TTransport>transport, shared_ptr<ThrudocClient> client, Monitor& monitor, size_t& threadCount, size_t loopCount, string loopType) :
+            _transport(transport),
+            _client(client),
+            _monitor(monitor),
+            _threadCount(threadCount),
+            _loopCount(loopCount),
+            _loopType(loopType)
     {}
 
-    void run() {
+        void run() {
 
-        // Wait for all worker threads to start
-        {Synchronized s(_monitor);
-            while(_threadCount == 0) {
-                _monitor.wait();
+            // Wait for all worker threads to start
+            {Synchronized s(_monitor);
+                while(_threadCount == 0) {
+                    _monitor.wait();
+                }
+            }
+
+            _startTime = currentTime();
+
+            _transport->open();
+
+            if(_loopType == "read")
+                testRead();
+            else if(_loopType == "write")
+                testWrite();
+            else
+                testBoth();
+
+            _endTime = currentTime();
+
+            _transport->close();
+
+            _done = true;
+
+            //cerr<<"client "<<_threadCount<<": "<<_loopType<<endl;
+
+            {Synchronized s(_monitor);
+
+                _threadCount--;
+
+                if (_threadCount == 0) {
+
+                    _monitor.notify();
+                }
             }
         }
 
-        _startTime = currentTime();
 
-        _transport->open();
+        void testWrite() {
+            for (size_t ix = 0; ix < _loopCount; ix++) {
+                string result, id;
+                _client->putValue(id, "data",sample);
 
-        if(_loopType == "read")
-            testRead();
-        else if(_loopType == "write")
-            testWrite();
-        else
-            testBoth();
-
-        _endTime = currentTime();
-
-        _transport->close();
-
-        _done = true;
-
-        //cerr<<"client "<<_threadCount<<": "<<_loopType<<endl;
-
-        {Synchronized s(_monitor);
-
-            _threadCount--;
-
-            if (_threadCount == 0) {
-
-                _monitor.notify();
             }
         }
-    }
 
-
-    void testWrite() {
-        for (size_t ix = 0; ix < _loopCount; ix++) {
-            string result, id;
-            _client->putValue(id, "data",sample);
-
+        void testRead() {
+            for (size_t ix = 0; ix < _loopCount; ix++) {
+                string result, id = "sample";
+                _client->get(result,"data",id);
+            }
         }
-    }
 
-    void testRead() {
-        for (size_t ix = 0; ix < _loopCount; ix++) {
-            string result, id = "sample";
-            _client->get(result,"data",id);
+        void testBoth() {
+
+            for (size_t ix = 0; ix < _loopCount/2; ix++) {
+                string result,id;
+                _client->putValue(id, "data",sample);
+                _client->get(result,"data",id);
+            }
         }
-    }
-
-    void testBoth() {
-
-        for (size_t ix = 0; ix < _loopCount/2; ix++) {
-            string result,id;
-            _client->putValue(id, "data",sample);
-            _client->get(result,"data",id);
-        }
-    }
 
 
-    shared_ptr<TTransport> _transport;
-    shared_ptr<DistStoreClient> _client;
-    Monitor&  _monitor;
-    size_t&   _threadCount;
-    size_t    _loopCount;
-    string    _loopType;
-    long long _startTime;
-    long long _endTime;
-    bool      _done;
-    Monitor   _sleep;
+        shared_ptr<TTransport> _transport;
+        shared_ptr<ThrudocClient> _client;
+        Monitor&  _monitor;
+        size_t&   _threadCount;
+        size_t    _loopCount;
+        string    _loopType;
+        long long _startTime;
+        long long _endTime;
+        bool      _done;
+        Monitor   _sleep;
 };
 
 
@@ -255,7 +255,7 @@ int main(int argc, char **argv) {
         shared_ptr<TSocket> socket(new TSocket("127.0.0.1", port));
         shared_ptr<TFramedTransport> bufferedSocket(new TFramedTransport(socket));
         shared_ptr<TProtocol> protocol(new TBinaryProtocol(bufferedSocket));
-        shared_ptr<DistStoreClient> serviceClient(new DistStoreClient(protocol));
+        shared_ptr<ThrudocClient> serviceClient(new ThrudocClient(protocol));
 
         socket->open();
         string r;
@@ -271,7 +271,7 @@ int main(int argc, char **argv) {
             shared_ptr<TSocket> socket(new TSocket("127.0.0.1", port));
             shared_ptr<TFramedTransport> bufferedSocket(new TFramedTransport(socket));
             shared_ptr<TProtocol> protocol(new TBinaryProtocol(bufferedSocket));
-            shared_ptr<DistStoreClient> serviceClient(new DistStoreClient(protocol));
+            shared_ptr<ThrudocClient> serviceClient(new ThrudocClient(protocol));
 
             clientThreads.insert(threadFactory->newThread(shared_ptr<ClientThread>(new ClientThread(socket, serviceClient, monitor, threadCount, loopCount, type))));
         }
