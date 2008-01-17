@@ -6,6 +6,13 @@
  * http://thrudb.googlecode.com
  *
  **/
+
+#ifdef HAVE_CONFIG_H
+#include "thrudex_config.h"
+#endif
+/* hack to work around thrift and log4cxx installing config.h's */
+#undef HAVE_CONFIG_H 
+
 #include "ThruceneSpreadTask.h"
 
 #include "Thrucene.h"

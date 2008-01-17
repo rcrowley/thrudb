@@ -6,14 +6,22 @@
  * http://thrudb.googlecode.com
  *
  **/
+
+#ifdef HAVE_CONFIG_H
+#include "thrudex_config.h"
+#endif
+/* hack to work around thrift and log4cxx installing config.h's */
+#undef HAVE_CONFIG_H 
+
 #include "ThruceneHandler.h"
 #include "LuceneManager.h"
 
-#include "SpreadManager.h"
-#include "TransactionManager.h"
-#include "utils.h"
+#include <MemcacheHandle.h>
+#include <SpreadManager.h>
+#include <TransactionManager.h>
+#include <utils.h>
+
 #include "LOG4CXX.h"
-#include "MemcacheHandle.h"
 #include <cstdlib>
 #include <string>
 

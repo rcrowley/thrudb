@@ -6,9 +6,16 @@
  * http://thrudb.googlecode.com
  *
  **/
+
+#ifdef HAVE_CONFIG_H
+#include "thrudex_config.h"
+#endif
+/* hack to work around thrift and log4cxx installing config.h's */
+#undef HAVE_CONFIG_H 
+
 #include "LuceneManager.h"
 
-#include "utils.h"
+#include <utils.h>
 
 _LuceneManager* _LuceneManager::pInstance = 0;
 Mutex           _LuceneManager::_mutex    = Mutex();

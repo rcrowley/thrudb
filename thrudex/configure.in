@@ -1,0 +1,81 @@
+AC_PREREQ(2.61)
+
+AC_INIT([thrudex], [0.1], [bugs@thrudb.org])
+AC_CONFIG_AUX_DIR(config)
+AM_INIT_AUTOMAKE
+AC_CONFIG_SRCDIR([thrudex_config.h.in])
+AC_CONFIG_HEADER(thrudex_config.h)
+
+# Checks for programs.
+AC_PROG_CC
+AC_PROG_CXX
+AC_PROG_INSTALL
+AC_PROG_MAKE_SET
+
+AC_LANG(C++)
+
+# thrucommon
+PKG_CHECK_MODULES(THRUCOMMON, [thrucommon],
+                  AC_DEFINE([HAVE_THRUCOMMON], [1], [Define to 1 if you have the thrucommon library (-lthrucommon)]))
+
+# CLucene
+AC_CHECK_LIB(clucene, [open], [],
+             AC_MSG_ERROR([You must install CLucene; please install libraries and development files]))
+AC_CHECK_HEADERS([CLucene.h],,
+                 AC_MSG_ERROR([CLucene.h missing; please add CLucene development files]))
+
+# thrift(nb) and related requirements
+AC_PATH_PROG(THRIFT, thrift, thrift, $PATH:/usr/local/bin:/usr/bin)
+PKG_CHECK_MODULES(THRIFT, [thrift],
+                  AC_DEFINE([HAVE_THRIFT], [1], [Define to 1 if you have the thrift library (-lthrift)]))
+PKG_CHECK_MODULES(THRIFTNB, [thrift-nb], 
+                  AC_DEFINE([HAVE_THRIFTNB], [1], [Define to 1 if you have the thriftnb library (-lthriftnb)]))
+
+# memcached
+AC_ARG_WITH(memcached,
+    AC_HELP_STRING([--with-memcached],
+                   [build in BerkeleyDB backend support (default is yes]),
+    [with_memcached=$withval],
+    [with_memcached=yes])
+if test "$with_memcached" != "no"; then
+    PKG_CHECK_MODULES(MEMCACHED, [libmemcached],
+                      AC_DEFINE([HAVE_LIBMEMCACHED], [1], [Define to 1 if you have the libmemcached library (-lmemcached)]))
+fi
+
+# spread
+AC_ARG_WITH(spread,
+    AC_HELP_STRING([--with-spread],
+                   [build in spread backend support (default is yes]),
+    [with_spread=$withval],
+    [with_spread=yes])
+if test "$with_spread" != "no"; then
+    AC_CHECK_LIB(spread, [open], [],
+                 AC_MSG_ERROR([You must install spread; please install libraries and development files]))
+    AC_CHECK_HEADERS([sp.h],,
+                     AC_MSG_ERROR([sp.h missing; please add spread development files]))
+fi
+
+# log4cxx
+AC_CHECK_LIB(log4cxx, [open], [],
+             AC_MSG_ERROR([You must install log4cxx; please install libraries and development files]))
+AC_CHECK_HEADERS([log4cxx/logger.h],,
+                 AC_MSG_ERROR([log4cxx/logger.h missing; please add log4cxx development files]))
+
+# misc
+AC_C_CONST
+AC_CHECK_FUNCS([memset mkdir setlocale])
+AC_CHECK_HEADERS([stdlib.h])
+AC_C_INLINE
+AC_FUNC_MBRTOWC
+AC_HEADER_STDBOOL
+AC_HEADER_STDC
+AC_TYPE_INT16_T
+AC_TYPE_INT32_T
+AC_TYPE_INT64_T
+AC_TYPE_SIZE_T
+AC_TYPE_UINT32_T
+AC_TYPE_UINT8_T
+
+AC_CONFIG_FILES([Makefile
+                 src/Makefile])
+AC_OUTPUT
