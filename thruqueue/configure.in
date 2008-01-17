@@ -56,6 +56,15 @@ AC_CHECK_HEADERS([log4cxx/logger.h],,
                  AC_MSG_ERROR([log4cxx/logger.h missing; please add log4cxx development files]))
 
 # misc
+AC_C_CONST
+AC_CHECK_HEADERS([stdlib.h])
+AC_C_INLINE
+AC_HEADER_STDBOOL
+AC_HEADER_STDC
+AC_TYPE_INT16_T
+AC_TYPE_INT32_T
+AC_TYPE_UINT32_T
+AC_TYPE_UINT8_T
 
 AC_CONFIG_FILES([Makefile
                  src/Makefile])
