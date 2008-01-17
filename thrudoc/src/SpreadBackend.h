@@ -11,8 +11,8 @@
 #include <set>
 #include <sp.h>
 #include <string>
-#include <thrift/protocol/TBinaryProtocol.h>
-#include <thrift/transport/TTransportUtils.h>
+#include <protocol/TBinaryProtocol.h>
+#include <transport/TTransportUtils.h>
 #include "Thrudoc.h"
 #include "ThrudocBackend.h"
 

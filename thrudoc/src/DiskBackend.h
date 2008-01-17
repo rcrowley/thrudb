@@ -15,8 +15,8 @@
 #include <log4cxx/logger.h>
 #include <boost/shared_ptr.hpp>
 
-#include <thrift/transport/TTransportUtils.h>
-#include <thrift/protocol/TBinaryProtocol.h>
+#include <transport/TTransportUtils.h>
+#include <protocol/TBinaryProtocol.h>
 
 #include "Thrudoc.h"
 #include "ThrudocBackend.h"

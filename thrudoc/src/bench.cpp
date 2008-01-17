@@ -13,18 +13,18 @@
 /* hack to work around thrift and log4cxx installing config.h's */
 #undef HAVE_CONFIG_H 
 
-#include <thrift/concurrency/ThreadManager.h>
-#include <thrift/concurrency/PosixThreadFactory.h>
-#include <thrift/concurrency/Monitor.h>
-#include <thrift/concurrency/Mutex.h>
-#include <thrift/protocol/TBinaryProtocol.h>
-#include <thrift/server/TSimpleServer.h>
-#include <thrift/server/TThreadPoolServer.h>
-#include <thrift/server/TThreadedServer.h>
-#include <thrift/transport/TServerSocket.h>
-#include <thrift/transport/TSocket.h>
-#include <thrift/transport/TTransportUtils.h>
-#include <thrift/transport/TFileTransport.h>
+#include <concurrency/ThreadManager.h>
+#include <concurrency/PosixThreadFactory.h>
+#include <concurrency/Monitor.h>
+#include <concurrency/Mutex.h>
+#include <protocol/TBinaryProtocol.h>
+#include <server/TSimpleServer.h>
+#include <server/TThreadPoolServer.h>
+#include <server/TThreadedServer.h>
+#include <transport/TServerSocket.h>
+#include <transport/TSocket.h>
+#include <transport/TTransportUtils.h>
+#include <transport/TFileTransport.h>
 #include <stdexcept>
 #include <iostream>
 #include "Thrudoc.h"
@@ -65,7 +65,7 @@ static const int64_t currentTime() {
         (((int64_t)now.tv_sec) * MS_PER_S) +
         (now.tv_usec / MS_PER_S) +
         (now.tv_usec % MS_PER_S >= 500 ? 1 : 0);
-#endif // defined(HAVE_GETTIMEDAY)
+#endif
 }
 
 class ClientThread: public Runnable {

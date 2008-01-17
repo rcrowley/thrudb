@@ -13,14 +13,14 @@
 /* hack to work around thrift and log4cxx installing config.h's */
 #undef HAVE_CONFIG_H 
 
-#include <thrift/concurrency/ThreadManager.h>
-#include <thrift/concurrency/PosixThreadFactory.h>
-#include <thrift/protocol/TBinaryProtocol.h>
-#include <thrift/server/TSimpleServer.h>
-#include <thrift/server/TThreadPoolServer.h>
-#include <thrift/server/TNonblockingServer.h>
-#include <thrift/transport/TServerSocket.h>
-#include <thrift/transport/TTransportUtils.h>
+#include <concurrency/ThreadManager.h>
+#include <concurrency/PosixThreadFactory.h>
+#include <protocol/TBinaryProtocol.h>
+#include <server/TSimpleServer.h>
+#include <server/TThreadPoolServer.h>
+#include <server/TNonblockingServer.h>
+#include <transport/TServerSocket.h>
+#include <transport/TTransportUtils.h>
 
 #include <iostream>
 #include <stdexcept>

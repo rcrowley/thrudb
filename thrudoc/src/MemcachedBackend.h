@@ -7,7 +7,7 @@
 
 #if HAVE_LIBMEMCACHED
 
-#include <libmemcached/memcached.h>
+#include <memcached.h>
 #include <log4cxx/logger.h>
 #include <set>
 #include <string>

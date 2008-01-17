@@ -9,7 +9,7 @@
 #include <mysql/mysql.h>
 #include <map>
 #include <stack>
-#include <thrift/concurrency/Mutex.h>
+#include <concurrency/Mutex.h>
 #include "Thrudoc.h"
 
 namespace mysql {

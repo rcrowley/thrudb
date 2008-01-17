@@ -20,8 +20,8 @@ thrudoc_SOURCES = \
 		  mysql_glue.cpp			\
 		  main.cpp
 
-thrudoc_CXXFLAGS = -Wall $(CFLAGS) -Igen-cpp
-thrudoc_LDFLAGS = -Wall $(CFLAGS)
+thrudoc_CPPFLAGS = -Wall -Igen-cpp $(CURL_CFLAGS) $(MEMCACHED_CFLAGS) $(THRIFTNB_CFLAGS) $(SSL_CFLAGS) $(UUID_CFLAGS)
+thrudoc_LDFLAGS = -Wall $(CURL_LIBS) $(MEMCACHED_LIBS) $(THRIFTNB_LIBS) $(SSL_LIBS) $(UUID_LIBS)
 
 thrudoc_bench_SOURCES = \
 			gen-cpp/Thrudoc.cpp		\
@@ -29,12 +29,11 @@ thrudoc_bench_SOURCES = \
 			gen-cpp/Thrudoc_constants.cpp	\
 			bench.cpp
 
-thrudoc_bench_CXXFLAGS = -Wall $(CFLAGS) -Igen-cpp
-thrudoc_bench_LDFLAGS = -Wall $(CFLAGS) 
+thrudoc_bench_CPPFLAGS = -Wall -Igen-cpp $(THRIFT_CFLAGS)
+thrudoc_bench_LDFLAGS = -Wall $(THRIFT_LDFLAGS) $(THRIFT_LIBS)
 
 gen-cpp/Thrudoc.cpp: Thrudoc.thrift
-	${THRIFT} -cpp Thrudoc.thrift
+	${THRIFT} -cpp $<
 
 clean-local:
 	rm -fr gen-cpp
-
