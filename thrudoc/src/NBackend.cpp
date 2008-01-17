@@ -6,8 +6,6 @@
 
 #include "NBackend.h"
 
-#if HAVE_LIBMEMCACHED
-
 using namespace boost;
 using namespace thrudoc;
 using namespace log4cxx;
@@ -89,5 +87,3 @@ void NBackend::validate (const string & bucket, const string * key,
         (*i)->validate (bucket, key, value);
     }
 }
-
-#endif
