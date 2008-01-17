@@ -49,7 +49,7 @@
 #include <fstream>
 #include <sstream>
 
-#include <thrift/concurrency/Mutex.h>
+#include <concurrency/Mutex.h>
 
 using std::string;
 

@@ -16,7 +16,7 @@
 #include <iostream>
 #include <string>
 #include <vector>
-#include <libmemcached/memcached.h>
+#include <memcached.h>
 
 //Exception classes
 class MemcacheException{

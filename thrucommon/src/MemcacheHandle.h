@@ -5,8 +5,8 @@
 #include "memcache++.h"
 #include "ConfigFile.h"
 #include "utils.h"
-#include <thrift/concurrency/Mutex.h>
-#include <thrift/concurrency/Monitor.h>
+#include <concurrency/Mutex.h>
+#include <concurrency/Monitor.h>
 
 
 static pthread_key_t memcache_key;

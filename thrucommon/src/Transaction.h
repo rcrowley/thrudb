@@ -10,7 +10,7 @@
 #ifndef __TRANSACTION_H__
 #define __TRANSACTION_H__
 
-#include <thrift/concurrency/Monitor.h>
+#include <concurrency/Monitor.h>
 #include <string>
 #include <iostream>
 

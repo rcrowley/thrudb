@@ -11,9 +11,9 @@
 
 
 #include <boost/shared_ptr.hpp>
-#include <thrift/concurrency/Thread.h>
-#include <thrift/concurrency/Mutex.h>
-#include <thrift/concurrency/Monitor.h>
+#include <concurrency/Thread.h>
+#include <concurrency/Mutex.h>
+#include <concurrency/Monitor.h>
 
 #include "Transaction.h"
 #include "ConfigFile.h"

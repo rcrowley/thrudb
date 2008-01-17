@@ -12,10 +12,10 @@
 
 #include <ConfigFile.h>
 #include <boost/shared_ptr.hpp>
-#include <thrift/concurrency/Mutex.h>
-#include <thrift/concurrency/Monitor.h>
-#include <thrift/concurrency/Thread.h>
-#include <thrift/transport/TFileTransport.h>
+#include <concurrency/Mutex.h>
+#include <concurrency/Monitor.h>
+#include <concurrency/Thread.h>
+#include <transport/TFileTransport.h>
 
 #include <vector>
 

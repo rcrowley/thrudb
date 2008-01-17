@@ -11,7 +11,7 @@
 #define __SPREAD_TASK_FACTORY_H__
 
 #include <boost/shared_ptr.hpp>
-#include <thrift/concurrency/Thread.h>
+#include <concurrency/Thread.h>
 #include <Transaction.h>
 
 class SpreadTaskFactory
