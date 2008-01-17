@@ -1,10 +1,10 @@
 bin_PROGRAMS = thruqueue
 
 thruqueue_SOURCES = \
-		  gen-cpp/QueueLog.cpp			\
 		  gen-cpp/Thruqueue.cpp			\
 		  gen-cpp/Thruqueue_types.cpp		\
 		  gen-cpp/Thruqueue_constants.cpp	\
+		  gen-cpp/QueueLog.cpp			\
 		  Queue.cpp				\
 		  QueueManager.cpp			\
 		  ThruqueueHandler.cpp			\
