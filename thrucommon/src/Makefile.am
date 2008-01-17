@@ -6,7 +6,17 @@ pkgconfig_DATA = thrucommon.pc
 
 include_thrucommondir = $(includedir)/thrucommon
 include_thrucommon_HEADERS = \
-			     ConfigFile.h
+			     gen-cpp/Redo.h		\
+			     gen-cpp/Redo_types.h	\
+			     ConfigFile.h		\
+			     memcache++.h		\
+			     MemcacheHandle.h		\
+			     RecoveryManager.h		\
+			     SpreadManager.h		\
+			     SpreadTaskFactory.h	\
+			     Transaction.h		\
+			     TransactionManager.h	\
+			     utils.h
 
 libthrucommon_la_SOURCES = \
 			   gen-cpp/Redo.cpp		\
