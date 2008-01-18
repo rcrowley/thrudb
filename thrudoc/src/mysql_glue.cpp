@@ -243,15 +243,16 @@ void PreparedStatement::init (Connection * connection, const char * query,
     if ((ret = mysql_stmt_prepare (this->stmt, this->query,
                                    strlen (this->query))) != 0)
     {
+        int err = mysql_stmt_errno (this->stmt);
         char buf[1024];
         sprintf (buf, "mysql_stmt_prepare failed: %d - %p - %d - %s - %s",
-                 ret, this->stmt, mysql_errno (mysql), mysql_error (mysql),
-                 query);
+                 ret, this->stmt, err, mysql_stmt_error (this->stmt), query);
         LOG4CXX_ERROR (logger, buf);
 
-        // NOTE: this isn't one of the error codes listed in the doc, but it's
-        // the one i'm getting when the server goes away
-        if (mysql_stmt_errno (this->stmt) == CR_CONN_HOST_ERROR)
+        // NOTE: the first two are what i've actually been seeing, the second
+        // two are what the docs say can be returned :(
+        if (err == CR_CONN_HOST_ERROR || err == CR_CONNECTION_ERROR ||
+            err == CR_SERVER_GONE_ERROR || err == CR_SERVER_LOST)
         {
             this->connection->lost_connection ();
         }
@@ -322,15 +323,16 @@ void PreparedStatement::execute ()
     int ret;
     if ((ret = mysql_stmt_execute (this->stmt)) != 0)
     {
+        int err = mysql_stmt_errno (this->stmt);
         char buf[1024];
         sprintf (buf, "mysql_stmt_execute failed: %d - %p - %d - %s", ret,
-                 this->stmt, mysql_stmt_errno (this->stmt),
-                 mysql_stmt_error (this->stmt));
+                 this->stmt, err, mysql_stmt_error (this->stmt));
         LOG4CXX_ERROR (logger, buf);
 
-        // NOTE: this isn't one of the error codes listed in the doc, but it's
-        // the one i'm getting when the server goes away
-        if (mysql_stmt_errno (this->stmt) == CR_CONN_HOST_ERROR)
+        // NOTE: the first two are what i've actually been seeing, the second
+        // two are what the docs say can be returned :(
+        if (err == CR_CONN_HOST_ERROR || err == CR_CONNECTION_ERROR ||
+            err == CR_SERVER_GONE_ERROR || err == CR_SERVER_LOST)
         {
             this->connection->lost_connection ();
         }
