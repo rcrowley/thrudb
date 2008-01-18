@@ -15,8 +15,8 @@
 
 #include "ThrudexHandler.h"
 #include "LuceneManager.h"
+#include "MemcacheHandle.h"
 
-#include <MemcacheHandle.h>
 #include <SpreadManager.h>
 #include <TransactionManager.h>
 #include <utils.h>
