@@ -1,6 +1,0 @@
-#!/bin/sh
-
-for i in thrucommon thrudex thrudoc thruqueue; do
-    echo configure $i;
-    (cd $i && ./configure "$@");
-done
