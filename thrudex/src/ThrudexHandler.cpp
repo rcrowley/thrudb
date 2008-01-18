@@ -11,9 +11,9 @@
 #include "thrudex_config.h"
 #endif
 /* hack to work around thrift and log4cxx installing config.h's */
-#undef HAVE_CONFIG_H 
+#undef HAVE_CONFIG_H
 
-#include "ThruceneHandler.h"
+#include "ThrudexHandler.h"
 #include "LuceneManager.h"
 
 #include <MemcacheHandle.h>
@@ -26,6 +26,7 @@
 #include <string>
 
 using namespace std;
+using namespace thrudex;
 using namespace facebook::thrift::transport;
 using namespace facebook::thrift::protocol;
 using namespace facebook::thrift::concurrency;
@@ -73,7 +74,7 @@ inline void wtrim(wstring &s){
   s.erase(s.find_last_not_of(L" \n\r\t")+1);
 }
 
-ThruceneHandler::ThruceneHandler()
+ThrudexHandler::ThrudexHandler()
 {
     //open indexes
     domain_index_locks locks = LuceneManager->getIndexLocks();
@@ -109,12 +110,12 @@ ThruceneHandler::ThruceneHandler()
 
     boost::shared_ptr<TProtocol>  protocol(new TBinaryProtocol(transport));
 
-    faux_client = boost::shared_ptr<ThruceneClient>(new ThruceneClient(protocol));
+    faux_client = boost::shared_ptr<ThrudexClient>(new ThrudexClient(protocol));
 
 }
 
 
-ThruceneHandler::~ThruceneHandler()
+ThrudexHandler::~ThrudexHandler()
 {
     map<string, boost::shared_ptr<IndexSearcher> >::iterator it;
 
@@ -125,12 +126,12 @@ ThruceneHandler::~ThruceneHandler()
     indexes.clear();
 }
 
-void ThruceneHandler::ping()
+void ThrudexHandler::ping()
 {
 
 }
 
-void ThruceneHandler::add(const DocMsg &d)
+void ThrudexHandler::add(const DocMsg &d)
 {
     vector<DocMsg> dv;
 
@@ -139,7 +140,7 @@ void ThruceneHandler::add(const DocMsg &d)
     return this->addList( dv );
 }
 
-void ThruceneHandler::update(const DocMsg &d)
+void ThrudexHandler::update(const DocMsg &d)
 {
     vector<DocMsg> du;
 
@@ -148,7 +149,7 @@ void ThruceneHandler::update(const DocMsg &d)
     return this->updateList( du );
 }
 
-void ThruceneHandler::remove(const RemoveMsg &r)
+void ThrudexHandler::remove(const RemoveMsg &r)
 {
     vector<RemoveMsg> dr;
 
@@ -159,7 +160,7 @@ void ThruceneHandler::remove(const RemoveMsg &r)
     return this->removeList( dr );
 }
 
-void ThruceneHandler::query(QueryResponse &_return, const QueryMsg &q)
+void ThrudexHandler::query(QueryResponse &_return, const QueryMsg &q)
 {
     vector<QueryMsg> dq;
 
@@ -172,7 +173,7 @@ void ThruceneHandler::query(QueryResponse &_return, const QueryMsg &q)
     _return = r[0];
 }
 
-void ThruceneHandler::addList( const vector<DocMsg> &dv )
+void ThrudexHandler::addList( const vector<DocMsg> &dv )
 {
     LOG4CXX::DEBUG("Entering addList");
 
@@ -201,7 +202,7 @@ void ThruceneHandler::addList( const vector<DocMsg> &dv )
                 this->_addList(dv);
 
             } else {
-                ThruceneException e;
+                ThrudexException e;
                 e.what = "transaction error";
                 throw e;
             }
@@ -216,8 +217,8 @@ void ThruceneHandler::addList( const vector<DocMsg> &dv )
         LOG4CXX::ERROR("Memcached Error");
         throw;
 
-    } catch (ThruceneException e){
-        LOG4CXX::ERROR(string("Thrucene Exception ")+e.what);
+    } catch (ThrudexException e){
+        LOG4CXX::ERROR(string("Thrudex Exception ")+e.what);
         throw;
 
     } catch(...) {
@@ -233,7 +234,7 @@ void ThruceneHandler::addList( const vector<DocMsg> &dv )
     RecoveryManager->addRedo( raw_msg, t->getId() );
 }
 
-void ThruceneHandler::_addList( const vector<DocMsg> &dv )
+void ThrudexHandler::_addList( const vector<DocMsg> &dv )
 {
 
     if(dv.empty())
@@ -253,7 +254,7 @@ void ThruceneHandler::_addList( const vector<DocMsg> &dv )
             assert( LuceneManager->isValidIndex(domain,index) );
 
         } else if( domain != dv[i].domain || index != dv[i].index ){
-            ThruceneException e;
+            ThrudexException e;
             e.what   = "Currently, you can only add to one index per request";
             e.eclass = CRITICAL;
 
@@ -322,7 +323,7 @@ void ThruceneHandler::_addList( const vector<DocMsg> &dv )
     return;
 }
 
-void ThruceneHandler::removeList( const vector<RemoveMsg> &rl )
+void ThrudexHandler::removeList( const vector<RemoveMsg> &rl )
 {
     if(rl.empty())
         return;
@@ -350,7 +351,7 @@ void ThruceneHandler::removeList( const vector<RemoveMsg> &rl )
                   this->_removeList(rl);
 
             } else {
-                ThruceneException e;
+                ThrudexException e;
                 e.what = "transaction error";
                 throw e;
             }
@@ -365,8 +366,8 @@ void ThruceneHandler::removeList( const vector<RemoveMsg> &rl )
         LOG4CXX::ERROR("Memcached Error");
         throw;
 
-    } catch (ThruceneException e){
-        LOG4CXX::ERROR(string("Thrucene Exception ")+e.what);
+    } catch (ThrudexException e){
+        LOG4CXX::ERROR(string("Thrudex Exception ")+e.what);
         throw;
 
     } catch(...) {
@@ -382,7 +383,7 @@ void ThruceneHandler::removeList( const vector<RemoveMsg> &rl )
     TransactionManager->endTransaction(t);
 }
 
-void ThruceneHandler::_removeList( const vector<RemoveMsg> &rl )
+void ThrudexHandler::_removeList( const vector<RemoveMsg> &rl )
 {
     LOG4CXX::DEBUG("Entering _removeList");
 
@@ -403,7 +404,7 @@ void ThruceneHandler::_removeList( const vector<RemoveMsg> &rl )
             assert( LuceneManager->isValidIndex(domain,index) );
 
         } else if( domain != rl[i].domain || index != rl[i].index ){
-            ThruceneException e;
+            ThrudexException e;
             e.what   = "Currently, you can only add to one index per request";
             e.eclass = CRITICAL;
 
@@ -422,7 +423,7 @@ void ThruceneHandler::_removeList( const vector<RemoveMsg> &rl )
 
 }
 
-void ThruceneHandler::updateList( const vector<DocMsg> &ul)
+void ThrudexHandler::updateList( const vector<DocMsg> &ul)
 {
     if(ul.empty())
         return;
@@ -449,7 +450,7 @@ void ThruceneHandler::updateList( const vector<DocMsg> &ul)
                   this->_updateList(ul);
 
             } else {
-                ThruceneException e;
+                ThrudexException e;
                 e.what = "transaction error";
                 throw e;
             }
@@ -464,8 +465,8 @@ void ThruceneHandler::updateList( const vector<DocMsg> &ul)
         LOG4CXX::ERROR("Memcached Error");
         throw;
 
-    } catch (ThruceneException e){
-        LOG4CXX::ERROR(string("Thrucene Exception ")+e.what);
+    } catch (ThrudexException e){
+        LOG4CXX::ERROR(string("Thrudex Exception ")+e.what);
         throw;
 
     } catch(...) {
@@ -481,7 +482,7 @@ void ThruceneHandler::updateList( const vector<DocMsg> &ul)
     TransactionManager->endTransaction(t);
 }
 
-void ThruceneHandler::_updateList( const vector<DocMsg> &ul)
+void ThrudexHandler::_updateList( const vector<DocMsg> &ul)
 {
     if(ul.empty())
         return;
@@ -503,7 +504,7 @@ void ThruceneHandler::_updateList( const vector<DocMsg> &ul)
     this->addList(ul);
 }
 
-void ThruceneHandler::queryList(vector<QueryResponse> &_return, const vector<QueryMsg> &q)
+void ThrudexHandler::queryList(vector<QueryResponse> &_return, const vector<QueryMsg> &q)
 {
 
     if(q.empty())
@@ -537,7 +538,7 @@ void ThruceneHandler::queryList(vector<QueryResponse> &_return, const vector<Que
 
 
         } else if( domain != q[i].domain || index != q[i].index ){
-            ThruceneException e;
+            ThrudexException e;
             e.what   = "Currently, you can only add to one index per request";
             e.eclass = CRITICAL;
 
@@ -559,14 +560,14 @@ void ThruceneHandler::queryList(vector<QueryResponse> &_return, const vector<Que
 
         } catch(CLuceneError &e) {
 
-            ThruceneException ex;
+            ThrudexException ex;
             ex.what  = "Invalid query: '"+string(e.what())+"'";
             ex.eclass= CRITICAL;
             throw ex;
 
         } catch(runtime_error &e) {
 
-            ThruceneException ex;
+            ThrudexException ex;
             ex.what  = "Invalid query: '"+string(e.what())+"'";
             ex.eclass= CRITICAL;
             throw ex;
@@ -669,7 +670,7 @@ void ThruceneHandler::queryList(vector<QueryResponse> &_return, const vector<Que
 }
 
 
-void ThruceneHandler::add( string &domain, string &index, vector<lucene::document::Document *> &to_add)
+void ThrudexHandler::add( string &domain, string &index, vector<lucene::document::Document *> &to_add)
 {
     //Writem if you got em
     domain_index_locks idx_locks = LuceneManager->getIndexLocks();
@@ -687,7 +688,7 @@ void ThruceneHandler::add( string &domain, string &index, vector<lucene::documen
     return;
 }
 
-void ThruceneHandler::remove(string &domain, string &index, vector<wstring> &to_remove )
+void ThrudexHandler::remove(string &domain, string &index, vector<wstring> &to_remove )
 {
 
     LOG4CXX::DEBUG("Entering remove");
@@ -716,14 +717,14 @@ void ThruceneHandler::remove(string &domain, string &index, vector<wstring> &to_
 
     } catch(CLuceneError &ee) {
 
-        ThruceneException e;
+        ThrudexException e;
         e.what  = "Remove Error: '"+string(ee.what())+"'";
         e.eclass= CRITICAL;
         throw e;
 
     } catch(runtime_error &ee) {
 
-        ThruceneException e;
+        ThrudexException e;
         e.what  = "Remove Error: '"+string(ee.what())+"'";
         e.eclass= CRITICAL;
         throw e;
@@ -733,7 +734,7 @@ void ThruceneHandler::remove(string &domain, string &index, vector<wstring> &to_
 }
 
 
-void ThruceneHandler::optimize(const string &domain, const string &index)
+void ThrudexHandler::optimize(const string &domain, const string &index)
 {
     boost::shared_ptr<Transaction> t = TransactionManager->beginTransaction();
 
@@ -757,7 +758,7 @@ void ThruceneHandler::optimize(const string &domain, const string &index)
                 this->_optimize(domain,index);
 
             } else {
-                ThruceneException e;
+                ThrudexException e;
                 e.what = "transaction error";
                 throw e;
             }
@@ -772,8 +773,8 @@ void ThruceneHandler::optimize(const string &domain, const string &index)
         LOG4CXX::ERROR("Memcached Error");
         throw;
 
-    } catch (ThruceneException e){
-        LOG4CXX::ERROR(string("Thrucene Exception ")+e.what);
+    } catch (ThrudexException e){
+        LOG4CXX::ERROR(string("Thrudex Exception ")+e.what);
         throw;
 
     } catch(...) {
@@ -792,7 +793,7 @@ void ThruceneHandler::optimize(const string &domain, const string &index)
 
 }
 
-void ThruceneHandler::_optimize(const string &domain, const string &index)
+void ThrudexHandler::_optimize(const string &domain, const string &index)
 {
     domain_index_locks idx_locks = LuceneManager->getIndexLocks();
     boost::shared_ptr<Mutex> mutex = idx_locks[ domain ][ index ];
@@ -809,7 +810,7 @@ void ThruceneHandler::_optimize(const string &domain, const string &index)
 }
 
 
-void ThruceneHandler::optimizeAll()
+void ThrudexHandler::optimizeAll()
 {
     boost::shared_ptr<Transaction> t = TransactionManager->beginTransaction();
 
@@ -833,7 +834,7 @@ void ThruceneHandler::optimizeAll()
                 this->_optimizeAll();
 
             } else {
-                ThruceneException e;
+                ThrudexException e;
                 e.what = "transaction error";
                 throw e;
             }
@@ -848,8 +849,8 @@ void ThruceneHandler::optimizeAll()
         LOG4CXX::ERROR("Memcached Error");
         throw;
 
-    } catch (ThruceneException e){
-        LOG4CXX::ERROR(string("Thrucene Exception ")+e.what);
+    } catch (ThrudexException e){
+        LOG4CXX::ERROR(string("Thrudex Exception ")+e.what);
         throw;
 
     } catch(...) {
@@ -866,7 +867,7 @@ void ThruceneHandler::optimizeAll()
     //RecoveryManager->addRedo( raw_msg, t->getId() );
 }
 
-void ThruceneHandler::_optimizeAll()
+void ThrudexHandler::_optimizeAll()
 {
     domain_index_locks idx_locks = LuceneManager->getIndexLocks();
 
@@ -882,7 +883,7 @@ void ThruceneHandler::_optimizeAll()
     return;
 }
 
-void ThruceneHandler::commit(const string &domain, const string &index)
+void ThrudexHandler::commit(const string &domain, const string &index)
 {
     boost::shared_ptr<Transaction> t = TransactionManager->beginTransaction();
 
@@ -906,7 +907,7 @@ void ThruceneHandler::commit(const string &domain, const string &index)
                 this->_commit(domain,index);
 
             } else {
-                ThruceneException e;
+                ThrudexException e;
                 e.what = "transaction error";
                 throw e;
             }
@@ -921,8 +922,8 @@ void ThruceneHandler::commit(const string &domain, const string &index)
         LOG4CXX::ERROR("Memcached Error");
         throw;
 
-    } catch (ThruceneException e){
-        LOG4CXX::ERROR(string("Thrucene Exception ")+e.what);
+    } catch (ThrudexException e){
+        LOG4CXX::ERROR(string("Thrudex Exception ")+e.what);
         throw;
 
     } catch(...) {
@@ -940,7 +941,7 @@ void ThruceneHandler::commit(const string &domain, const string &index)
 
 }
 
-void ThruceneHandler::_commit(const string &domain, const string &index)
+void ThrudexHandler::_commit(const string &domain, const string &index)
 {
     domain_index_locks idx_locks = LuceneManager->getIndexLocks();
     boost::shared_ptr<Mutex> mutex = idx_locks[ domain ][ index ];
@@ -956,7 +957,7 @@ void ThruceneHandler::_commit(const string &domain, const string &index)
     return;
 }
 
-void ThruceneHandler::commitAll()
+void ThrudexHandler::commitAll()
 {
     boost::shared_ptr<Transaction> t = TransactionManager->beginTransaction();
 
@@ -980,7 +981,7 @@ void ThruceneHandler::commitAll()
                 this->_commitAll();
 
             } else {
-                ThruceneException e;
+                ThrudexException e;
                 e.what = "transaction error";
                 throw e;
             }
@@ -995,8 +996,8 @@ void ThruceneHandler::commitAll()
         LOG4CXX::ERROR("Memcached Error");
         throw;
 
-    } catch (ThruceneException e){
-        LOG4CXX::ERROR(string("Thrucene Exception ")+e.what);
+    } catch (ThrudexException e){
+        LOG4CXX::ERROR(string("Thrudex Exception ")+e.what);
         throw;
 
     } catch(...) {
@@ -1014,7 +1015,7 @@ void ThruceneHandler::commitAll()
 
 }
 
-void ThruceneHandler::_commitAll()
+void ThrudexHandler::_commitAll()
 {
     domain_index_locks idx_locks = LuceneManager->getIndexLocks();
 

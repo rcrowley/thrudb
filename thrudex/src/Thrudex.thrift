@@ -1,7 +1,7 @@
-cpp_namespace thrucene
-php_namespace Thrucene
-perl_package  Thrucene
-java_package  Thrucene
+cpp_namespace thrudex
+php_namespace Thrudex
+perl_package  Thrudex
+java_package  Thrudex
 
 enum ExceptionClass
 {
@@ -9,7 +9,7 @@ enum ExceptionClass
         CRITICAL
 }
 
-exception ThruceneException
+exception ThrudexException
 {
         1: ExceptionClass eclass,
         2: string what
@@ -67,21 +67,21 @@ struct DocMsg
         5: list<Field> fields
 }
 
-service Thrucene
+service Thrudex
 {
         void          ping(),
-        void          add(1:DocMsg d)       throws(ThruceneException e),
-        void          update(1:DocMsg u)    throws(ThruceneException e),
-        void          remove(1:RemoveMsg d) throws(ThruceneException e),
-        QueryResponse query(1:QueryMsg q)   throws(ThruceneException e),
+        void          add(1:DocMsg d)       throws(ThrudexException e),
+        void          update(1:DocMsg u)    throws(ThrudexException e),
+        void          remove(1:RemoveMsg d) throws(ThrudexException e),
+        QueryResponse query(1:QueryMsg q)   throws(ThrudexException e),
 
-        void         addList(1:list<DocMsg> d)             throws(ThruceneException e),
-        void         updateList(1:list<DocMsg> u)          throws(ThruceneException e),
-        void         removeList(1:list<RemoveMsg> d)       throws(ThruceneException e),
-        list<QueryResponse> queryList(1:list<QueryMsg> q)  throws(ThruceneException e)
+        void         addList(1:list<DocMsg> d)             throws(ThrudexException e),
+        void         updateList(1:list<DocMsg> u)          throws(ThrudexException e),
+        void         removeList(1:list<RemoveMsg> d)       throws(ThrudexException e),
+        list<QueryResponse> queryList(1:list<QueryMsg> q)  throws(ThrudexException e)
 
-        void         optimize(string domain, string index) throws(ThruceneException e);
-        void         optimizeAll()                         throws(ThruceneException e);
-        void         commit(string domain, string index)   throws(ThruceneException e);
-        void         commitAll()                           throws(ThruceneException e);
+        void         optimize(string domain, string index) throws(ThrudexException e);
+        void         optimizeAll()                         throws(ThrudexException e);
+        void         commit(string domain, string index)   throws(ThrudexException e);
+        void         commitAll()                           throws(ThrudexException e);
 }

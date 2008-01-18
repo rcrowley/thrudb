@@ -11,7 +11,7 @@
 #include "thrudex_config.h"
 #endif
 /* hack to work around thrift and log4cxx installing config.h's */
-#undef HAVE_CONFIG_H 
+#undef HAVE_CONFIG_H
 
 #include <concurrency/ThreadManager.h>
 #include <concurrency/PosixThreadFactory.h>
@@ -31,8 +31,8 @@
 
 #include "RecoveryManager.h"
 #include "SpreadManager.h"
-#include "ThruceneHandler.h"
-#include "ThruceneSpreadTask.h"
+#include "ThrudexHandler.h"
+#include "SpreadTask.h"
 #include "LuceneManager.h"
 #include "ConfigFile.h"
 #include "utils.h"
@@ -53,13 +53,13 @@ using namespace facebook::thrift::server;
 
 using namespace boost;
 
-LoggerPtr logger(Logger::getLogger("Thrucene"));
+LoggerPtr logger(Logger::getLogger("Thrudex"));
 
 //print usage and die
 inline void usage()
 {
-    cerr<<"thrucene -f /path/to/config.inf -nb"<<endl;
-    cerr<<"\tor create ~/.thrucene"<<endl;
+    cerr<<"thrudex -f /path/to/config.inf -nb"<<endl;
+    cerr<<"\tor create ~/.thrudex"<<endl;
     cerr<<"\t-nb creates non-blocking server"<<endl;
     exit(-1);
 }
@@ -147,11 +147,11 @@ int main(int argc, char **argv) {
 
 
         shared_ptr<TProtocolFactory>  protocolFactory  (new TBinaryProtocolFactory());
-        shared_ptr<ThruceneHandler>   handler          (new ThruceneHandler());
-        shared_ptr<TProcessor>        processor        (new ThruceneProcessor(handler));
+        shared_ptr<ThrudexHandler>   handler          (new ThrudexHandler());
+        shared_ptr<TProcessor>        processor        (new ThrudexProcessor(handler));
 
 
-        SpreadManager->setTaskFactory( boost::shared_ptr<SpreadTaskFactory>(new ThruceneSpreadTaskFactory()) );
+        SpreadManager->setTaskFactory( boost::shared_ptr<SpreadTaskFactory>(new ThrudexSpreadTaskFactory()) );
 
         shared_ptr<ThreadManager> threadManager =
             ThreadManager::newSimpleThreadManager(thread_count);

@@ -6,14 +6,14 @@
  * http://thrudb.googlecode.com
  *
  **/
-#ifndef __THRUCENE_SIMPLE_HANDLER__
-#define __THRUCENE_SIMPLE_HANDLER__
+#ifndef __THRUDEX_SIMPLE_HANDLER__
+#define __THRUDEX_SIMPLE_HANDLER__
 
-#include "ThruceneHandler.h"
+#include "ThrudexHandler.h"
 
 //Thrucene handler minus logic used to realise remote transactions
 
-class ThruceneSimpleHandler : public ThruceneHandler
+class ThrudexSimpleHandler : public ThrudexHandler
 {
  public:
 

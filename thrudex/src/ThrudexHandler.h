@@ -6,10 +6,10 @@
  * http://thrudb.googlecode.com
  *
  **/
-#ifndef __THRUCENE_HANDLER__
-#define __THRUCENE_HANDLER__
+#ifndef __THRUDEX_HANDLER__
+#define __THRUDEX_HANDLER__
 
-#include "Thrucene.h"
+#include "Thrudex.h"
 
 #include "CLucene.h"
 #include "CLucene/util/Reader.h"
@@ -20,7 +20,6 @@
 #include <thrift/transport/TTransportUtils.h>
 #include <thrift/protocol/TBinaryProtocol.h>
 
-using namespace thrucene;
 using namespace lucene::index;
 using namespace lucene::store;
 using namespace lucene::search;
@@ -30,21 +29,21 @@ using namespace lucene::queryParser;
 using namespace lucene::document;
 
 
-class ThruceneHandler : virtual public thrucene::ThruceneIf
+class ThrudexHandler : virtual public thrudex::ThrudexIf
 {
  public:
-    ThruceneHandler();
-    virtual ~ThruceneHandler();
+    ThrudexHandler();
+    virtual ~ThrudexHandler();
 
-    void    add(const DocMsg &d);
-    void update(const DocMsg &d);
-    void remove(const RemoveMsg &r);
-    void query(QueryResponse &_return, const QueryMsg &q);
+    void    add(const thrudex::DocMsg &d);
+    void update(const thrudex::DocMsg &d);
+    void remove(const thrudex::RemoveMsg &r);
+    void query(thrudex::QueryResponse &_return, const thrudex::QueryMsg &q);
 
-    virtual void addList(const std::vector<DocMsg> &d);
-    virtual void updateList(const std::vector<DocMsg> &u);
-    virtual void removeList(const std::vector<RemoveMsg> & d);
-    void queryList(std::vector<QueryResponse> &_return, const std::vector<QueryMsg> &q);
+    virtual void addList(const std::vector<thrudex::DocMsg> &d);
+    virtual void updateList(const std::vector<thrudex::DocMsg> &u);
+    virtual void removeList(const std::vector<thrudex::RemoveMsg> & d);
+    void queryList(std::vector<thrudex::QueryResponse> &_return, const std::vector<thrudex::QueryMsg> &q);
 
     void ping();
 
@@ -56,9 +55,9 @@ class ThruceneHandler : virtual public thrucene::ThruceneIf
 
  protected:
 
-    void _addList(const std::vector<DocMsg> &d);
-    void _updateList(const std::vector<DocMsg> &u);
-    void _removeList(const std::vector<RemoveMsg> & d);
+    void _addList(const std::vector<thrudex::DocMsg> &d);
+    void _updateList(const std::vector<thrudex::DocMsg> &u);
+    void _removeList(const std::vector<thrudex::RemoveMsg> & d);
 
     void _optimize(const string &domain, const string &index);
     void _optimizeAll();
@@ -76,7 +75,7 @@ class ThruceneHandler : virtual public thrucene::ThruceneIf
 
 
     boost::shared_ptr<facebook::thrift::transport::TMemoryBuffer>  transport;
-    boost::shared_ptr<thrucene::ThruceneClient>                    faux_client;
+    boost::shared_ptr<thrudex::ThrudexClient>                      faux_client;
 
 };
 
