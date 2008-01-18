@@ -13,6 +13,7 @@ thrudoc_SOURCES = \
 		  MySQLBackend.cpp			\
 		  MemcachedBackend.cpp			\
 		  NBackend.cpp				\
+		  NullBackend.cpp			\
 		  S3Backend.cpp				\
 		  SpreadBackend.cpp			\
 		  base64.cpp				\

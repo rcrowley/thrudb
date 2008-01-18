@@ -42,6 +42,7 @@
 #include "MemcachedBackend.h"
 #include "MySQLBackend.h"
 #include "NBackend.h"
+#include "NullBackend.h"
 #include "S3Backend.h"
 #include "s3_glue.h"
 #include "SpreadBackend.h"
@@ -127,6 +128,12 @@ int main (int argc, char **argv) {
         vector<string>::iterator be;
         for (be = whiches.begin (); be != whiches.end (); be++)
         {
+            if ((*be) == "null")
+            {
+                // NULL backend
+                backends.push_back 
+                    (shared_ptr<ThrudocBackend>(new NullBackend ()));
+            }
 #if HAVE_LIBDB_CXX
             if ((*be) == "bdb")
             {
