@@ -7,7 +7,7 @@ thrudex_SOURCES = \
 		  LOG4CXX.cpp				\
 		  LuceneManager.cpp			\
 		  ThrudexHandler.cpp			\
-		  SpreadTask.cpp			\
+		  ThrudexSpreadTask.cpp			\
 		  main.cpp
 
 thrudex_CPPFLAGS = -Wall -Igen-cpp $(CURL_CFLAGS) $(MEMCACHED_CFLAGS) $(THRIFTNB_CFLAGS) $(THRUCOMMON_CFLAGS) $(SSL_CFLAGS) $(UUID_CFLAGS)

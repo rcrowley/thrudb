@@ -17,15 +17,15 @@ class ThrudexSimpleHandler : public ThrudexHandler
 {
  public:
 
-    void addList(const std::vector<DocMsg> &d){
+    void addList(const std::vector<thrudex::DocMsg> &d){
         this->_addList(d);
     };
 
-    void updateList(const std::vector<DocMsg> &u){
+    void updateList(const std::vector<thrudex::DocMsg> &u){
         this->_updateList(u);
     };
 
-    void removeList(const std::vector<RemoveMsg> &d){
+    void removeList(const std::vector<thrudex::RemoveMsg> &d){
         this->_removeList(d);
     };
 

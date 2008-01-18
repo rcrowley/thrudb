@@ -6,8 +6,8 @@
  * http://thrudb.googlecode.com
  *
  **/
-#ifndef __THRUCENE_SPREAD_TASK__
-#define __THRUCENE_SPREAD_TASK__
+#ifndef __THRUDEX_SPREAD_TASK__
+#define __THRUDEX_SPREAD_TASK__
 
 #include "SpreadTaskFactory.h"
 #include "Transaction.h"
@@ -16,9 +16,9 @@
 
 #include <boost/shared_ptr.hpp>
 
-class ThruceneSpreadTask : public facebook::thrift::concurrency::Runnable {
+class ThrudexSpreadTask : public facebook::thrift::concurrency::Runnable {
 public:
-    ThruceneSpreadTask(boost::shared_ptr<Transaction> t);
+    ThrudexSpreadTask(boost::shared_ptr<Transaction> t);
 
     void run();
 
@@ -27,11 +27,11 @@ private:
 };
 
 
-class ThruceneSpreadTaskFactory : public SpreadTaskFactory
+class ThrudexSpreadTaskFactory : public SpreadTaskFactory
 {
  public:
     boost::shared_ptr<facebook::thrift::concurrency::Runnable> defineTask( boost::shared_ptr<Transaction> t ) {
-        boost::shared_ptr<facebook::thrift::concurrency::Runnable> task(new ThruceneSpreadTask(t));
+        boost::shared_ptr<facebook::thrift::concurrency::Runnable> task(new ThrudexSpreadTask(t));
 
         return task;
     }

@@ -32,7 +32,7 @@
 #include "RecoveryManager.h"
 #include "SpreadManager.h"
 #include "ThrudexHandler.h"
-#include "SpreadTask.h"
+#include "ThrudexSpreadTask.h"
 #include "LuceneManager.h"
 #include "ConfigFile.h"
 #include "utils.h"
@@ -50,7 +50,7 @@ using namespace facebook::thrift::concurrency;
 using namespace facebook::thrift::protocol;
 using namespace facebook::thrift::transport;
 using namespace facebook::thrift::server;
-
+using namespace thrudex;
 using namespace boost;
 
 LoggerPtr logger(Logger::getLogger("Thrudex"));

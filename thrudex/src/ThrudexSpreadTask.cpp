@@ -11,13 +11,13 @@
 #include "thrudex_config.h"
 #endif
 /* hack to work around thrift and log4cxx installing config.h's */
-#undef HAVE_CONFIG_H 
+#undef HAVE_CONFIG_H
 
-#include "ThruceneSpreadTask.h"
+#include "ThrudexSpreadTask.h"
 
-#include "Thrucene.h"
-#include "ThruceneHandler.h"
-#include "ThruceneSimpleHandler.h"
+#include "Thrudex.h"
+#include "ThrudexHandler.h"
+#include "ThrudexSimpleHandler.h"
 #include "RecoveryManager.h"
 #include "TransactionManager.h"
 #include "Transaction.h"
@@ -29,26 +29,26 @@
 #include <thrift/protocol/TBinaryProtocol.h>
 #include <thrift/transport/TTransportUtils.h>
 
-using namespace thrucene;
+using namespace thrudex;
 using namespace facebook::thrift;
 using namespace facebook::thrift::concurrency;
 using namespace facebook::thrift::protocol;
 using namespace facebook::thrift::transport;
 
-ThruceneSpreadTask::ThruceneSpreadTask(boost::shared_ptr<Transaction> t)
+ThrudexSpreadTask::ThrudexSpreadTask(boost::shared_ptr<Transaction> t)
         : transaction(t)
 {
 
 }
 
-void ThruceneSpreadTask::ThruceneSpreadTask::run()
+void ThrudexSpreadTask::ThrudexSpreadTask::run()
 {
     //write threads happen locally
     TBinaryProtocolFactory protocol_factory;
 
     //thrucene handler specific to spread
-    boost::shared_ptr<ThruceneHandler>   handler(new ThruceneSimpleHandler());
-    boost::shared_ptr<ThruceneProcessor> processor(new ThruceneProcessor(handler));
+    boost::shared_ptr<ThrudexHandler>   handler(new ThrudexSimpleHandler());
+    boost::shared_ptr<ThrudexProcessor> processor(new ThrudexProcessor(handler));
 
     const string raw_msg = transaction->getRawBuffer();
 
