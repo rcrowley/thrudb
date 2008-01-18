@@ -26,8 +26,6 @@ AC_CHECK_HEADERS([CLucene.h],,
 
 # thrift(nb) and related requirements
 AC_PATH_PROG(THRIFT, thrift, thrift, $PATH:/usr/local/bin:/usr/bin)
-PKG_CHECK_MODULES(THRIFT, [thrift],
-                  AC_DEFINE([HAVE_THRIFT], [1], [Define to 1 if you have the thrift library (-lthrift)]))
 PKG_CHECK_MODULES(THRIFTNB, [thrift-nb], 
                   AC_DEFINE([HAVE_THRIFTNB], [1], [Define to 1 if you have the thriftnb library (-lthriftnb)]))
 
