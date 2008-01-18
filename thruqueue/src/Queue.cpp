@@ -7,6 +7,11 @@
  *
  **/
 
+#ifdef HAVE_CONFIG_H
+#include "thruqueue_config.h"
+#endif
+/* hack to work around thrift and log4cxx installing config.h's */
+#undef HAVE_CONFIG_H 
 
 #include "Queue.h"
 #include "ConfigFile.h"
