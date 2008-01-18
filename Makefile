@@ -2,9 +2,25 @@
 #
 #
 
-CONFIGURE_OPTS = --prefix=$(SANDBOX)
+#CONFIGURE_OPTS = --prefix=$(SANDBOX)
+PKGS=thrucommon thrudex thrudoc thruqueue
 
-all: thrucommon thrudex thrudoc thruqueue
+all: $(PKGS)
+
+clean:
+	for i in $(PKGS); do		\
+	    (cd $$i && make $@);	\
+	done
+
+distclean:
+	for i in $(PKGS); do		\
+	    (cd $$i && make $@);	\
+	done
+
+distclean-am:
+	for i in $(PKGS); do		\
+	    (cd $$i && make $@);	\
+	done
 
 thrucommon: thrucommon/Makefile
 	(cd $@ && make all install)
