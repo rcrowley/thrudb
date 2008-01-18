@@ -29,7 +29,7 @@ libthrucommon_la_SOURCES = \
 			   TransactionManager.cpp
 
 libthrucommon_la_CPPFLAGS = -Wall -Igen-cpp $(CURL_CFLAGS) $(MEMCACHED_CFLAGS) $(THRIFT_CFLAGS) $(SSL_CFLAGS) $(UUID_CFLAGS)
-libthrucommon_la_LDFLAGS = -Wall $(CURL_LIBS) $(MEMCACHED_LIBS) $(THRIFT_LIBS) $(SSL_LIBS) $(UUID_LIBS)
+libthrucommon_la_LDFLAGS = -Wall $(CURL_LIBS) $(THRIFT_LIBS) $(SSL_LIBS) $(UUID_LIBS) -lmemcached
 
 gen-cpp/Redo.cpp: Redo.thrift
 	${THRIFT} -cpp $<
