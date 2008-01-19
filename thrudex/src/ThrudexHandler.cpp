@@ -320,6 +320,12 @@ void ThrudexHandler::_addList( const vector<DocMsg> &dv )
 
     this->add(domain,index,docs);
 
+    vector< lucene::document::Document *>::iterator i;
+    for (i = docs.begin (); i < docs.end (); i++)
+    {
+        delete (*i);
+    }
+
     return;
 }
 
