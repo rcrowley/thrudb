@@ -3,7 +3,6 @@
 use strict;
 use warnings;
 
-
 #Thrift components
 use Thrift;
 use Thrift::MemoryBuffer;
@@ -16,19 +15,22 @@ use lib "../gen-perl";
 use Tutorial::Types;
 
 #Thrudb
-use Thrucene;
+use Thrudex;
 use Thrudoc;
 
 
 package BookmarkManager;
 use Time::HiRes qw(gettimeofday);
+use Data::Dumper;
 
 #Config
-use constant THRUCENE_PORT   => 11299;
+use constant THRUDEX_PORT   => 11299;
 use constant THRUDOC_PORT    => 11291;
 
-use constant THRUCENE_DOMAIN => "tutorial";
-use constant THRUCENE_INDEX  => "bookmarks";
+use constant THRUDOC_BUCKET  => "bookmarks";
+
+use constant THRUDEX_DOMAIN => "tutorial";
+use constant THRUDEX_INDEX  => "bookmarks";
 
 
 sub new
@@ -49,7 +51,7 @@ sub new
 
     #Connect to thrudb
     $self->connect_to_thrudoc();
-    $self->connect_to_thrucene();
+    $self->connect_to_thrudex();
 
     return $self;
 }
@@ -103,15 +105,15 @@ sub connect_to_thrudoc
     }
 }
 
-sub connect_to_thrucene
+sub connect_to_thrudex
 {
     my $self = shift;
 
     eval{
-        my $socket    = new Thrift::Socket("localhost",THRUCENE_PORT());
+        my $socket    = new Thrift::Socket("localhost",THRUDEX_PORT());
         my $transport = new Thrift::FramedTransport($socket);
         my $protocol  = new Thrift::BinaryProtocol($transport);
-        $self->{thrucene}  = new ThruceneClient($protocol);
+        $self->{thrudex}  = new ThrudexClient($protocol);
 
         $transport->open();
     }; if($@){
@@ -144,7 +146,7 @@ sub load_tsv_file
 
     close(BMFILE);
 
-    $self->{thrucene}->commitAll();
+    $self->{thrudex}->commitAll();
 
     my $t1 = gettimeofday();
 
@@ -168,7 +170,7 @@ sub get_bookmark
     my $id      = shift;
 
     my $thrudoc = $self->{thrudoc};
-    my $b_str   = $thrudoc->fetch($id);
+    my $b_str   = $thrudoc->get(THRUDOC_BUCKET(),$id);
 
     return unless defined $b_str;
 
@@ -183,7 +185,7 @@ sub store_bookmark
 
     my $b_str    = $self->serialize_bookmark($b);
 
-    my $id = $thrudoc->add( $b_str );
+    my $id = $thrudoc->putValue(THRUDOC_BUCKET(), $b_str );
 
     return $id;
 }
@@ -192,22 +194,22 @@ sub store_bookmark
 sub index_bookmark
 {
     my $self     = shift;
-    my $thrucene = $self->{thrucene};
+    my $thrudex = $self->{thrudex};
 
     my $id       = shift;
     my $b        = shift;
 
     #
     #Indexing requires mapping the fields in our
-    #bookmark object to a Thrucene Document
+    #bookmark object to a Thrudex Document
     #
-    my $doc      = new Thrucene::DocMsg();
+    my $doc      = new Thrudex::DocMsg();
 
     $doc->docid($id);
-    $doc->domain( THRUCENE_DOMAIN() );
-    $doc->index ( THRUCENE_INDEX()  );
+    $doc->domain( THRUDEX_DOMAIN() );
+    $doc->index ( THRUDEX_INDEX()  );
 
-    my $field = new Thrucene::Field();
+    my $field = new Thrudex::Field();
 
     #
     #title
@@ -220,12 +222,12 @@ sub index_bookmark
     #
     #tags
     #
-    $field = new Thrucene::Field();
+    $field = new Thrudex::Field();
     $field->name("tags");
     $field->value($b->tags);
     push(@{$doc->{fields}}, $field);
 
-    $thrucene->add( $doc );
+    $thrudex->add( $doc );
 }
 
 sub remove_all
@@ -233,40 +235,43 @@ sub remove_all
     my $self     = shift;
 
     my $thrudoc  = $self->{thrudoc};
-    my $thrucene = $self->{thrucene};
+    my $thrudex  = $self->{thrudex};
 
 
     my $t0 = gettimeofday();
 
     #chunks of 100
-    my $offset = 0;
     my $limit  = 100;
-    my $ids;
-
+    my $r;
+    my $seed;
     do{
 
-        $ids = $thrudoc->listIds($offset,$limit);
+        $r = $thrudoc->scan(THRUDOC_BUCKET(), $seed , $limit);
 
-        if(@$ids > 0 ){
+        if(@{$r->elements} > 0 ){
 
-            my @docs;
-            foreach my $id (@$ids){
-                my $rm = new Thrucene::RemoveMsg();
-                $rm->domain( THRUCENE_DOMAIN() );
-                $rm->index ( THRUCENE_INDEX()  );
-                $rm->docid($id);
+            my @thrudex_docs;
 
-                push(@docs, $rm);
+            foreach my $el (@{ $r->elements }){
+                #
+                my $rm = new Thrudex::RemoveMsg();
+                $rm->domain( THRUDEX_DOMAIN() );
+                $rm->index ( THRUDEX_INDEX()  );
+                $rm->docid($el->key);
+
+                push(@thrudex_docs, $rm);
             }
 
-            $thrucene->removeList(\@docs);
-            $thrudoc->removeList($ids);
+            $thrudex->removeList(\@thrudex_docs);
+            $thrudoc->removeList($r->elements);
 
-            $offset += $limit;
+            $thrudex->commitAll();
 
-            $thrucene->commitAll();
         }
-    }while(@$ids == $limit);
+
+        $seed = $r->{seed};
+
+    }while(@{$r->elements} == $limit);
 
 
     my $t1 = gettimeofday();
@@ -287,12 +292,12 @@ sub find
     print "Searching for: '$terms' ".join(",",map{$_.":".$options->{$_}} keys %$options)."\n";
     my $t0 = gettimeofday();
 
-    my $thrucene = $self->{thrucene};
+    my $thrudex = $self->{thrudex};
     my $thrudoc  = $self->{thrudoc};
-    my $query    = new Thrucene::QueryMsg();
+    my $query    = new Thrudex::QueryMsg();
 
-    $query->domain( THRUCENE_DOMAIN() );
-    $query->index(  THRUCENE_INDEX() );
+    $query->domain( THRUDEX_DOMAIN() );
+    $query->index(  THRUDEX_INDEX() );
     $query->query($terms);
 
     #$query->limit(10);
@@ -301,16 +306,31 @@ sub find
     $query->randomize(1)               if exists $options->{random};
     $query->sortby($options->{sortby}) if exists $options->{sortby};
 
-    my $ids = $thrucene->query( $query );
+    my $ids = $thrudex->query( $query );
 
     return unless defined $ids;
 
     print "Found ".$ids->total." bookmarks\n";
-    if( @{$ids->{ids}} > 0 ){
 
-        my $bm_strs = $thrudoc->fetchList($ids->{ids});
+    if(@{$ids->{ids}} > 0){
 
-        my @bookmarks = map{ $self->deserialize_bookmark($_) } @$bm_strs;
+        my $response = $thrudoc->getList( $self->create_doc_list($ids->{ids}) );
+
+        my @bookmarks;
+
+        foreach my $r (@$response){
+
+            if( $r->element->value ne "" ){
+
+                my $bm = $self->deserialize_bookmark( $r->element->value );
+
+                push(@bookmarks, $bm);
+            }else{
+
+                warn($r->ex->what);
+            }
+
+        }
 
         $self->print_bookmarks(\@bookmarks);
     }
@@ -319,6 +339,24 @@ sub find
     print "Took: ".($t1-$t0)."\n\n";
 }
 
+sub create_doc_list
+{
+    my $self     = shift;
+    my $ids      = shift;
+
+    my @docs;
+
+    foreach my $id (@$ids){
+        my $el = new Thrudoc::Element();
+
+        $el->bucket( THRUDOC_BUCKET() );
+        $el->key( $id );
+
+        push(@docs,$el);
+    }
+
+    return \@docs;
+}
 
 sub print_bookmarks
 {

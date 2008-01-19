@@ -4,22 +4,25 @@
 # Startup/shutdown script
 #
 
+BEGIN{
+    $ENV{LD_LIBRARY_PATH} = "../thrucommon/src/.libs/:".$ENV{LD_LIBRARY_PATH};
+}
 
 #
 # Locations of thrudb services
 #
 use constant THRUDOC  => {
     name     => "Thrudoc",
-    bin      => "../thrudoc",
+    bin      => "../thrudoc/src/thrudoc",
     conf     => "thrudoc.conf",
     pidfile  => "thrudoc.pid"
 };
 
-use constant THRUCENE => {
-    name     => "Thrucene",
-    bin      => "../thrucene",
-    conf     => "thrucene.conf",
-    pidfile  => "thrucene.pid"
+use constant THRUDEX => {
+    name     => "Thrudex",
+    bin      => "../thrudex/src/thrudex",
+    conf     => "thrudex.conf",
+    pidfile  => "thrudex.pid"
 };
 
 
@@ -33,12 +36,12 @@ die usage() unless defined $cmd;
 
 if ($cmd eq "start") {
 
-        start(THRUCENE());
+        start(THRUDEX());
         start(THRUDOC());
 
 } elsif ($cmd eq "stop") {
 
-        stop(THRUCENE());
+        stop(THRUDEX());
         stop(THRUDOC());
 
 } else {
@@ -76,7 +79,7 @@ sub start {
 
     #check if running
     if( -f $conf->{pidfile} ){
-        open(F,THRUCENE->{pidfile}) or die "crap: $!";
+        open(F,$conf->{pidfile}) or die "crap: $!";
         my $file = <F>;
         close(F);
 
