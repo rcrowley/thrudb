@@ -101,7 +101,7 @@ void ThrudocHandler::admin (string & _return, const string & op, const string & 
     }
 }
 
-void ThrudocHandler::putList(vector<ThrudocException> & _return, 
+void ThrudocHandler::putList(vector<ThrudocException> & _return,
                              const vector<Element> & elements)
 {
     if (logger->isDebugEnabled())
@@ -113,38 +113,38 @@ void ThrudocHandler::putList(vector<ThrudocException> & _return,
     _return = this->backend->putList (elements);
 }
 
-void ThrudocHandler::getList(vector<ListResponse> & _return, 
+void ThrudocHandler::getList(vector<ListResponse> & _return,
                              const vector<Element> & elements)
 {
     if (logger->isDebugEnabled())
     {
         char buf[128];
-        sprintf (buf, "putList: elements.size=%d", (int)elements.size ());
+        sprintf (buf, "getList: elements.size=%d", (int)elements.size ());
         LOG4CXX_DEBUG (logger, buf);
     }
     _return = this->backend->getList (elements);
 }
 
-void ThrudocHandler::removeList(vector<ThrudocException> & _return, 
+void ThrudocHandler::removeList(vector<ThrudocException> & _return,
                                 const vector<Element> & elements)
 {
     if (logger->isDebugEnabled())
     {
         char buf[128];
-        sprintf (buf, "putList: elements.size=%d", (int)elements.size ());
+        sprintf (buf, "removeList: elements.size=%d", (int)elements.size ());
         LOG4CXX_DEBUG (logger, buf);
     }
     _return = this->backend->removeList (elements);
 }
 
-void ThrudocHandler::putValueList(vector<ListResponse> & _return, 
+void ThrudocHandler::putValueList(vector<ListResponse> & _return,
                                   const vector<Element> & elements)
 {
 #if HAVE_LIBUUID
     if (logger->isDebugEnabled())
     {
         char buf[128];
-        sprintf (buf, "putList: elements.size=%d", (int)elements.size ());
+        sprintf (buf, "putValueList: elements.size=%d", (int)elements.size ());
         LOG4CXX_DEBUG (logger, buf);
     }
     uuid_t uuid;
