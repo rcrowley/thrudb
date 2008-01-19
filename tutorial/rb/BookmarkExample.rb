@@ -7,24 +7,26 @@ require 'thrift/protocol/tbinaryprotocol.rb'
 
 require 'Thrudoc'
 require 'Thrudoc_types.rb'
-require 'Thrucene'
-require 'Thrucene_types.rb'
+require 'Thrudex'
+require 'Thrudex_types.rb'
 
 require 'Bookmark_types.rb'
 
 #Config Constants
-THRUCENE_PORT   = 11299;
-THRUDOC_PORT    = 11291;
+THRUDEX_PORT   = 11299;
+THRUDOC_PORT   = 11291;
 
-THRUCENE_DOMAIN = "tutorial";
-THRUCENE_INDEX  = "bookmarks";
+THRUDOC_BUCKET = "bookmarks";
+
+THRUDEX_DOMAIN = "tutorial";
+THRUDEX_INDEX  = "bookmarks";
 
 
 class BookmarkManager
 
       def initialize
           connect_to_thrudoc()
-          connect_to_thrucene()
+          connect_to_thrudex()
 
           @mbuf           = TMemoryBuffer.new()
           @mbuf_protocol  = TBinaryProtocol.new(@mbuf)
@@ -38,10 +40,10 @@ class BookmarkManager
           transport.open()
       end
 
-      def connect_to_thrucene
-          transport = TFramedTransport.new(TSocket.new('localhost', THRUCENE_PORT))
+      def connect_to_thrudex
+          transport = TFramedTransport.new(TSocket.new('localhost', THRUDEX_PORT))
           protocol  = TBinaryProtocol.new(transport)
-          @thrucene = Thrucene::Client.new(protocol)
+          @thrudex = Thrudex::Client.new(protocol)
 
           transport.open()
       end
@@ -81,7 +83,7 @@ class BookmarkManager
           }
 
 
-          @thrucene.commitAll()
+          @thrudex.commitAll()
 
           t1 = Time.new()
 
@@ -108,7 +110,7 @@ class BookmarkManager
 
      def store_bookmark(b)
          b_str = serialize(b)
-         id    = @thrudoc.add( b_str )
+         id    = @thrudoc.putValue( THRUDOC_BUCKET, b_str )
 
          return id
      end
@@ -116,13 +118,13 @@ class BookmarkManager
      def index_bookmark(id,b)
          #
          #Indexing requires mapping the fields in our
-         #bookmark object to a Thrucene Document
+         #bookmark object to a Thrudex Document
          #
          doc  = DocMsg.new()
 
          doc.docid  = id
-         doc.domain = THRUCENE_DOMAIN
-         doc.index  = THRUCENE_INDEX
+         doc.domain = THRUDEX_DOMAIN
+         doc.index  = THRUDEX_INDEX
          doc.fields = []
 
          field = Field.new()
@@ -140,36 +142,40 @@ class BookmarkManager
          field.value   = b.tags
          doc.fields << field
 
-         @thrucene.add( doc )
+         @thrudex.add( doc )
      end
 
      def remove_all
          t0 = Time.new
 
          #chunks of 100
-         offset = 0
-         limit  = 1000
+         limit  = 100
          docs   = []
+         seed   = nil;
 
          begin
-                ids = @thrudoc.listIds(offset,limit)
+                response = @thrudoc.scan(THRUDOC_BUCKET,seed,limit)
 
-                ids.each { |id|
+                response.elements.each { |r|
                    rm = RemoveMsg.new()
-                   rm.domain = THRUCENE_DOMAIN
-                   rm.index  = THRUCENE_INDEX
-                   rm.docid  = id
+                   rm.domain = THRUDEX_DOMAIN
+                   rm.index  = THRUDEX_INDEX
+                   rm.docid  = r.key
 
                    docs << rm
                 }
 
 
-                @thrucene.removeList(docs)
-                @thrudoc.removeList(ids)
+                @thrudex.removeList(docs)
+                @thrudoc.removeList(response.elements)
 
-                offset += limit
-                @thrucene.commitAll()
-        end while ids.length == limit
+
+                @thrudex.commitAll()
+
+
+                seed = response.seed
+
+        end while response.elements.length == limit
 
 
         t1 = Time.new
@@ -188,8 +194,8 @@ class BookmarkManager
 
         q  = QueryMsg.new();
 
-        q.domain = THRUCENE_DOMAIN
-        q.index  = THRUCENE_INDEX
+        q.domain = THRUDEX_DOMAIN
+        q.index  = THRUDEX_INDEX
         q.query  = terms
 
         #q.limit = 10
@@ -203,7 +209,7 @@ class BookmarkManager
            q.sortby = options[:sortby]
         end
 
-        ids = @thrucene.query( q )
+        ids = @thrudex.query( q )
 
         if ids == nil
            return
@@ -212,9 +218,16 @@ class BookmarkManager
         print "Found "+ids.total.to_s+" bookmarks\n"
 
         if ids.ids.length > 0
-           bm_strs = @thrudoc.fetchList(ids.ids)
-           bms     = []
-           bm_strs.each{ |bm_str| bms << deserialize(bm_str) }
+
+           doc_list = @thrudoc.getList( create_doc_list(ids.ids) )
+           bms      = []
+           doc_list.each{ |doc|
+                if doc.element.value != nil
+                   bms << deserialize(doc.element.value)
+                else
+                   print "Error getting:"+doc.element.key+"\n"
+                end
+           }
 
            print_bookmarks(bms)
         end
@@ -223,6 +236,19 @@ class BookmarkManager
         print "Took: "+(t1-t0).to_s+"\n\n"
     end
 
+    def create_doc_list(ids)
+        docs = []
+
+        ids.each{ |id|
+              doc        = Element.new()
+              doc.bucket = THRUDOC_BUCKET
+              doc.key    = id
+
+              docs << doc
+        }
+
+        return docs
+    end
 
     def print_bookmarks(bookmarks)
         i = 1
