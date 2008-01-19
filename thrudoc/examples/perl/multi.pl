@@ -22,6 +22,7 @@ my $num_threads = 2;
 my $num_calls = 500;
 
 # load up data
+my $bucket = "data";
 eval{
     my $socket    = new Thrift::Socket("localhost",THRUDOC_PORT());
     my $transport = new Thrift::FramedTransport($socket);
@@ -33,7 +34,7 @@ eval{
 
     foreach (0..($num_calls - 1))
     {
-        $thrudoc->put ("data", "key.$_", "value_$_");
+        $thrudoc->put ($bucket, "key.$_", "value_$_");
     }
 };
 if($@) {
@@ -73,7 +74,7 @@ sub make_calls
 
         foreach (0..(($num_calls - 1) * 10))
         {
-            $thrudoc->get ("data", 'key.'.int (rand ($num_calls)));
+            $thrudoc->get ($bucket, 'key.'.int (rand ($num_calls)));
         }
     };
     if($@) {
