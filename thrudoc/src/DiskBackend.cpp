@@ -113,7 +113,7 @@ void DiskBackend::put (const string & bucket, const string & key,
 
     string loc = doc_root + "/" + bucket + "/" + d1 + "/" + d2 + "/" + d3;
 
-    while (!fs::is_directory (loc))
+    if (!fs::is_directory (loc))
     {
         fs::create_directories (loc);
     }
