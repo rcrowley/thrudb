@@ -11,7 +11,7 @@
 #include "thrudoc_config.h"
 #endif
 /* hack to work around thrift and log4cxx installing config.h's */
-#undef HAVE_CONFIG_H 
+#undef HAVE_CONFIG_H
 
 #if HAVE_LIBBOOST_FILESYSTEM && HAVE_LIBCRYPTO
 
@@ -112,7 +112,8 @@ void DiskBackend::put (const string & bucket, const string & key,
     get_dir_pieces (d1, d2, d3, bucket, key);
 
     string loc = doc_root + "/" + bucket + "/" + d1 + "/" + d2 + "/" + d3;
-    if (!fs::is_directory (loc))
+
+    while (!fs::is_directory (loc))
     {
         fs::create_directories (loc);
     }
@@ -146,6 +147,10 @@ void DiskBackend::remove (const string & bucket, const string & key)
             e.what = "Can't remove " + bucket + "/" + key;
             throw e;
         }
+    } else {
+        ThrudocException e;
+        e.what = "Can't remove " + bucket + "/" + key + ": DNE";
+        throw e;
     }
 }
 
@@ -224,12 +229,13 @@ ScanResponse DiskBackend::scan (const string & bucket, const string & seed,
 
         i = new fs::directory_iterator (base + d1 + "/" + d2 + "/" + d3);
         dir_stack.push (i);
-        // pre-wind to seed 
+        // pre-wind to seed
         while ((*i) != end && (*i)->path ().leaf () != key)
             ++(*i);
 
-        // move past seed 
-        ++(*i);
+        // move past seed
+        if( (*i) != end )
+            ++(*i);
     }
 
     // we're in our initial state now
@@ -237,7 +243,7 @@ ScanResponse DiskBackend::scan (const string & bucket, const string & seed,
 
     // inital
     i = dir_stack.top ();
-    do 
+    do
     {
 
         if ((*i) == end)
@@ -249,15 +255,17 @@ ScanResponse DiskBackend::scan (const string & bucket, const string & seed,
             {
                 i = dir_stack.top ();
                 // next;
-                ++(*i);
+                if( (*i) != end )
+                    ++(*i);
             }
         }
         else if (is_regular ((*i)->status ()))
         {
             string ret = (*i)->path ().leaf ();
             Element e;
-            e.key = ret;
-            e.value = get (bucket, ret);
+            e.key    = ret;
+            e.value  = get (bucket, ret);
+            e.bucket = bucket;
             scan_response.elements.push_back (e);
             ++(*i);
         }
@@ -274,7 +282,7 @@ ScanResponse DiskBackend::scan (const string & bucket, const string & seed,
         }
 
         // while we still have dirs on the stack and don't have enough elements
-    } while (!dir_stack.empty () && 
+    } while (!dir_stack.empty () &&
              scan_response.elements.size () < (unsigned int)count);
 
     // clean up after ourselves
@@ -319,7 +327,7 @@ string DiskBackend::admin (const string & op, const string & data)
             char buf[128];
             sprintf (buf, "%s-del_%06d", base.c_str (), rand ());
             string deleted (buf);
-            // we're making a somehwat safe assumption that deleted doesn't 
+            // we're making a somehwat safe assumption that deleted doesn't
             // exist
             fs::rename (base, deleted);
         }
@@ -364,7 +372,7 @@ void DiskBackend::validate (const string & bucket, const string * key,
     /* values can be whatever they want to be */
 }
 
-void DiskBackend::get_dir_pieces (string & d1, string & d2, string & d3, 
+void DiskBackend::get_dir_pieces (string & d1, string & d2, string & d3,
                                   const string & bucket, const string & key)
 {
     // we partition by the md5 of the key so that we'll get an even
@@ -372,9 +380,10 @@ void DiskBackend::get_dir_pieces (string & d1, string & d2, string & d3,
     unsigned char md5[16];
     memset (md5, 0, sizeof (md5));
     MD5 ((const unsigned char *)key.c_str (), key.length (), md5);
-    char d1_str[2];
-    char d2_str[2];
-    char d3_str[2];
+
+    char d1_str[3];
+    char d2_str[3];
+    char d3_str[3];
     sprintf (d1_str, "%02x", md5[0]);
     sprintf (d2_str, "%02x", md5[1]);
     sprintf (d3_str, "%02x", md5[2]);
@@ -383,7 +392,7 @@ void DiskBackend::get_dir_pieces (string & d1, string & d2, string & d3,
     d3 = d3_str;
 }
 
-string DiskBackend::build_filename(const string & bucket, 
+string DiskBackend::build_filename(const string & bucket,
                                    const string & key)
 {
     string d1, d2, d3;
@@ -395,12 +404,12 @@ string DiskBackend::build_filename(const string & bucket, const string & d1,
                                    const string & d2, const string & d3,
                                    const string & key)
 {
-    return 
-        doc_root + "/" + 
-        bucket + "/" + 
+    return
+        doc_root + "/" +
+        bucket + "/" +
         d1 + "/" +
-        d2 + "/" + 
-        d3 + "/" + 
+        d2 + "/" +
+        d3 + "/" +
         key;
 }
 
