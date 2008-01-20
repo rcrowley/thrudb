@@ -1,7 +1,7 @@
-cpp_namespace Thruqueue
+cpp_namespace thruqueue
 php_namespace Thruqueue
 perl_package  Thruqueue
-java_package  Thruqueue
+java_package  thruqueue
 
 exception ThruqueueException
 {

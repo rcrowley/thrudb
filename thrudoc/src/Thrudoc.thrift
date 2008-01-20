@@ -1,7 +1,7 @@
 cpp_namespace thrudoc
 php_namespace Thrudoc
 perl_package  Thrudoc
-java_package  Thrudoc
+java_package  thrudoc
 
 exception ThrudocException
 {
