@@ -11,35 +11,33 @@ from thrift.transport.TSocket import TSocket
 from thrift.transport.TTransport import TFramedTransport, TMemoryBuffer
 from thrift.protocol.TBinaryProtocol import TBinaryProtocol
 
-from Thrudoc import Thrudoc
-from Thrucene import Thrucene, ttypes as ThruceneTypes
+from Thrudoc import Thrudoc, ttypes as ThrudocTypes
+from Thrudex import Thrudex, ttypes as ThrudexTypes
 
 from Bookmark.ttypes import Bookmark
 
 # Config Constants
-THRUCENE_PORT   = 11299;
-THRUDOC_PORT    = 11291;
+THRUDEX_PORT   = 11299;
+THRUDOC_PORT   = 11291;
 
-THRUCENE_DOMAIN = "tutorial";
-THRUCENE_INDEX  = "bookmarks";
+THRUDOC_BUCKET = "bookmarks";
 
-def chunker(start, size, func):
-    offset = start
+THRUDEX_DOMAIN = "tutorial";
+THRUDEX_INDEX  = "bookmarks";
+
+def chunker(seed, size, func):   
     while True:
-        chunk = func(offset, size)
+        chunk = func(THRUDOC_BUCKET, seed, size)
         yield chunk
-        if len(chunk) != size:
+        if len(chunk.responses) != size:
             break
-        offset += size
+        seed = chunk.seed
 
 class BookmarkManager(object):
     def __init__(self):
         self.connect_to_thrudoc()
-        self.connect_to_thrucene()
+        self.connect_to_thrudex()
 
-#        self.mbuf = TMemoryBuffer()
-#        self.mbuf_protocol = TBinaryProtocol(self.mbuf)
-    
     def connect_to_thrudoc(self):
         socket = TSocket('localhost', THRUDOC_PORT)
         transport = TFramedTransport(socket)
@@ -48,11 +46,11 @@ class BookmarkManager(object):
 
         transport.open()
 
-    def connect_to_thrucene(self):
-        socket = TSocket('localhost', THRUCENE_PORT)
+    def connect_to_thrudex(self):
+        socket = TSocket('localhost', THRUDEX_PORT)
         transport = TFramedTransport(socket)
         protocol = TBinaryProtocol(transport)
-        self.thrucene = Thrucene.Client(protocol)
+        self.thrudex = Thrudex.Client(protocol)
 
         transport.open()
 
@@ -61,9 +59,7 @@ class BookmarkManager(object):
         mbuf_protocol = TBinaryProtocol(mbuf)
         b.write(mbuf_protocol)
         return mbuf.getvalue()
-#        self.mbuf.resetBuffer()
-#        b.write(self.mbuf_protocol)
-#        return self.mbuf.getBuffer()
+
 
     def deserialize(self, b_str):
         mbuf = TMemoryBuffer(b_str)
@@ -71,10 +67,6 @@ class BookmarkManager(object):
         b = Bookmark()
         b.read(mbuf_protocol)
         return b
-#        b = Bookmark()
-#        mbuf.resetBuffer(b_str)
-#        b.read(self.mbuf_protocol)
-#        return b
 
     def load_tsv_file(self, fl):
         t0 = time()
@@ -89,7 +81,7 @@ class BookmarkManager(object):
 
             self.add_bookmark(b)
 
-        self.thrucene.commitAll()
+        self.thrudex.commitAll()
 
         t1 = time()
         
@@ -107,46 +99,47 @@ class BookmarkManager(object):
 
     def store_bookmark(self, b):
         b_str = self.serialize(b)
-        bid = self.thrudoc.add(b_str)
+        bid = self.thrudoc.putValue(b_str)
         return bid
 
     def index_bookmark(self, b_id, b):
-        doc = ThruceneTypes.DocMsg()
+        doc = ThrudexTypes.DocMsg()
         doc.docid = b_id
-        doc.domain = THRUCENE_DOMAIN
-        doc.index = THRUCENE_INDEX
+        doc.domain = THRUDEX_DOMAIN
+        doc.index = THRUDEX_INDEX
         doc.fields = []
 
-        field = ThruceneTypes.Field()
+        field = ThrudexTypes.Field()
         field.name = "title"
         field.value = b.title
         field.sortable = True
-        field.stype = ThruceneTypes.StorageType.UNSTORED
+        field.stype = ThrudexTypes.StorageType.UNSTORED
         doc.fields.append(field)
   
-        field = ThruceneTypes.Field()
+        field = ThrudexTypes.Field()
         field.name = "tags"
         field.value = b.tags
-        field.stype = ThruceneTypes.StorageType.UNSTORED
+        field.stype = ThrudexTypes.StorageType.UNSTORED
         doc.fields.append(field)
 
-        self.thrucene.add(doc)
+        self.thrudex.add(doc)
 
     def remove_all(self):
-        t0 = time()
+        t0   = time()
+        seed = ""
 
-        for ids in chunker(0, 1000, self.thrudoc.listIds):
+        for ids in chunker(seed, 100, self.thrudoc.scan):
             docs = []
-            for id in ids:
-                rm = ThruceneTypes.RemoveMsg()
-                rm.domain = THRUCENE_DOMAIN
-                rm.index = THRUCENE_INDEX
-                rm.docid = id
+            for id in ids.elements:
+                rm = ThrudexTypes.RemoveMsg()
+                rm.domain = THRUDEX_DOMAIN
+                rm.index = THRUDEX_INDEX
+                rm.docid = id.key
                 docs.append(rm)
 
-            self.thrucene.removeList(docs)
-            self.thrudoc.removeList(ids)
-            self.thrucene.commitAll()
+            self.thrudex.removeList(docs)
+            self.thrudoc.removeList(ids.elements)
+            self.thrudex.commitAll()
 
         t1 = time()
         print "\n*Index cleared in: %.2f seconds*" % (t1-t0)
@@ -158,9 +151,9 @@ class BookmarkManager(object):
 
         t0 = time()
 
-        q = ThruceneTypes.QueryMsg()
-        q.domain = THRUCENE_DOMAIN
-        q.index = THRUCENE_INDEX
+        q = ThrudexTypes.QueryMsg()
+        q.domain = THRUDEX_DOMAIN
+        q.index = THRUDEX_INDEX
         q.query = terms
 
         q.limit = 100
@@ -171,21 +164,31 @@ class BookmarkManager(object):
         if sortby:
             q.sortby = sortby
 
-        ids = self.thrucene.query(q)
+        ids = self.thrudex.query(q)
         if ids is None:
             return
 
         print "Found", ids.total, "bookmarks"
 
         if len(ids.ids) > 0:
-            bm_strs = self.thrudoc.fetchList(ids.ids)
+            bm_strs = self.thrudoc.fetchList( self.create_doc_list(ids.ids))
             bms = [self.deserialize(bs) for bs in bm_strs]
             self.print_bookmarks(bms)
 
         t1 = time()
         
         print "Took: %.2f seconds" % (t1-t0)
-    
+
+    def create_doc_list(self, ids):
+        docs = []
+        for id in enumerate(ids):
+            doc = ThrudocTypes.Element()
+            doc.bucket = THRUDOC_BUCKET
+            doc.key    = id
+            docs.append(doc)
+
+        return docs
+
     def print_bookmarks(self, bookmarks):
         for i, b in enumerate(bookmarks):
             print "%d\ttitle:\t%s" % (i+1, b.title)

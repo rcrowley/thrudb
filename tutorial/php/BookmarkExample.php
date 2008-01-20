@@ -12,29 +12,32 @@ require_once $GLOBALS['THRIFT_ROOT'].'/transport/TMemoryBuffer.php';
 
 error_reporting(E_NONE);
 $GEN_DIR = '../gen-php';
-require_once $GEN_DIR.'/Thrucene.php';
-require_once $GEN_DIR.'/Thrucene_types.php';
+require_once $GEN_DIR.'/Thrudex.php';
+require_once $GEN_DIR.'/Thrudex_types.php';
 require_once $GEN_DIR.'/Thrudoc.php';
+require_once $GEN_DIR.'/Thrudoc_types.php';
 require_once $GEN_DIR.'/Bookmark_types.php';
 error_reporting(E_ALL);
 
 
-define("THRUCENE_PORT", 11299 );
+define("THRUDEX_PORT", 11299 );
 define("THRUDOC_PORT",  11291 );
 
-define("THRUCENE_DOMAIN", "tutorial");
-define("THRUCENE_INDEX",  "bookmarks");
+define("THRUDOC_BUCKET", "bookmarks");
+
+define("THRUDEX_DOMAIN", "tutorial");
+define("THRUDEX_INDEX",  "bookmarks");
 
 class BookmarkManager {
     private $thrudoc;
-    private $thrucene;
+    private $thrudex;
 
     private $mbuf;
     private $mbuf_protocol;
 
     function __construct() {
         $this->connect_to_thrudoc();
-        $this->connect_to_thrucene();
+        $this->connect_to_thrudex();
 
         $this->mbuf          = new TMemoryBuffer();
         $this->mbuf_protocol = new TBinaryProtocol($this->mbuf);
@@ -51,13 +54,13 @@ class BookmarkManager {
         $transport->open();
     }
 
-    private function connect_to_thrucene()
+    private function connect_to_thrudex()
     {
         //Thrudoc connection
-        $socket         = new TSocket('localhost', THRUCENE_PORT);
+        $socket         = new TSocket('localhost', THRUDEX_PORT);
         $transport      = new TFramedTransport($socket);
         $protocol       = new TBinaryProtocol($transport);
-        $this->thrucene = new ThruceneClient($protocol);
+        $this->thrudex = new ThrudexClient($protocol);
 
         $transport->open();
     }
@@ -105,7 +108,7 @@ class BookmarkManager {
 
         fclose($fh);
 
-        $this->thrucene->commitAll();
+        $this->thrudex->commitAll();
 
         $t1 = gettimeofday(true);
 
@@ -127,21 +130,21 @@ class BookmarkManager {
     private function store_bookmark( $b )
     {
         $b_str = $this->serialize_bookmark($b);
-        $id    = $this->thrudoc->add($b_str);
+        $id    = $this->thrudoc->putValue(THRUDOC_BUCKET,$b_str);
 
         return $id;
     }
 
     private function index_bookmark( $id, $b )
     {
-        $doc      = new Thrucene_DocMsg();
+        $doc      = new Thrudex_DocMsg();
 
         $doc->docid  = $id;
-        $doc->domain = THRUCENE_DOMAIN;
-        $doc->index  = THRUCENE_INDEX;
+        $doc->domain = THRUDEX_DOMAIN;
+        $doc->index  = THRUDEX_INDEX;
 
         $fields = array();
-        $field = new Thrucene_Field();
+        $field = new Thrudex_Field();
 
         //
         //title
@@ -152,7 +155,7 @@ class BookmarkManager {
         array_push( $fields, $field);
 
 
-        $field = new Thrucene_Field();
+        $field = new Thrudex_Field();
         //
         //tag
         //
@@ -162,7 +165,7 @@ class BookmarkManager {
 
         $doc->fields = $fields;
 
-        $this->thrucene->add( $doc );
+        $this->thrudex->add( $doc );
     }
 
     function remove_all()
@@ -170,34 +173,33 @@ class BookmarkManager {
         $t0 = gettimeofday(true);
 
         //chunks of 100
-        $offset = 0;
-        $limit  = 101;
-
+        $limit  = 100;
+        $seed   = "";
         do{
 
-            $ids  = $this->thrudoc->listIds($offset,$limit);
+            $r    = $this->thrudoc->scan(THRUDOC_BUCKET,$seed,$limit);
             $docs = array();
 
-            if(count($ids) == 0)
+            if(count($r->elements) == 0)
                 break;
 
-            foreach($ids as $id){
-                $rm = new Thrucene_RemoveMsg();
-                $rm->domain = THRUCENE_DOMAIN;
-                $rm->index  = THRUCENE_INDEX;
-                $rm->docid  = $id;
+            foreach($r->elements as $id){
+                $rm = new Thrudex_RemoveMsg();
+                $rm->domain = THRUDEX_DOMAIN;
+                $rm->index  = THRUDEX_INDEX;
+                $rm->docid  = $id->key;
 
                 array_push( $docs, $rm );
             }
 
-             $this->thrucene->removeList($docs);
-             $this->thrudoc->removeList($ids);
+             $this->thrudex->removeList($docs);
+             $this->thrudoc->removeList($r->elements);
 
-             $offset = $offset + $limit;
+             $seed = $r->seed;
 
-             $this->thrucene->commitAll();
+             $this->thrudex->commitAll();
 
-        }while( count($ids) >= $limit );
+        }while( count($r->elements) >= $limit );
 
 
         $t1 = gettimeofday(true);
@@ -212,10 +214,10 @@ class BookmarkManager {
 
         $t0 = gettimeofday(true);
 
-        $query    = new Thrucene_QueryMsg();
+        $query    = new Thrudex_QueryMsg();
 
-        $query->domain =  THRUCENE_DOMAIN;
-        $query->index  =  THRUCENE_INDEX;
+        $query->domain =  THRUDEX_DOMAIN;
+        $query->index  =  THRUDEX_INDEX;
         $query->query  = $terms;
 
         //$query->limit = 10;
@@ -228,16 +230,19 @@ class BookmarkManager {
             $query->sortby    = $options["sortby"];
 
 
-        $ids = $this->thrucene->query( $query );
+        $ids = $this->thrudex->query( $query );
 
         print "Found ".$ids->total." bookmarks\n";
 
         if( count( $ids->ids ) > 0 ){
-            $bm_strs = $this->thrudoc->fetchList($ids->ids);
+            $response  = $this->thrudoc->getList( $this->create_doc_list($ids->ids) );
             $bookmarks = array();
 
-            foreach( $bm_strs as $bm_str ){
-                array_push( $bookmarks, $this->deserialize_bookmark($bm_str) );
+            foreach( $response as $doc ){
+                if( $doc->element->value != null )
+                    array_push( $bookmarks, $this->deserialize_bookmark($doc->element->value) );
+                else
+                    print "Could not get Document: \n";
             }
 
             $this->print_bookmarks($bookmarks);
@@ -246,6 +251,22 @@ class BookmarkManager {
         $t1 = gettimeofday(true);
 
         print "Took: ".($t1-$t0)."\n\n";
+    }
+
+    private function create_doc_list( $ids )
+    {
+        $docs = array();
+
+        foreach( $ids as $id ){
+            $doc = new Thrudoc_Element();
+
+            $doc->key    = $id;
+            $doc->bucket = THRUDOC_BUCKET;
+
+            array_push( $docs, $doc );
+        }
+
+        return $docs;
     }
 
     private function print_bookmarks( $bookmarks )

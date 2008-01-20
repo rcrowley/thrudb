@@ -1,7 +1,7 @@
 //Our generated classes
-import Tutorial.*;
-import Thrucene.*;
-import Thrudoc.*;
+import tutorial.*;
+import thrudex.*;
+import thrudoc.*;
 
 import com.facebook.thrift.TException;
 import com.facebook.thrift.transport.TTransport;
@@ -21,14 +21,16 @@ import java.io.*;
 
 public class BookmarkExample {
 
-    static final int THRUCENE_PORT = 11299;
+    static final int THRUDEX_PORT = 11299;
     static final int THRUDOC_PORT  = 11291;
-    
-    static final String THRUCENE_DOMAIN = "tutorial";
-    static final String THRUCENE_INDEX  = "bookmarks";
+
+    static final String THRUDOC_BUCKET = "bookmarks";    
+
+    static final String THRUDEX_DOMAIN = "tutorial";
+    static final String THRUDEX_INDEX  = "bookmarks";
     
     private Thrudoc.Client   thrudoc;
-    private Thrucene.Client  thrucene;
+    private Thrudex.Client  thrudex;
     
     private ByteArrayOutputStream        mbuf_out;
     private PushbackInputStream mbuf_in;
@@ -38,7 +40,7 @@ public class BookmarkExample {
     public BookmarkExample() throws IOException, TException{
 
         this.connectToThrudoc();
-        this.connectToThrucene();
+        this.connectToThrudex();
 
         //Creates a buffer to serialize/deserialize with
         InputStream in = new ByteArrayInputStream(new byte[1]);
@@ -58,12 +60,12 @@ public class BookmarkExample {
         transport.open();
     }
 
-    private void connectToThrucene() throws TException {
-        TSocket          socket    = new TSocket("localhost", THRUCENE_PORT );
+    private void connectToThrudex() throws TException {
+        TSocket          socket    = new TSocket("localhost", THRUDEX_PORT );
         TFramedTransport transport = new TFramedTransport(socket);
         TBinaryProtocol  protocol  = new TBinaryProtocol(transport);
          
-        thrucene = new Thrucene.Client(protocol);
+        thrudex = new Thrudex.Client(protocol);
 
         transport.open();
     }
@@ -91,7 +93,7 @@ public class BookmarkExample {
         return b;
     }
 
-    public void loadTSVFile(String file) throws IOException, TException, ThrudocException, ThruceneException{
+    public void loadTSVFile(String file) throws IOException, TException, ThrudocException, ThrudexException{
 
         long t0 = System.currentTimeMillis();
 
@@ -111,7 +113,7 @@ public class BookmarkExample {
             this.addBookmark(b);           
         }
 
-        thrucene.commitAll();
+        thrudex.commitAll();
         
         input.close();
 
@@ -121,7 +123,7 @@ public class BookmarkExample {
         System.out.println("*Indexed file in: "+(t1-t0)+"ms*\n");
     }
 
-    private void addBookmark( Bookmark b ) throws IOException, TException, ThrudocException, ThruceneException{
+    private void addBookmark( Bookmark b ) throws IOException, TException, ThrudocException, ThrudexException{
         
         String id = this.storeBookmark(b);
         
@@ -130,7 +132,7 @@ public class BookmarkExample {
 
     public Bookmark getBookmark( String id ) throws TException, ThrudocException, IOException{
 
-        String b_str = thrudoc.fetch(id);
+        String b_str = thrudoc.get(THRUDOC_BUCKET,id);
 
         return this.deserialize(b_str);
     }
@@ -139,18 +141,18 @@ public class BookmarkExample {
     private String storeBookmark( Bookmark b ) throws TException, ThrudocException, IOException{
 
         String b_str = this.serialize(b);
-        String id    = thrudoc.add(b_str);
+        String id    = thrudoc.putValue(THRUDOC_BUCKET,b_str);
 
         return id;
     }
     
-    private void indexBookmark( String id, Bookmark b ) throws TException, ThruceneException{
+    private void indexBookmark( String id, Bookmark b ) throws TException, ThrudexException{
          
         DocMsg doc = new DocMsg();
         
         doc.docid  = id;
-        doc.domain = THRUCENE_DOMAIN;
-        doc.index  = THRUCENE_INDEX;
+        doc.domain = THRUDEX_DOMAIN;
+        doc.index  = THRUDEX_INDEX;
         doc.fields = new ArrayList<Field>();
 
         Field field = new Field();
@@ -169,43 +171,44 @@ public class BookmarkExample {
         field.stype = StorageType.UNSTORED;
         doc.fields.add(field);
 
-        thrucene.add( doc );
+        thrudex.add( doc );
     }
      
-    public void removeAll() throws TException, ThrudocException, ThruceneException {
+    public void removeAll() throws TException, ThrudocException, ThrudexException {
        
         long t0 = System.currentTimeMillis();
 
         //chunks of 100
-        int offset = 0;
         int limit  = 100;
-        ArrayList<String> ids;
+        String seed = new String();
+
+        ScanResponse r;
 
         do{
-            ids = thrudoc.listIds(offset,limit);
+            r = thrudoc.scan(THRUDOC_BUCKET,seed,limit);
 
-            if(ids.size() == 0)
+            if(r.elements.size() == 0)
                 break;
 
             ArrayList<RemoveMsg> docs = new ArrayList<RemoveMsg>();
 
-            for( String id : ids ){
+            for( Element e : r.elements ){
                 RemoveMsg rm = new RemoveMsg();
-                rm.domain = THRUCENE_DOMAIN;
-                rm.index  = THRUCENE_INDEX;
-                rm.docid  = id;
+                rm.domain = THRUDEX_DOMAIN;
+                rm.index  = THRUDEX_INDEX;
+                rm.docid  = e.key;
                 
                 docs.add(rm);
             }
 
-            thrucene.removeList(docs);
-            thrudoc.removeList(ids);
+            thrudex.removeList(docs);
+            thrudoc.removeList(r.elements);
 
-            offset += limit;
+            seed = r.seed;
 
-            thrucene.commitAll();
+            thrudex.commitAll();
 
-        }while(ids.size() == limit);
+        }while(r.elements.size() == limit);
 
         
         long t1 = System.currentTimeMillis();
@@ -213,7 +216,7 @@ public class BookmarkExample {
         System.out.println("\n*Index cleared in: "+(t1-t0)+"ms*");        
     }
 
-    public void find(String terms, HashMap<String,String> options) throws IOException, TException, ThruceneException{
+    public void find(String terms, HashMap<String,String> options) throws IOException, TException, ThrudocException, ThrudexException{
 
         System.out.print("Searching for: '"+terms+"' ");
         for (String key : options.keySet()) {
@@ -225,8 +228,8 @@ public class BookmarkExample {
         
         QueryMsg query  = new QueryMsg();
          
-        query.domain    = THRUCENE_DOMAIN;
-        query.index     = THRUCENE_INDEX;
+        query.domain    = THRUDEX_DOMAIN;
+        query.index     = THRUDEX_INDEX;
         query.query     = terms;
 
         query.limit     =100;
@@ -238,18 +241,21 @@ public class BookmarkExample {
         if( options.get("sortby") != null )            
             query.sortby = options.get("sortby");
 
-        QueryResponse r = thrucene.query( query );
+        QueryResponse r = thrudex.query( query );
 
         System.out.println("Found "+r.total+" bookmarks");
         
         if( r.ids.size() > 0 ) {
 
-            ArrayList<String> b_strs = thrudoc.fetchList(r.ids);
+            ArrayList<ListResponse> response = thrudoc.getList( createDocList(r.ids) );
 
             ArrayList<Bookmark> bookmarks = new ArrayList<Bookmark>();
             
-            for(String b_str : b_strs){
-                bookmarks.add( this.deserialize( b_str ) );
+            for(ListResponse lr : response ){
+                if(lr.element.value != "")
+                    bookmarks.add( this.deserialize( lr.element.value ) );
+                else
+                    System.out.println("Error fetching document");
             }
 
             this.printBookmarks(bookmarks);
@@ -257,6 +263,21 @@ public class BookmarkExample {
 
         long t1 = System.currentTimeMillis();
         System.out.println("Took: "+(t1-t0)+"ms\n");  
+    }
+
+    private ArrayList<Element> createDocList( ArrayList<String> ids ) throws ThrudocException {
+        
+        ArrayList<Element> docs = new ArrayList<Element>();
+
+        for( String id : ids ){
+            Element el = new Element();
+            el.key    = id;
+            el.bucket = THRUDOC_BUCKET;
+
+            docs.add(el);
+        }
+
+        return docs;
     }
 
     private void printBookmarks( ArrayList<Bookmark> bookmarks ){
