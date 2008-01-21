@@ -21,7 +21,7 @@
 class S3Backend : public ThrudocBackend
 {
     public:
-        S3Backend();
+        S3Backend (std::string bucket_prefix);
 
         std::vector<std::string> getBuckets ();
         std::string get (const std::string & bucket,
@@ -35,8 +35,10 @@ class S3Backend : public ThrudocBackend
         void validate (const std::string & bucket, const std::string * key,
                        const std::string * value);
 
-    protected:
+    private:
         static log4cxx::LoggerPtr logger;
+
+        std::string bucket_prefix;
 };
 
 #endif /* HAVE_LIBEXPAT && HAVE_LIBCURL */

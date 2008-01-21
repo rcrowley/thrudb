@@ -30,9 +30,10 @@ using namespace log4cxx;
 
 LoggerPtr S3Backend::logger (Logger::getLogger ("S3Backend"));
 
-S3Backend::S3Backend ()
+S3Backend::S3Backend (string bucket_prefix)
 {
-    LOG4CXX_INFO (logger, "S3Backend");
+    LOG4CXX_INFO (logger, "S3Backend: bucket_prefix=" + bucket_prefix);
+    this->bucket_prefix = bucket_prefix;
 }
 
 vector<string> S3Backend::getBuckets ()
@@ -52,7 +53,18 @@ vector<string> S3Backend::getBuckets ()
     vector<Bucket *>::iterator i;
     for (i = contents.begin (); i != contents.end (); i++)
     {
-        buckets.push_back ((*i)->Name);
+        if (this->bucket_prefix.empty ())
+        {
+            // everything is a legal bucketname
+            buckets.push_back ((*i)->Name);
+        }
+        else if ((*i)->Name.find (this->bucket_prefix) != string::npos)
+        {
+            // we're using a prefix, so only things that begin with it are
+            // legal bucket names
+            buckets.push_back ((*i)->Name.substr 
+                               (this->bucket_prefix.length ()));
+        }
     }
 
     delete result;
@@ -64,7 +76,7 @@ string S3Backend::get (const string & bucket, const string & key)
 {
     class response_buffer *b = NULL;
 
-    b = object_get (bucket, key, 0);
+    b = object_get (this->bucket_prefix + bucket, key, 0);
 
     if(b == NULL){
         ThrudocException e;
@@ -90,10 +102,11 @@ void S3Backend::put (const string & bucket, const string & key,
 {
     struct s3headers meta[2] = {{0,0},{0,0}};
 
-    int r = object_put (bucket, key, value.c_str(), value.length(),
-                        meta);
+    int r = object_put (this->bucket_prefix + bucket, key, value.c_str(),
+                        value.length(), meta);
 
-    if(r == -1){
+    if (r == -1)
+    {
         ThrudocException e;
         e.what = "S3Backend error";
         throw e;
@@ -102,9 +115,10 @@ void S3Backend::put (const string & bucket, const string & key,
 
 void S3Backend::remove (const string & bucket, const string & key)
 {
-    int r = object_rm (bucket, key);
+    int r = object_rm (this->bucket_prefix + bucket, key);
 
-    if(r == -1){
+    if (r == -1)
+    {
         ThrudocException e;
         e.what = "S3Backend error";
         throw e;
@@ -116,7 +130,8 @@ ScanResponse S3Backend::scan (const string & bucket, const string & seed,
 {
     ScanResponse scan_response;
 
-    s3_result * result = list_bucket (bucket, "", seed, count);
+    s3_result * result = list_bucket (this->bucket_prefix + bucket, "", seed,
+                                      count);
 
     if (!result)
     {
@@ -156,7 +171,8 @@ string S3Backend::admin (const string & op, const string & data)
         validate (data, NULL, NULL);
 
         ThrudocException e;
-        class response_buffer * b =  request ("PUT", data, "", 0, 0, 0, 0);
+        class response_buffer * b =  request ("PUT", this->bucket_prefix + data,
+                                              "", 0, 0, 0, 0);
         if( b == NULL )
             e.what = "S3Backend error";
         int result = b->result;
@@ -177,7 +193,9 @@ string S3Backend::admin (const string & op, const string & data)
         validate (data, NULL, NULL);
 
         // NOTE: only works if empty...
-        class response_buffer * b = request ("DELETE", data, "", 0, 0, 0, 0);
+        class response_buffer * b = request ("DELETE", 
+                                             this->bucket_prefix + data, "", 0,
+                                             0, 0, 0);
         int result = b->result;
         delete b;
         ThrudocException e;

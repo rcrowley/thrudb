@@ -167,8 +167,11 @@ int main (int argc, char **argv) {
                 aws_access_key_id     = ConfigManager->read<string>("AWS_ACCESS_KEY").c_str();
                 aws_secret_access_key = ConfigManager->read<string>("AWS_SECRET_ACCESS_KEY").c_str();
 
+                string bucket_prefix =
+                    ConfigManager->read<string>("S3_BUCKET_PREFIX", "");
+
                 backends.push_back 
-                    (shared_ptr<ThrudocBackend>(new S3Backend ()));
+                    (shared_ptr<ThrudocBackend>(new S3Backend (bucket_prefix)));
             }
 #endif /* HAVE_LIBEXPAT && HAVE_LIBCURL */
 #if HAVE_LIBMYSQLCLIENT_R
