@@ -5,7 +5,6 @@ thrudoc_SOURCES = \
 		  gen-cpp/Thrudoc.cpp			\
 		  gen-cpp/Thrudoc_types.cpp		\
 		  gen-cpp/Thrudoc_constants.cpp		\
-		  ConfigFile.cpp			\
 		  ThrudocBackend.cpp			\
 		  ThrudocHandler.cpp			\
 		  BDBBackend.cpp			\
@@ -21,8 +20,8 @@ thrudoc_SOURCES = \
 		  mysql_glue.cpp			\
 		  main.cpp
 
-thrudoc_CPPFLAGS = -Wall -Igen-cpp $(CURL_CFLAGS) $(MEMCACHED_CFLAGS) $(THRIFTNB_CFLAGS) $(SSL_CFLAGS) $(UUID_CFLAGS)
-thrudoc_LDFLAGS = -Wall $(CURL_LIBS) $(THRIFTNB_LIBS) $(SSL_LIBS) $(UUID_LIBS) -levent -lmemcached
+thrudoc_CPPFLAGS = -Wall -Igen-cpp $(CURL_CFLAGS) $(MEMCACHED_CFLAGS) $(THRIFTNB_CFLAGS) $(THRUCOMMON_CFLAGS) $(SSL_CFLAGS) $(UUID_CFLAGS)
+thrudoc_LDFLAGS = -Wall $(CURL_LIBS) $(THRIFTNB_LIBS) $(THRUCOMMON_LIBS) $(SSL_LIBS) $(UUID_LIBS) -levent -lmemcached
 
 thrudoc_bench_SOURCES = \
 			gen-cpp/Thrudoc.cpp		\
