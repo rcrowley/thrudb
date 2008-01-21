@@ -45,6 +45,7 @@
 #include "NullBackend.h"
 #include "S3Backend.h"
 #include "s3_glue.h"
+#include "StatsBackend.h"
 #include "SpreadBackend.h"
 #include "ThrudocHandler.h"
 
@@ -258,6 +259,9 @@ int main (int argc, char **argv) {
             exit (1);
         }
 #endif /* HAVE_LIBSPREAD */
+
+        if (ConfigManager->read<int>("KEEP_STATS", 0))
+            backend = shared_ptr<ThrudocBackend> (new StatsBackend (backend));
 
         shared_ptr<ThrudocHandler>   handler (new ThrudocHandler (backend));
         shared_ptr<ThrudocProcessor> processor (new ThrudocProcessor (handler));

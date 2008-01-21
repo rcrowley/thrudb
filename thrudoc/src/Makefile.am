@@ -14,6 +14,7 @@ thrudoc_SOURCES = \
 		  NBackend.cpp				\
 		  NullBackend.cpp			\
 		  S3Backend.cpp				\
+		  StatsBackend.cpp			\
 		  SpreadBackend.cpp			\
 		  base64.cpp				\
 		  s3_glue.cpp				\
