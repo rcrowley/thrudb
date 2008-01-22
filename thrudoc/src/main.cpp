@@ -11,7 +11,7 @@
 #include "thrudoc_config.h"
 #endif
 /* hack to work around thrift and log4cxx installing config.h's */
-#undef HAVE_CONFIG_H 
+#undef HAVE_CONFIG_H
 
 #include <concurrency/ThreadManager.h>
 #include <concurrency/PosixThreadFactory.h>
@@ -44,6 +44,8 @@
 #include "NBackend.h"
 #include "NullBackend.h"
 #include "S3Backend.h"
+#include "LogBackend.h"
+#include "BloomBackend.h"
 #include "s3_glue.h"
 #include "StatsBackend.h"
 #include "SpreadBackend.h"
@@ -132,7 +134,7 @@ int main (int argc, char **argv) {
             if ((*be) == "null")
             {
                 // NULL backend
-                backends.push_back 
+                backends.push_back
                     (shared_ptr<ThrudocBackend>(new NullBackend ()));
             }
 #if HAVE_LIBDB_CXX
@@ -141,7 +143,7 @@ int main (int argc, char **argv) {
                 // BDB backend
                 string bdb_home =
                     ConfigManager->read<string>("BDB_HOME", "/tmp/bdbs");
-                backends.push_back 
+                backends.push_back
                     (shared_ptr<ThrudocBackend>(new BDBBackend (bdb_home,
                                                                 thread_count)));
             }
@@ -152,7 +154,7 @@ int main (int argc, char **argv) {
                 // Disk backend
                 string doc_root =
                     ConfigManager->read<string>("DISK_DOC_ROOT", "/tmp/docs");
-                backends.push_back 
+                backends.push_back
                     (shared_ptr<ThrudocBackend>(new DiskBackend (doc_root)));
             }
 #endif /* HAVE_LIBBOOST_FILESYSTEM */
@@ -167,10 +169,11 @@ int main (int argc, char **argv) {
                 aws_access_key_id     = ConfigManager->read<string>("AWS_ACCESS_KEY").c_str();
                 aws_secret_access_key = ConfigManager->read<string>("AWS_SECRET_ACCESS_KEY").c_str();
 
+
                 string bucket_prefix =
                     ConfigManager->read<string>("S3_BUCKET_PREFIX", "");
 
-                backends.push_back 
+                backends.push_back
                     (shared_ptr<ThrudocBackend>(new S3Backend (bucket_prefix)));
             }
 #endif /* HAVE_LIBEXPAT && HAVE_LIBCURL */
@@ -180,28 +183,28 @@ int main (int argc, char **argv) {
                 // MySQL backend
                 string master_hostname =
                     ConfigManager->read<string>("MYSQL_MASTER_HOST", "localhost");
-                short master_port = 
+                short master_port =
                     ConfigManager->read<short>("MYSQL_MASTER_PORT", 3306);
                 string slave_hostname =
                     ConfigManager->read<string>("MYSQL_SLAVE_HOST", "");
-                short slave_port = 
+                short slave_port =
                     ConfigManager->read<short>("MYSQL_SLAVE_PORT", 3306);
-                string directory_db = 
-                    ConfigManager->read<string>("MYSQL_DIRECTORY_DB", 
-                                                "thrudoc");
-                string username = 
+                string directory_db =
+                    ConfigManager->read<string>("MYSQL_DIRECTORY_DB", "thrudoc");
+                string username =
                     ConfigManager->read<string>("MYSQL_USERNAME", "thrudoc");
-                string password = 
+                string password =
                     ConfigManager->read<string>("MYSQL_PASSWORD", "thrudoc");
-                int max_value_size = 
+                int max_value_size =
                     ConfigManager->read<int>("MYSQL_MAX_VALUES_SIZE", 1024);
+
                 backends.push_back (shared_ptr<ThrudocBackend>
-                                    (new MySQLBackend (master_hostname, 
-                                                       master_port, 
-                                                       slave_hostname, 
-                                                       slave_port, 
+                                    (new MySQLBackend (master_hostname,
+                                                       master_port,
+                                                       slave_hostname,
+                                                       slave_port,
                                                        directory_db,
-                                                       username, password, 
+                                                       username, password,
                                                        max_value_size)));
             }
 #endif /* HAVE_LIBMYSQLCLIENT_R */
@@ -210,9 +213,9 @@ int main (int argc, char **argv) {
         shared_ptr<ThrudocBackend> backend;
         if (backends.size () == 0)
         {
-            LOG4CXX_ERROR (logger, string ("unknown or unbuilt backend=") + 
+            LOG4CXX_ERROR (logger, string ("unknown or unbuilt backend=") +
                            which);
-            fprintf (stderr, "unknown or unbuilt backend=%s\n", 
+            fprintf (stderr, "unknown or unbuilt backend=%s\n",
                      which.c_str ());
             exit (1);
         }
@@ -224,6 +227,16 @@ int main (int argc, char **argv) {
         {
             backend = shared_ptr<ThrudocBackend> (new NBackend (backends));
         }
+
+
+        //Logging enabled
+        string log_directory =
+            ConfigManager->read<string>("LOG_DIRECTORY","");
+
+        if(!log_directory.empty()){
+            backend = shared_ptr<ThrudocBackend>( new LogBackend(log_directory,backend) );
+        }
+
 
         // Memcached cache
         string memcached_servers =
@@ -263,8 +276,15 @@ int main (int argc, char **argv) {
         }
 #endif /* HAVE_LIBSPREAD */
 
+
+        //On by default
+        if(!ConfigManager->read<bool>("DISABLE_BLOOM_FILTER",false))
+            backend = shared_ptr<ThrudocBackend>(new BloomBackend(backend));
+
+
         if (ConfigManager->read<int>("KEEP_STATS", 0))
             backend = shared_ptr<ThrudocBackend> (new StatsBackend (backend));
+
 
         shared_ptr<ThrudocHandler>   handler (new ThrudocHandler (backend));
         shared_ptr<ThrudocProcessor> processor (new ThrudocProcessor (handler));
@@ -314,6 +334,10 @@ int main (int argc, char **argv) {
 
 
     }
+    catch (TException e)
+    {
+        cerr<<"Thrift Error: "<<e.what()<<endl;
+    }
     catch (std::runtime_error e)
     {
         cerr<<"Runtime Exception: "<<e.what ()<<endl;
@@ -328,12 +352,12 @@ int main (int argc, char **argv) {
     }
     catch (std::exception e)
     {
-        cerr<<"Caught Fatal Exception: "<<e.what ()<<endl;
+        cerr<<"Caught Fatal Exception: "<<e.what()<<endl;
     }
     catch (...)
     {
         cerr<<"Caught unknown exception"<<endl;
-    }
+        }
 
     return 0;
 }

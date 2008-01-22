@@ -7,6 +7,8 @@ thrudoc_SOURCES = \
 		  gen-cpp/Thrudoc_constants.cpp		\
 		  ThrudocBackend.cpp			\
 		  ThrudocHandler.cpp			\
+		  LogBackend.cpp			\
+		  BloomBackend.cpp			\
 		  BDBBackend.cpp			\
 		  DiskBackend.cpp			\
 		  MySQLBackend.cpp			\
