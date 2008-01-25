@@ -278,7 +278,7 @@ int main (int argc, char **argv) {
 
 
         //On by default
-        if(!ConfigManager->read<bool>("DISABLE_BLOOM_FILTER",false))
+        if(ConfigManager->read<bool>("ENABLE_BLOOM_FILTER",false))
             backend = shared_ptr<ThrudocBackend>(new BloomBackend(backend));
 
 
