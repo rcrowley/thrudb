@@ -44,7 +44,7 @@ string MemcachedBackend::get (const string & bucket, const string & key )
     memcached_st * cache = get_cache ();
     string cache_key = (bucket + ":" + key);
     memcached_return rc;
-    uint16_t opt_flags = 0;
+    uint32_t opt_flags = 0;
     size_t str_length;
     char * str = memcached_get(cache, (char*)cache_key.c_str (),
                                cache_key.length (), &str_length,
