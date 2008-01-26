@@ -10,6 +10,7 @@ AC_CONFIG_HEADER(thrudoc_config.h)
 AC_PROG_CC
 AC_PROG_CXX
 AC_PROG_INSTALL
+AC_PROG_LIBTOOL
 AC_PROG_MAKE_SET
 
 AC_LANG(C++)
@@ -154,5 +155,6 @@ AC_TYPE_UINT8_T
 
 AC_CONFIG_FILES([Makefile
                  examples/Makefile
-                 src/Makefile])
+                 src/Makefile
+                 src/thrudoc.pc])
 AC_OUTPUT
