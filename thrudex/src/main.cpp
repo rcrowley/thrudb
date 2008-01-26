@@ -32,6 +32,8 @@
 #include "RecoveryManager.h"
 #include "SpreadManager.h"
 #include "ThrudexHandler.h"
+#include "ThrudexBackend.h"
+#include "CLuceneBackend.h"
 #include "ThrudexSpreadTask.h"
 #include "LuceneManager.h"
 #include "ConfigFile.h"
@@ -147,7 +149,8 @@ int main(int argc, char **argv) {
 
 
         shared_ptr<TProtocolFactory>  protocolFactory  (new TBinaryProtocolFactory());
-        shared_ptr<ThrudexHandler>   handler          (new ThrudexHandler());
+        shared_ptr<ThrudexBackend>    backend          (new CLuceneBackend());
+        shared_ptr<ThrudexHandler>    handler          (new ThrudexHandler(backend));
         shared_ptr<TProcessor>        processor        (new ThrudexProcessor(handler));
 
 

@@ -17,7 +17,8 @@
 
 #include "Thrudex.h"
 #include "ThrudexHandler.h"
-#include "ThrudexSimpleHandler.h"
+#include "ThrudexBackend.h"
+#include "CLuceneSimpleBackend.h"
 #include "RecoveryManager.h"
 #include "TransactionManager.h"
 #include "Transaction.h"
@@ -47,7 +48,8 @@ void ThrudexSpreadTask::ThrudexSpreadTask::run()
     TBinaryProtocolFactory protocol_factory;
 
     //thrucene handler specific to spread
-    boost::shared_ptr<ThrudexHandler>   handler(new ThrudexSimpleHandler());
+    boost::shared_ptr<ThrudexBackend>   backend(new CLuceneSimpleBackend ());
+    boost::shared_ptr<ThrudexHandler>   handler(new ThrudexHandler(backend));
     boost::shared_ptr<ThrudexProcessor> processor(new ThrudexProcessor(handler));
 
     const string raw_msg = transaction->getRawBuffer();
