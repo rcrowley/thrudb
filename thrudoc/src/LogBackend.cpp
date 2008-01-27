@@ -19,11 +19,12 @@
 #include <stdexcept>
 
 using namespace boost;
-using namespace std;
-using namespace facebook::thrift::transport;
+using namespace facebook::thrift::concurrency;
 using namespace facebook::thrift::protocol;
-using namespace thrudoc;
+using namespace facebook::thrift::transport;
 using namespace log4cxx;
+using namespace std;
+using namespace thrudoc;
 
 /*
  * TODO:
@@ -34,8 +35,8 @@ using namespace log4cxx;
 
 LoggerPtr LogBackend::logger (Logger::getLogger ("LogBackend"));
 
-LogBackend::LogBackend (const string & log_directory, 
-                        shared_ptr<ThrudocBackend> backend)
+LogBackend::LogBackend (shared_ptr<ThrudocBackend> backend,
+                        const string & log_directory, unsigned int max_ops)
 {
 
     LOG4CXX_INFO (logger, "LogBackend: LogDir=" + log_directory);
@@ -48,8 +49,10 @@ LogBackend::LogBackend (const string & log_directory,
         throw runtime_error (string ("Invalid Log Directory: ") + log_directory);
     }
 
+    this->backend = backend;
     this->log_directory = log_directory;
-    this->backend       = backend;
+    this->num_ops = 0;
+    this->max_ops = max_ops;
 
     // Serializes messages for the log
     msg_transport = shared_ptr<TMemoryBuffer>(new TMemoryBuffer ());
@@ -57,8 +60,10 @@ LogBackend::LogBackend (const string & log_directory,
     msg_client = shared_ptr<ThrudocClient>(new ThrudocClient (msg_protocol));
 
     // Open logfile
+    string log_filename = get_log_filename ();
+    LOG4CXX_INFO (logger, "LogBackend: logfile=" + log_filename);
     log_transport = shared_ptr<TFileTransport>
-        (new TFileTransport (log_directory + "/thrudoc.log"));
+        (new TFileTransport (log_directory + "/" + log_filename));
     shared_ptr<TProtocol>  log_protocol (new TBinaryProtocol (log_transport));
     log_client = shared_ptr<EventLogClient> (new EventLogClient (log_protocol));
 
@@ -81,6 +86,42 @@ string LogBackend::get (const string & bucket, const string & key)
     return backend->get (bucket, key);
 }
 
+string LogBackend::get_log_filename ()
+{
+    char buf[64];
+    sprintf (buf, "thrudoc.log.%d", (int)time (NULL));
+    return buf; 
+}
+
+void LogBackend::send_message (string raw_message)
+{
+    log_client->send_log (this->createEvent (raw_message));
+
+    // this is going to be fuzzy b/c of multi-thread, but that's ok
+    this->num_ops++;
+
+    if (this->num_ops >= this->max_ops)
+    {
+        // it's unlikely that a mutex at this level is good enough...
+        Guard g(log_mutex); 
+
+        string log_filename = get_log_filename ();
+        LOG4CXX_INFO (logger, "send_message: new logfile=" + log_filename);
+
+        // time for a new file
+        log_transport->flush ();
+        log_client->send_nextLog (log_filename);
+        log_transport = shared_ptr<TFileTransport>
+            (new TFileTransport (log_directory + "/" + log_filename));
+        shared_ptr<TProtocol>  log_protocol (new TBinaryProtocol (log_transport));
+        log_client = shared_ptr<EventLogClient> (new EventLogClient (log_protocol));
+
+        // just in case we happen to reopen rather than create new
+        log_transport->seekToEnd ();
+
+        this->num_ops = 0;
+    }
+}
 
 void LogBackend::put (const string & bucket, const string & key,
           const string & value)
@@ -92,7 +133,7 @@ void LogBackend::put (const string & bucket, const string & key,
     string raw_msg = msg_transport->getBufferAsString ();
     msg_transport->resetBuffer ();
 
-    log_client->send_log (this->createEvent (raw_msg));
+    send_message (raw_msg);
 }
 
 void LogBackend::remove (const std::string & bucket, const std::string & key)
@@ -104,7 +145,7 @@ void LogBackend::remove (const std::string & bucket, const std::string & key)
     string raw_msg = msg_transport->getBufferAsString ();
     msg_transport->resetBuffer ();
 
-    log_client->send_log (this->createEvent (raw_msg));
+    send_message (raw_msg);
 }
 
 ScanResponse LogBackend::scan (const string & bucket,
@@ -122,7 +163,7 @@ string LogBackend::admin (const std::string & op, const std::string & data)
     string raw_msg = msg_transport->getBufferAsString ();
     msg_transport->resetBuffer ();
 
-    log_client->send_log (this->createEvent (raw_msg));
+    send_message (raw_msg);
 
     return ret;
 }
@@ -136,7 +177,7 @@ vector<ThrudocException> LogBackend::putList (const vector<Element> & elements)
     string raw_msg = msg_transport->getBufferAsString ();
     msg_transport->resetBuffer ();
 
-    log_client->send_log (this->createEvent (raw_msg));
+    send_message (raw_msg);
     return ret;
 }
 
@@ -149,7 +190,7 @@ vector<ThrudocException> LogBackend::removeList(const vector<Element> & elements
     string raw_msg = msg_transport->getBufferAsString ();
     msg_transport->resetBuffer ();
 
-    log_client->send_log (this->createEvent (raw_msg));
+    send_message (raw_msg);
     return ret;
 }
 

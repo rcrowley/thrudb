@@ -68,9 +68,11 @@ inline void usage ()
 class Replayer : public EventLogIf
 {
     public:
-        Replayer (shared_ptr<ThrudocBackend> backend) 
+        Replayer (shared_ptr<ThrudocBackend> backend, string current_filename) 
         {
             this->backend = backend;
+            this->current_filename = current_filename;
+
             this->handler = shared_ptr<ThrudocHandler>
                 (new ThrudocHandler (this->backend));
             this->processor = shared_ptr<ThrudocProcessor>
@@ -79,11 +81,17 @@ class Replayer : public EventLogIf
 
         void log (const Event & event)
         {
-            char buf[1024];
-            sprintf (buf, "log: event.timestamp=%ld, event.msg=***", 
-                     event.timestamp); // TODO: , event.message.c_str ());
-            LOG4CXX_DEBUG (logger, buf);
+            // TODO: skip over previously completed transactions...
 
+            if (logger->isDebugEnabled ())
+            {
+                char buf[1024];
+                sprintf (buf, "log: event.timestamp=%ld, event.msg=***", 
+                         event.timestamp); // TODO: , event.message.c_str ());
+                LOG4CXX_DEBUG (logger, buf);
+            }
+
+            // do these really have to be shared pointers?
             shared_ptr<TTransport> tbuf(new TMemoryBuffer (event.message));
             shared_ptr<TProtocol> prot = protocol_factory.getProtocol (tbuf);
 
@@ -125,6 +133,17 @@ class Replayer : public EventLogIf
             }
         }
 
+        void nextLog (const string & next_filename)
+        {
+            LOG4CXX_INFO (logger, "nextLog: next_filename=" + next_filename);
+            this->current_filename = next_filename;
+        }
+
+        string get_current_filename ()
+        {
+            return this->current_filename;
+        }
+
     private:
         static log4cxx::LoggerPtr logger;
 
@@ -132,6 +151,7 @@ class Replayer : public EventLogIf
         shared_ptr<ThrudocBackend> backend;
         shared_ptr<ThrudocHandler> handler;
         shared_ptr<ThrudocProcessor> processor;
+        string current_filename;
 };
 
 LoggerPtr Replayer::logger (Logger::getLogger ("Replayer"));
@@ -155,31 +175,58 @@ int main (int argc, char **argv)
     //Read da config
     ConfigManager->readFile ( conf_file );
 
-    try{
-        //Init logger
+    try
+    {
         PropertyConfigurator::configure (conf_file);
 
-        LOG4CXX_INFO (logger, "Starting up");
+        string log_directory = argv[argc-2];
+        LOG4CXX_INFO (logger, "log_directory=" + log_directory);
+        string log_filename = argv[argc-1];
+        LOG4CXX_INFO (logger, "log_filename=" + log_filename);
 
-        //Startup Services
         shared_ptr<TProtocolFactory>
             protocolFactory (new TBinaryProtocolFactory ());
 
+        // create our backend
         string which = ConfigManager->read<string> ("BACKEND", "mysql");
-
         shared_ptr<ThrudocBackend> backend = create_backend (which, 1);
 
-        boost::shared_ptr<Replayer> replayer (new Replayer (backend));
+        // create our replayer with initial log_filename
+        boost::shared_ptr<Replayer> replayer (new Replayer (backend, 
+                                                            log_filename));
+        // blank it out so we'll open things up... HACK
+        log_filename = "";
 
-        shared_ptr<TFileTransport> 
-            rlog (new TFileTransport ("logs/thrudoc.log", true));
-        boost::shared_ptr<EventLogProcessor> 
-            proc (new EventLogProcessor (replayer));
-        shared_ptr<TProtocolFactory> pfactory (new TBinaryProtocolFactory ());
+        TFileProcessor * fileProcessor = NULL;
+        while (1)
+        {
+            // check for new file
+            if (log_filename != replayer->get_current_filename ())
+            {
+                log_filename = replayer->get_current_filename ();
+                
+                LOG4CXX_INFO (logger, "opening=" + log_directory + "/" + 
+                              log_filename);
 
-        TFileProcessor fileProcessor (proc, pfactory, rlog);
+                // TODO: we have to sleep for a little bit here to give the
+                // new file time to come in to existence, as sometimes we'll
+                // beat it...
+                sleep (1);
 
-        fileProcessor.process (0, true);
+                shared_ptr<TFileTransport> 
+                    rlog (new TFileTransport (log_directory + "/" +
+                                              log_filename, true));
+                boost::shared_ptr<EventLogProcessor> 
+                    proc (new EventLogProcessor (replayer));
+                shared_ptr<TProtocolFactory> pfactory (new TBinaryProtocolFactory ());
+
+                if (fileProcessor)
+                    delete fileProcessor;
+                fileProcessor = new TFileProcessor (proc, pfactory, rlog);
+            }
+
+            fileProcessor->process (1, true);
+        }
 
     }
     catch (TException e)

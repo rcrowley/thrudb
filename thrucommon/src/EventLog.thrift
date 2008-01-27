@@ -11,5 +11,6 @@ struct Event
 
 service EventLog
 {
-    void log (1:Event event) throws (EventLogException e)
+    void log (1:Event event) throws (EventLogException e),
+    void nextLog (1:string next_filename) throws (EventLogException e)
 }

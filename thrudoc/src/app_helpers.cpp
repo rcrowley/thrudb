@@ -204,8 +204,10 @@ shared_ptr<ThrudocBackend> create_backend (string which, int thread_count)
         ConfigManager->read<string>("LOG_DIRECTORY","");
     if(!log_directory.empty())
     {
-        backend = shared_ptr<ThrudocBackend> (new LogBackend (log_directory,
-                                                              backend));
+        int max_ops = ConfigManager->read<int>("LOG_MAX_OPS", 25000);
+        backend = shared_ptr<ThrudocBackend> (new LogBackend (backend,
+                                                              log_directory,
+                                                              max_ops));
     }
 
     return backend;

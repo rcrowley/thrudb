@@ -14,10 +14,11 @@
 #include <log4cxx/logger.h>
 #include <boost/shared_ptr.hpp>
 
-#include <thrift/transport/TTransportUtils.h>
-#include <thrift/transport/TFileTransport.h>
+#include <thrift/concurrency/Mutex.h>
 #include <thrift/protocol/TBinaryProtocol.h>
 #include <thrift/protocol/TDenseProtocol.h>
+#include <thrift/transport/TFileTransport.h>
+#include <thrift/transport/TTransportUtils.h>
 
 #include "ThrudocBackend.h"
 #include "EventLog.h"
@@ -25,8 +26,8 @@
 class LogBackend : public ThrudocBackend
 {
     public:
-        LogBackend (const std::string &log_directory, 
-                    boost::shared_ptr<ThrudocBackend> backend);
+        LogBackend (boost::shared_ptr<ThrudocBackend> backend,
+                    const std::string &log_directory, unsigned int max_ops);
         ~LogBackend ();
 
         std::vector<std::string> getBuckets ();
@@ -54,8 +55,6 @@ class LogBackend : public ThrudocBackend
     private:
         static log4cxx::LoggerPtr logger;
 
-        Event createEvent (const std::string &msg);
-
         boost::shared_ptr<ThrudocBackend> backend;
 
         // this will be used to create the event message
@@ -63,9 +62,16 @@ class LogBackend : public ThrudocBackend
         boost::shared_ptr<thrudoc::ThrudocClient> msg_client;
 
         // this will be used to write to the log file
-        std::string log_directory;
         boost::shared_ptr<facebook::thrift::transport::TFileTransport> log_transport;
         boost::shared_ptr<EventLogClient> log_client;
+        facebook::thrift::concurrency::Mutex log_mutex;
+        std::string log_directory;
+        unsigned int num_ops;
+        unsigned int max_ops;
+
+        Event createEvent (const std::string &msg);
+        std::string get_log_filename ();
+        void send_message (std::string raw_message);
 };
 
 #endif
