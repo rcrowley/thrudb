@@ -7,6 +7,7 @@ pkgconfig_DATA = thrudoc.pc
 
 include_thrudocdir = $(includedir)/thrudoc
 include_thrudoc_HEADERS = \
+			     app_helpers.h	\
 			     BDBBackend.h	\
 			     BloomBackend.h	\
 			     DiskBackend.h	\
@@ -24,6 +25,7 @@ libthrudoc_la_SOURCES = \
 		  gen-cpp/Thrudoc.cpp			\
 		  gen-cpp/Thrudoc_types.cpp		\
 		  gen-cpp/Thrudoc_constants.cpp		\
+		  app_helpers.cpp			\
 		  ThrudocBackend.cpp			\
 		  ThrudocHandler.cpp			\
 		  LogBackend.cpp			\
@@ -47,8 +49,11 @@ libthrudoc_la_LDFLAGS = -Wall $(CURL_LIBS) $(THRIFTNB_LIBS) $(THRUCOMMON_LIBS) $
 thrudoc_SOURCES = \
 		  thrudoc.cpp
 
+LDADD = $(top_builddir)/src/libthrudoc.la
+
 thrudoc_CPPFLAGS = -Wall -Igen-cpp $(CURL_CFLAGS) $(MEMCACHED_CFLAGS) $(THRIFTNB_CFLAGS) $(THRUCOMMON_CFLAGS) $(SSL_CFLAGS) $(UUID_CFLAGS)
-thrudoc_LDFLAGS = -Wall $(CURL_LIBS) $(THRIFTNB_LIBS) $(THRUCOMMON_LIBS) $(SSL_LIBS) $(UUID_LIBS) -levent -lmemcached -lthrudoc
+thrudoc_LDADD = $(LDADD)
+thrudoc_LDFLAGS = -Wall -rpath $(pkglibdir) $(CURL_LIBS) $(THRIFTNB_LIBS) $(THRUCOMMON_LIBS) $(SSL_LIBS) $(UUID_LIBS) -levent -lmemcached
 
 thrudoc_bench_SOURCES = \
 			thrudoc_bench.cpp
