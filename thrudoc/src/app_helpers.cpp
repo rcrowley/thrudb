@@ -154,16 +154,6 @@ shared_ptr<ThrudocBackend> create_backend (string which, int thread_count)
         backend = shared_ptr<ThrudocBackend> (new NBackend (backends));
     }
 
-
-    //Logging enabled
-    string log_directory =
-        ConfigManager->read<string>("LOG_DIRECTORY","");
-
-    if(!log_directory.empty()){
-        backend = shared_ptr<ThrudocBackend>( new LogBackend(log_directory,backend) );
-    }
-
-
     // Memcached cache
     string memcached_servers =
         ConfigManager->read<string>("MEMCACHED_SERVERS", "");
@@ -208,6 +198,15 @@ shared_ptr<ThrudocBackend> create_backend (string which, int thread_count)
 
     if (ConfigManager->read<int>("KEEP_STATS", 0))
         backend = shared_ptr<ThrudocBackend> (new StatsBackend (backend));
+
+    // NOTE: logging should always be the outtermost backend
+    string log_directory =
+        ConfigManager->read<string>("LOG_DIRECTORY","");
+    if(!log_directory.empty())
+    {
+        backend = shared_ptr<ThrudocBackend> (new LogBackend (log_directory,
+                                                              backend));
+    }
 
     return backend;
 }

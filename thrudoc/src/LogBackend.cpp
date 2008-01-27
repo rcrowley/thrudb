@@ -15,7 +15,6 @@
 
 #include "LogBackend.h"
 #include "utils.h"
-#include "Redo.h"
 
 #include <stdexcept>
 
@@ -26,111 +25,162 @@ using namespace facebook::thrift::protocol;
 using namespace thrudoc;
 using namespace log4cxx;
 
+/*
+ * TODO:
+ * - error handling isn't exactly correct, backend can succeed, but log fail
+ *   and an exception will be return to client, but not a very useful one, how
+ *   should this behave.
+ */
+
 LoggerPtr LogBackend::logger (Logger::getLogger ("LogBackend"));
 
-LogBackend::LogBackend(const string &log_directory, shared_ptr<ThrudocBackend> backend)
+LogBackend::LogBackend (const string & log_directory, 
+                        shared_ptr<ThrudocBackend> backend)
 {
 
     LOG4CXX_INFO (logger, "LogBackend: LogDir=" + log_directory);
 
     //Verify log directory
-    if(!directory_exists( log_directory )){
-        LOG4CXX_ERROR (logger, string ("Invalid Log Directory: ") + log_directory );
-
-        throw runtime_error(string ("Invalid Log Directory: ") + log_directory );
+    if (!directory_exists (log_directory))
+    {
+        // TODO: create directory here
+        LOG4CXX_ERROR (logger, string ("Invalid Log Directory: ") + log_directory);
+        throw runtime_error (string ("Invalid Log Directory: ") + log_directory);
     }
 
     this->log_directory = log_directory;
     this->backend       = backend;
 
-    //Serializes messages for the log
-    transport = shared_ptr<TMemoryBuffer>(new TMemoryBuffer());
-    shared_ptr<TProtocol>  protocol(new TBinaryProtocol(transport));
-    faux_client = shared_ptr<ThrudocClient>(new ThrudocClient(protocol));
+    // Serializes messages for the log
+    msg_transport = shared_ptr<TMemoryBuffer>(new TMemoryBuffer ());
+    shared_ptr<TProtocol>  msg_protocol (new TBinaryProtocol (msg_transport));
+    msg_client = shared_ptr<ThrudocClient>(new ThrudocClient (msg_protocol));
 
+    // Open logfile
+    log_transport = shared_ptr<TFileTransport>
+        (new TFileTransport (log_directory + "/thrudoc.log"));
+    shared_ptr<TProtocol>  log_protocol (new TBinaryProtocol (log_transport));
+    log_client = shared_ptr<EventLogClient> (new EventLogClient (log_protocol));
 
-    //Open logfile
-    thrudoc_log = shared_ptr<TFileTransport>( new TFileTransport(log_directory + "/thrudoc.log") );
-
-    shared_ptr<TProtocol>  log_protocol(new TBinaryProtocol(thrudoc_log));
-    log_client = shared_ptr<RedoClient>( new RedoClient(log_protocol) );
-
-    thrudoc_log->seekToEnd();
-
+    // start writing at the end, append
+    log_transport->seekToEnd ();
 }
 
-LogBackend::~LogBackend()
+LogBackend::~LogBackend ()
 {
-    thrudoc_log->flush();
+    log_transport->flush ();
 }
 
-vector<string> LogBackend::getBuckets()
+vector<string> LogBackend::getBuckets ()
 {
-    return backend->getBuckets();
+    return backend->getBuckets ();
 }
 
 string LogBackend::get (const string & bucket, const string & key)
 {
-    return backend->get(bucket,key);
+    return backend->get (bucket, key);
 }
 
 
 void LogBackend::put (const string & bucket, const string & key,
           const string & value)
 {
+    backend->put (bucket, key, value);
 
-    backend->put(bucket,key,value);
+    //Create raw message 
+    msg_client->send_put (bucket, key, value);
+    string raw_msg = msg_transport->getBufferAsString ();
+    msg_transport->resetBuffer ();
 
-
-    //Create raw message
-    faux_client->send_put(bucket,key,value);
-    string raw_msg = transport->getBufferAsString();
-    transport->resetBuffer();
-
-    log_client->send_log( this->createLogMessage(raw_msg) );
+    log_client->send_log (this->createEvent (raw_msg));
 }
 
 void LogBackend::remove (const std::string & bucket, const std::string & key)
 {
-
-    backend->remove(bucket,key);
-
+    backend->remove (bucket, key);
 
     //Create raw message
-    faux_client->send_remove(bucket,key);
-    string raw_msg = transport->getBufferAsString();
-    transport->resetBuffer();
+    msg_client->send_remove (bucket, key);
+    string raw_msg = msg_transport->getBufferAsString ();
+    msg_transport->resetBuffer ();
 
-    log_client->send_log( this->createLogMessage( raw_msg ) );
-
+    log_client->send_log (this->createEvent (raw_msg));
 }
 
 ScanResponse LogBackend::scan (const string & bucket,
                                const string & seed, int32_t count)
 {
-    return backend->scan(bucket, seed, count);
+    return backend->scan (bucket, seed, count);
 }
 
 string LogBackend::admin (const std::string & op, const std::string & data)
 {
-    return backend->admin(op, data);
+    string ret = backend->admin (op, data);
+
+    //Create raw message
+    msg_client->send_admin (op, data);
+    string raw_msg = msg_transport->getBufferAsString ();
+    msg_transport->resetBuffer ();
+
+    log_client->send_log (this->createEvent (raw_msg));
+
+    return ret;
 }
 
+vector<ThrudocException> LogBackend::putList (const vector<Element> & elements)
+{
+    vector<ThrudocException> ret = backend->putList (elements);
+
+    //Create raw message 
+    msg_client->send_putList (elements);
+    string raw_msg = msg_transport->getBufferAsString ();
+    msg_transport->resetBuffer ();
+
+    log_client->send_log (this->createEvent (raw_msg));
+    return ret;
+}
+
+vector<ThrudocException> LogBackend::removeList(const vector<Element> & elements)
+{
+    vector<ThrudocException> ret = backend->removeList (elements);
+
+    //Create raw message 
+    msg_client->send_removeList (elements);
+    string raw_msg = msg_transport->getBufferAsString ();
+    msg_transport->resetBuffer ();
+
+    log_client->send_log (this->createEvent (raw_msg));
+    return ret;
+}
 
 void LogBackend::validate (const std::string & bucket, const std::string * key,
                            const std::string * value)
 {
-    backend->validate(bucket, key, value);
+    backend->validate (bucket, key, value);
 }
 
 
-RedoMessage LogBackend::createLogMessage(const string &msg)
+Event LogBackend::createEvent (const string & message)
 {
-    RedoMessage m;
+    Event event;
 
-    m.message         = msg;
-    m.timestamp       = time(NULL);
-    m.transaction_id  = generateUUID();
+#if defined(HAVE_CLOCK_GETTIME)
+#define NS_PER_S 1000000000LL
+    struct timespec now;
+    int ret = clock_gettime (CLOCK_REALTIME, &now);
+    assert (ret == 0);
+    event.timestamp = (now.tv_sec * NS_PER_S) + now.tv_nsec;
+#elif defined(HAVE_GETTIMEOFDAY)
+#define US_PER_S 1000000LL
+    struct timeval now;
+    int ret = gettimeofday (&now, NULL);
+    assert (ret == 0);
+    event.timestamp = (((int64_t)now.tv_sec) * US_PER_S) + now.tv_usec;
+#else
+#error "one of either clock_gettime or gettimeofday required for LogBackend"
+#endif // defined(HAVE_GETTIMEDAY)
 
-    return m;
+    event.message = message;
+
+    return event;
 }

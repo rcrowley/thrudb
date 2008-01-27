@@ -10,6 +10,10 @@
 using namespace thrudoc;
 using namespace std;
 
+/* TODO:
+ * - the way List happens here won't work with nested backends...
+ */
+
 vector<ThrudocException> ThrudocBackend::putList 
 (const vector<Element> & elements)
 {

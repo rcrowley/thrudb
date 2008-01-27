@@ -20,45 +20,52 @@
 #include <thrift/protocol/TDenseProtocol.h>
 
 #include "ThrudocBackend.h"
-#include "Redo.h"
+#include "EventLog.h"
 
 class LogBackend : public ThrudocBackend
 {
- public:
-    LogBackend( const std::string &log_directory, boost::shared_ptr<ThrudocBackend> backend );
-    ~LogBackend();
+    public:
+        LogBackend (const std::string &log_directory, 
+                    boost::shared_ptr<ThrudocBackend> backend);
+        ~LogBackend ();
 
-    std::vector<std::string> getBuckets();
-    std::string get (const std::string & bucket,
-                     const std::string & key);
+        std::vector<std::string> getBuckets ();
+        std::string get (const std::string & bucket,
+                         const std::string & key);
 
-    void put (const std::string & bucket, const std::string & key,
-              const std::string & value);
+        void put (const std::string & bucket, const std::string & key,
+                  const std::string & value);
 
-    void remove (const std::string & bucket, const std::string & key);
+        void remove (const std::string & bucket, const std::string & key);
 
-    thrudoc::ScanResponse scan (const std::string & bucket,
-                                  const std::string & seed, int32_t count);
+        thrudoc::ScanResponse scan (const std::string & bucket,
+                                    const std::string & seed, int32_t count);
 
-    std::string admin (const std::string & op, const std::string & data);
+        std::string admin (const std::string & op, const std::string & data);
 
-    void validate (const std::string & bucket, const std::string * key,
-                   const std::string * value);
+        std::vector<thrudoc::ThrudocException> putList
+            (const std::vector<thrudoc::Element> & elements);
+        std::vector<thrudoc::ThrudocException> removeList
+            (const std::vector<thrudoc::Element> & elements);
 
- private:
-    RedoMessage createLogMessage(const std::string &msg);
+        void validate (const std::string & bucket, const std::string * key,
+                       const std::string * value);
 
-    static log4cxx::LoggerPtr logger;
-    boost::shared_ptr<ThrudocBackend> backend;
+    private:
+        static log4cxx::LoggerPtr logger;
 
-    //This will be used to create the log msg
-    boost::shared_ptr<facebook::thrift::transport::TMemoryBuffer>  transport;
-    boost::shared_ptr<thrudoc::ThrudocClient>                      faux_client;
+        Event createEvent (const std::string &msg);
 
-    //for logfile
-    std::string log_directory;
-    boost::shared_ptr<facebook::thrift::transport::TFileTransport> thrudoc_log;
-    boost::shared_ptr<RedoClient>                                  log_client;
+        boost::shared_ptr<ThrudocBackend> backend;
+
+        // this will be used to create the event message
+        boost::shared_ptr<facebook::thrift::transport::TMemoryBuffer> msg_transport;
+        boost::shared_ptr<thrudoc::ThrudocClient> msg_client;
+
+        // this will be used to write to the log file
+        std::string log_directory;
+        boost::shared_ptr<facebook::thrift::transport::TFileTransport> log_transport;
+        boost::shared_ptr<EventLogClient> log_client;
 };
 
 #endif

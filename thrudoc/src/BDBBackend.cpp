@@ -272,6 +272,7 @@ string BDBBackend::admin (const string & op, const string & data)
         try
         {
             db = get_db (data);
+            // this will log an error message if db doesn't exist, ignore it
         }
         catch (ThrudocException e) {}
 
@@ -345,7 +346,7 @@ Db * BDBBackend::get_db (const string & bucket)
         catch (DbException & e)
         {
             delete db;
-            LOG4CXX_WARN (logger, string ("get_open: exception=") + e.what ());
+            LOG4CXX_WARN (logger, string ("get_db: exception=") + e.what ());
             ThrudocException de;
             de.what = "BDBBackend error";
             throw de;

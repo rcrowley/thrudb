@@ -35,21 +35,9 @@
 #include "log4cxx/propertyconfigurator.h"
 #include "log4cxx/helpers/exception.h"
 
-#include "ConfigFile.h"
 #include "app_helpers.h"
+#include "ConfigFile.h"
 #include "ThrudocBackend.h"
-#include "BDBBackend.h"
-#include "DiskBackend.h"
-#include "MemcachedBackend.h"
-#include "MySQLBackend.h"
-#include "NBackend.h"
-#include "NullBackend.h"
-#include "S3Backend.h"
-#include "LogBackend.h"
-#include "BloomBackend.h"
-#include "s3_glue.h"
-#include "StatsBackend.h"
-#include "SpreadBackend.h"
 #include "ThrudocHandler.h"
 
 using namespace boost;
@@ -108,8 +96,8 @@ int main (int argc, char **argv)
 
         string which = ConfigManager->read<string> ("BACKEND", "mysql");
 
-        shared_ptr<ThrudocBackend> backend = 
-            create_backend (which, thread_count);
+        shared_ptr<ThrudocBackend> backend = create_backend (which, 
+                                                             thread_count);
         shared_ptr<ThrudocHandler>   handler (new ThrudocHandler (backend));
         shared_ptr<ThrudocProcessor> processor (new ThrudocProcessor (handler));
 
