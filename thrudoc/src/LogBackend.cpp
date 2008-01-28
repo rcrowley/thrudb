@@ -274,6 +274,8 @@ Event LogBackend::createEvent (const string & message)
 
 void LogBackend::send_message (string raw_message)
 {
+    Guard g(log_mutex); 
+
     log_client->send_log (this->createEvent (raw_message));
 
     // this is going to be fuzzy b/c of multi-thread, but that's ok
@@ -281,9 +283,6 @@ void LogBackend::send_message (string raw_message)
 
     if (this->num_ops >= this->max_ops)
     {
-        // it's unlikely that a mutex at this level is good enough...
-        Guard g(log_mutex); 
-
         string new_log_filename = get_log_filename ();
         LOG4CXX_INFO (logger, "send_message: new logfile=" + new_log_filename);
 
