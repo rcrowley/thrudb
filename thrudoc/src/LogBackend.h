@@ -9,11 +9,11 @@
 #ifndef _THRUDOC_LOG_BACKEND_H_
 #define _THRUDOC_LOG_BACKEND_H_
 
-
-#include <string>
-#include <log4cxx/logger.h>
+#include <boost/filesystem/fstream.hpp>
+#include <boost/filesystem.hpp>
 #include <boost/shared_ptr.hpp>
-
+#include <log4cxx/logger.h>
+#include <string>
 #include <thrift/concurrency/Mutex.h>
 #include <thrift/protocol/TBinaryProtocol.h>
 #include <thrift/protocol/TDenseProtocol.h>
@@ -22,6 +22,8 @@
 
 #include "ThrudocBackend.h"
 #include "EventLog.h"
+
+#define LOG_FILE_PREFIX "thrudoc-log."
 
 class LogBackend : public ThrudocBackend
 {
@@ -66,11 +68,13 @@ class LogBackend : public ThrudocBackend
         boost::shared_ptr<EventLogClient> log_client;
         facebook::thrift::concurrency::Mutex log_mutex;
         std::string log_directory;
+        boost::filesystem::fstream index_file;
         unsigned int num_ops;
         unsigned int max_ops;
 
-        Event createEvent (const std::string &msg);
         std::string get_log_filename ();
+        void open_log_client (std::string log_filename);
+        Event createEvent (const std::string &msg);
         void send_message (std::string raw_message);
 };
 

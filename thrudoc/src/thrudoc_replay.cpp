@@ -39,6 +39,7 @@
 
 #include "app_helpers.h"
 #include "ConfigFile.h"
+#include "LogBackend.h"
 #include "ThrudocBackend.h"
 #include "ThrudocHandler.h"
 #include "ThrudocHandler.h"
@@ -54,7 +55,12 @@ using namespace log4cxx;
 using namespace log4cxx::helpers;
 using namespace std;
 
-LoggerPtr logger (Logger::getLogger ("Thrudoc"));
+LoggerPtr logger (Logger::getLogger ("thrudoc_replay"));
+
+/*
+ * TODO:
+ * - support delayed replay
+ */
 
 //print usage and die
 inline void usage ()
@@ -77,18 +83,45 @@ class Replayer : public EventLogIf
                 (new ThrudocHandler (this->backend));
             this->processor = shared_ptr<ThrudocProcessor>
                 (new ThrudocProcessor (this->handler));
+
+            this->last_position_flush = 0;
+            this->current_position = 0;
+
+            try
+            {
+                string last_position;
+                last_position = this->backend->admin ("get_log_position", "");
+                LOG4CXX_INFO (logger, "last_position=" + last_position);
+                if (!last_position.empty ())
+                {
+                    int index = last_position.find (":");
+                    this->nextLog (last_position.substr (0, index));
+                    this->current_position = 
+                        atol (last_position.substr (index + 1).c_str ());
+                    // we have a last position
+                }
+            }
+            catch (ThrudocException e)
+            {
+                LOG4CXX_WARN (logger, "last_position unknown, assuming epoch");
+            }
         }
 
         void log (const Event & event)
         {
-            // TODO: skip over previously completed transactions...
-
             if (logger->isDebugEnabled ())
             {
                 char buf[1024];
                 sprintf (buf, "log: event.timestamp=%ld, event.msg=***", 
                          event.timestamp); // TODO: , event.message.c_str ());
                 LOG4CXX_DEBUG (logger, buf);
+            }
+
+            if (event.timestamp <= this->current_position)
+            {
+                // we're already at or past this event
+                LOG4CXX_DEBUG (logger, "    skipping");
+                return;
             }
 
             // do these really have to be shared pointers?
@@ -100,21 +133,6 @@ class Replayer : public EventLogIf
             try 
             {
                 processor->process(prot, prot);
-
-                int32_t rseqid = 0;
-                std::string fname;
-                facebook::thrift::protocol::TMessageType mtype;
-
-                //Make sure the call succeded before adding to redo log
-                prot->readMessageBegin(fname, mtype, rseqid);
-                if (mtype == facebook::thrift::protocol::T_EXCEPTION)
-                {
-                    //cerr<<"Exception (S3 connectivity?)"<<endl;
-                }
-                else 
-                {
-                    //cerr<<"Processed "+m.transaction_id<<endl;
-                }
             } 
             catch (TTransportException& ttx) 
             {
@@ -131,6 +149,23 @@ class Replayer : public EventLogIf
                 cerr << "uncaught exception." << endl;
                 throw;
             }
+
+            // write our log position out to "storage" every once in a while,
+            // we'll be at most interval behind and thus at most need to replay
+            // that many seconds in to the slave datastore
+            if (time (NULL) > this->last_position_flush + 60)
+            {
+                char buf[64];
+                sprintf (buf, "%s:%ld", get_current_filename ().c_str (), 
+                         event.timestamp);
+                LOG4CXX_DEBUG (logger, string ("log: flushing position=") +
+                               buf);
+                this->backend->admin ("put_log_position", buf);
+                this->last_position_flush = time (NULL);
+            }
+
+            // update the current position
+            this->current_position = event.timestamp;
         }
 
         void nextLog (const string & next_filename)
@@ -152,6 +187,8 @@ class Replayer : public EventLogIf
         shared_ptr<ThrudocHandler> handler;
         shared_ptr<ThrudocProcessor> processor;
         string current_filename;
+        int64_t current_position;
+        time_t last_position_flush;
 };
 
 LoggerPtr Replayer::logger (Logger::getLogger ("Replayer"));
@@ -179,10 +216,36 @@ int main (int argc, char **argv)
     {
         PropertyConfigurator::configure (conf_file);
 
-        string log_directory = argv[argc-2];
+        string log_directory = argv[argc-1];
         LOG4CXX_INFO (logger, "log_directory=" + log_directory);
-        string log_filename = argv[argc-1];
-        LOG4CXX_INFO (logger, "log_filename=" + log_filename);
+
+        // open the log index file
+        fstream index_file;
+        index_file.open ((log_directory + "/" + LOG_FILE_PREFIX +
+                          "index").c_str (), ios::in);
+        string log_filename;
+        if (index_file.good ())
+        {
+            // read the first line
+            char buf[64];
+            index_file.getline (buf, 64);
+            log_filename = string (buf);
+        }
+        else 
+        {
+            ThrudocException e;
+            e.what = "error opening log index file";
+            LOG4CXX_ERROR (logger, e.what);
+            throw e;
+        }
+
+        if (log_filename.empty ())
+        {
+            ThrudocException e;
+            e.what = "error log index file empty";
+            LOG4CXX_ERROR (logger, e.what);
+            throw e;
+        }
 
         shared_ptr<TProtocolFactory>
             protocolFactory (new TBinaryProtocolFactory ());
@@ -204,14 +267,15 @@ int main (int argc, char **argv)
             if (log_filename != replayer->get_current_filename ())
             {
                 log_filename = replayer->get_current_filename ();
-                
+
                 LOG4CXX_INFO (logger, "opening=" + log_directory + "/" + 
                               log_filename);
 
                 // TODO: we have to sleep for a little bit here to give the
                 // new file time to come in to existence, as sometimes we'll
-                // beat it...
-                sleep (1);
+                // beat it since thrift seems to be really slow at opening 
+                // them up...
+                sleep (5);
 
                 shared_ptr<TFileTransport> 
                     rlog (new TFileTransport (log_directory + "/" +

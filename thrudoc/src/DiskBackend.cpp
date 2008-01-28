@@ -341,6 +341,19 @@ string DiskBackend::admin (const string & op, const string & data)
         }
         return "done";
     }
+    else if (op == "put_log_position")
+    {
+        // TODO: error handling
+        // TODO: might be nice to not always create even if it's a no-op
+        admin ("create_bucket", "thrudoc_state");
+        put ("thrudoc_state", "__thrudoc__log__position__", data);
+        return "done";
+    }
+    else if (op == "get_log_position")
+    {
+        // TODO: error handling
+        return get ("thrudoc_state", "__thrudoc__log__position__");
+    }
     return "";
 }
 

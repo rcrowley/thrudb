@@ -199,6 +199,7 @@ shared_ptr<ThrudocBackend> create_backend (string which, int thread_count)
     if (ConfigManager->read<int>("KEEP_STATS", 0))
         backend = shared_ptr<ThrudocBackend> (new StatsBackend (backend));
 
+#if HAVE_LIBBOOST_FILESYSTEM
     // NOTE: logging should always be the outtermost backend
     string log_directory =
         ConfigManager->read<string>("LOG_DIRECTORY","");
@@ -209,6 +210,7 @@ shared_ptr<ThrudocBackend> create_backend (string which, int thread_count)
                                                               log_directory,
                                                               max_ops));
     }
+#endif /* HAVE_LIBBOOST_FILESYSTEM */
 
     return backend;
 }

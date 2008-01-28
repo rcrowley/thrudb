@@ -5,6 +5,7 @@ exception EventLogException
 
 struct Event
 {
+    # TODO: would be nice if this was uint64_t...
     1:i64    timestamp,
     2:string message
 }

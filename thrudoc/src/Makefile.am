@@ -1,3 +1,6 @@
+# TODO: figure out the right way to link with libthrudoc for apps, making sure
+# that we're linked to the one we're building and not any installed verison...
+
 pkgconfigdir = $(libdir)/pkgconfig
 
 bin_PROGRAMS = thrudoc thrudoc_replay
