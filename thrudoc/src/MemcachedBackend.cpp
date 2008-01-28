@@ -36,7 +36,8 @@ MemcachedBackend::~MemcachedBackend ()
 
 vector<string> MemcachedBackend::getBuckets ()
 {
-    return this->backend->getBuckets ();
+    vector<string> buckets;
+    return this->backend ? this->backend->getBuckets () : buckets;
 }
 
 string MemcachedBackend::get (const string & bucket, const string & key )
@@ -71,7 +72,7 @@ string MemcachedBackend::get (const string & bucket, const string & key )
     if (str)
         free (str);
 
-    if (value.empty ())
+    if (value.empty () && this->backend)
     {
         value = this->backend->get (bucket, key);
         cache_put (cache_key, value);
@@ -83,14 +84,16 @@ string MemcachedBackend::get (const string & bucket, const string & key )
 void MemcachedBackend::put (const string & bucket, const string & key, 
                             const string & value)
 {
-    this->backend->put (bucket, key, value);
+    if (this->backend)
+        this->backend->put (bucket, key, value);
     string cache_key = (bucket + ":" + key);
     cache_put (cache_key, value);
 }
 
 void MemcachedBackend::remove (const string & bucket, const string & key )
 {
-    this->backend->remove (bucket, key);
+    if (this->backend)
+        this->backend->remove (bucket, key);
 
     memcached_st * cache = get_cache ();
     string cache_key = (bucket + ":" + key);
@@ -111,18 +114,31 @@ void MemcachedBackend::remove (const string & bucket, const string & key )
 ScanResponse MemcachedBackend::scan (const string & bucket,
                                      const string & seed, int32_t count)
 {
-    return this->backend->scan (bucket, seed, count);
+    if (this->backend)
+        return this->backend->scan (bucket, seed, count);
+    else
+    {
+        ScanResponse scan_response;
+        return scan_response;
+    }
 }
 
 string MemcachedBackend::admin (const string & op, const string & data)
 {
-    return this->backend->admin (op, data);
+    if (this->backend)
+        return this->backend->admin (op, data);
+    else
+        return "";
 }
 
 void MemcachedBackend::validate (const string & bucket, const string * key, 
                                  const string * value)
 {
-    this->backend->validate (bucket, key, value);
+    if (this->backend)
+        this->backend->validate (bucket, key, value);
+    else
+        ThrudocBackend::validate (bucket, key, value);
+
     if (bucket.find (":") != string::npos)
     {
         ThrudocException e;
