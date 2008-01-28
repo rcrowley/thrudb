@@ -442,7 +442,12 @@ FindReturn MySQLBackend::find_next_and_checkout (const string & bucket,
 
 string MySQLBackend::admin (const string & op, const string & data)
 {
-    if (op == "load_partitions")
+    string ret = ThrudocBackend::admin (op, data);
+    if (!ret.empty ())
+    {
+        return ret;
+    }
+    else if (op == "load_partitions")
     {
         this->load_partitions (data);
         return "done";

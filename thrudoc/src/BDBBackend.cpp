@@ -266,7 +266,12 @@ ScanResponse BDBBackend::scan (const string & bucket, const string & seed,
 
 string BDBBackend::admin (const string & op, const string & data)
 {
-    if (op == "create_bucket")
+    string ret = ThrudocBackend::admin (op, data);
+    if (!ret.empty ())
+    {
+        return ret;
+    }
+    else if (op == "create_bucket")
     {
         Db * db = NULL;
         try

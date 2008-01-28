@@ -20,6 +20,7 @@ LoggerPtr ThrudocHandler::logger (Logger::getLogger ("ThrudocHandler"));
 
 ThrudocHandler::ThrudocHandler (shared_ptr<ThrudocBackend> backend)
 {
+    LOG4CXX_INFO (logger, "ThrudocHandler");
     this->backend = backend;
 }
 
@@ -89,16 +90,7 @@ void ThrudocHandler::scan (ScanResponse & _return, const string & bucket,
 void ThrudocHandler::admin (string & _return, const string & op, const string & data)
 {
     LOG4CXX_DEBUG (logger, "admin: op=" + op + ", data=" + data);
-    if (op == "echo")
-    {
-        // echo is a special admin command that we'll handle at this level,
-        // everything else will get passed on down
-        _return = data;
-    }
-    else
-    {
-        _return = this->backend->admin (op, data);
-    }
+    _return = this->backend->admin (op, data);
 }
 
 void ThrudocHandler::putList(vector<ThrudocException> & _return,

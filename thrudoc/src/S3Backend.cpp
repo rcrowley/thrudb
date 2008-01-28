@@ -165,7 +165,12 @@ ScanResponse S3Backend::scan (const string & bucket, const string & seed,
 
 string S3Backend::admin (const string & op, const string & data)
 {
-    if (op == "create_bucket")
+    string ret = ThrudocBackend::admin (op, data);
+    if (!ret.empty ())
+    {
+        return ret;
+    }
+    else if (op == "create_bucket")
     {
         // will throw
         validate (data, NULL, NULL);

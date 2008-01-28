@@ -14,6 +14,29 @@ using namespace std;
  * - the way List happens here won't work with nested backends...
  */
 
+string ThrudocBackend::admin (const string & op, const string & data)
+{
+    if (op == "echo")
+    {
+        return data;
+    }
+    else if (op == "exit")
+    {
+        exit (0);
+    }
+    else if (op == "put_log_position")
+    {
+        admin ("create_bucket", "thrudoc_state");
+        put ("thrudoc_state", "log_position", data);
+        return "done";
+    }
+    else if (op == "get_log_position")
+    {
+        return get ("thrudoc_state", "log_position");
+    }
+    return "";
+}
+
 vector<ThrudocException> ThrudocBackend::putList 
 (const vector<Element> & elements)
 {

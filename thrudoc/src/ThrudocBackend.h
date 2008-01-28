@@ -29,7 +29,7 @@ class ThrudocBackend
                                             const std::string & seed,
                                             int32_t count) = 0;
         virtual std::string admin (const std::string & op,
-                                   const std::string & data) = 0;
+                                   const std::string & data);
 
         virtual std::vector<thrudoc::ThrudocException> putList
             (const std::vector<thrudoc::Element> & elements);
