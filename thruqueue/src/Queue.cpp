@@ -33,7 +33,7 @@ using namespace log4cxx;
 using namespace facebook::thrift::concurrency;
 using namespace facebook::thrift::transport;
 using namespace facebook::thrift::protocol;
-using namespace Thruqueue;
+using namespace thruqueue;
 
 LoggerPtr   Queue::logger(Logger::getLogger("Queue"));
 

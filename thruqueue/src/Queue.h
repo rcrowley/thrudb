@@ -32,7 +32,7 @@ class Queue
  public:
     Queue(const std::string name, bool unique = false);
 
-    void         enqueue(const Thruqueue::QueueMessage &mess);
+    void         enqueue(const thruqueue::QueueMessage &mess);
     void         enqueue(const std::string &mess, bool priority = false);
     std::string  dequeue();
     std::string  peek();
@@ -49,7 +49,7 @@ class Queue
 
     std::set<std::string>   unique_keys;
 
-    std::deque<Thruqueue::QueueMessage> queue;
+    std::deque<thruqueue::QueueMessage> queue;
     std::deque<std::string>             pruning_queue;
     std::deque<std::string>             priority_queue;
 
@@ -64,7 +64,7 @@ class Queue
     boost::shared_ptr<facebook::thrift::transport::TFileTransport> queue_log_reader;
 
     boost::shared_ptr<facebook::thrift::transport::TMemoryBuffer>  transport;
-    boost::shared_ptr<Thruqueue::QueueLogClient>                   queue_log_client;
+    boost::shared_ptr<thruqueue::QueueLogClient>                   queue_log_client;
 
     boost::shared_ptr<facebook::thrift::transport::TFileProcessor> queue_log_processor;
 

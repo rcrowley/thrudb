@@ -11,7 +11,7 @@
 #include "QueueManager.h"
 
 using namespace boost;
-using namespace Thruqueue;
+using namespace thruqueue;
 
 void ThruqueueHandler::create(const std::string& queue_name, const bool unique)
 {

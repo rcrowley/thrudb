@@ -12,7 +12,7 @@
 
 #include "Thruqueue.h"
 
-class ThruqueueHandler : virtual public Thruqueue::ThruqueueIf {
+class ThruqueueHandler : virtual public thruqueue::ThruqueueIf {
  public:
     ThruqueueHandler() {};
 

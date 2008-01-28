@@ -24,7 +24,7 @@ using namespace std;
 using namespace boost;
 using namespace facebook::thrift;
 using namespace log4cxx;
-using namespace Thruqueue;
+using namespace thruqueue;
 using namespace facebook::thrift::concurrency;
 using namespace facebook::thrift::transport;
 using namespace facebook::thrift::protocol;

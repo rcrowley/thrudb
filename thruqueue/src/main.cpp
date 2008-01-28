@@ -43,7 +43,7 @@ using namespace facebook::thrift::transport;
 using namespace facebook::thrift::server;
 
 using namespace boost;
-using namespace Thruqueue;
+using namespace thruqueue;
 
 LoggerPtr logger(Logger::getLogger("Thruqueue"));
 
