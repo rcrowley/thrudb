@@ -27,7 +27,8 @@ LoggerPtr BloomBackend::logger (Logger::getLogger ("BloomBackend"));
 BloomBackend::BloomBackend( shared_ptr<ThrudocBackend> backend )
     : filter_space(10000000)
 {
-    this->backend = backend;
+    LOG4CXX_INFO(logger,"BloomBackend");
+    this->set_backend (backend);
 
     hit_filter   = new bloom_filter(filter_space,1.0/(1.0 * filter_space), ((int) 100000*rand()));
     miss_filter  = new bloom_filter(filter_space,1.0/(1.0 * filter_space), ((int) 100000*rand()));
@@ -44,12 +45,6 @@ BloomBackend::~BloomBackend()
     delete miss_filter2;
 }
 
-
-vector<string> BloomBackend::getBuckets ()
-{
-    return backend->getBuckets();
-}
-
 string BloomBackend::get (const string & bucket, const string & key)
 {
     string bloom_key = bucket + key;
@@ -62,7 +57,7 @@ string BloomBackend::get (const string & bucket, const string & key)
         checked_backend = true;
 
         try{
-            value = backend->get(bucket,key);
+            value = this->get_backend ()->get(bucket,key);
         }catch(ThrudocException e){
 
         }
@@ -90,7 +85,7 @@ string BloomBackend::get (const string & bucket, const string & key)
         //this must be a new id check backend
 
         try{
-            value = backend->get(bucket,key);
+            value = this->get_backend ()->get(bucket,key);
         }catch(ThrudocException e){
 
         }
@@ -112,7 +107,7 @@ string BloomBackend::get (const string & bucket, const string & key)
 
 void BloomBackend::put (const string & bucket, const string & key, const string & value)
 {
-    backend->put(bucket,key,value);
+    this->get_backend ()->put(bucket,key,value);
 
     string bloom_key = bucket+key;
 
@@ -121,26 +116,4 @@ void BloomBackend::put (const string & bucket, const string & key, const string 
 
         hit_filter->insert(bloom_key);
     }
-}
-
-void BloomBackend::remove (const std::string & bucket, const std::string & key)
-{
-    backend->remove(bucket,key);
-}
-
-ScanResponse BloomBackend::scan (const std::string & bucket,
-                                 const std::string & seed, int32_t count)
-{
-    return backend->scan(bucket,seed,count);
-}
-
-string BloomBackend::admin (const std::string & op, const std::string & data)
-{
-    return backend->admin(op,data);
-}
-
-void BloomBackend::validate (const std::string & bucket, const std::string * key,
-                             const std::string * value)
-{
-    return backend->validate(bucket,key,value);
 }

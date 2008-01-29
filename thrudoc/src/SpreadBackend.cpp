@@ -22,10 +22,10 @@ LoggerPtr SpreadBackend::logger (Logger::getLogger ("SpreadBackend"));
 
 string SP_error_to_string (int error);
 
-SpreadBackend::SpreadBackend (const string & spread_name, 
+SpreadBackend::SpreadBackend (shared_ptr<ThrudocBackend> backend,
+                              const string & spread_name, 
                               const string & spread_private_name,
-                              const string & spread_group,
-                              shared_ptr<ThrudocBackend> backend)
+                              const string & spread_group)
 {
     LOG4CXX_INFO (logger, "SpreadBackend: spread_name=" + spread_name + 
                   ", spread_private_name=" + spread_private_name + 
@@ -34,7 +34,7 @@ SpreadBackend::SpreadBackend (const string & spread_name,
     this->spread_name = spread_name;
     this->spread_private_name = spread_private_name;
     this->spread_group = spread_group;
-    this->backend = backend;
+    this->set_backend (backend);
 
     char private_group[MAX_GROUP_NAME];
     int ret = SP_connect (this->spread_name.c_str (), 
@@ -67,20 +67,10 @@ SpreadBackend::~SpreadBackend ()
     SP_disconnect (spread_mailbox);
 }
 
-vector<string> SpreadBackend::getBuckets ()
-{
-    return this->backend->getBuckets ();
-}
-
-string SpreadBackend::get (const string & bucket, const string & key )
-{
-    return this->backend->get (bucket, key);
-}
-
 void SpreadBackend::put (const string & bucket, const string & key, 
                          const string & value)
 {
-    this->backend->put (bucket, key, value);
+    this->get_backend ()->put (bucket, key, value);
     char msg[SPREAD_BACKEND_MAX_MESSAGE_SIZE];
     snprintf (msg, SPREAD_BACKEND_MAX_MESSAGE_SIZE, "put %s %s", 
               bucket.c_str (), key.c_str ());
@@ -90,29 +80,12 @@ void SpreadBackend::put (const string & bucket, const string & key,
 
 void SpreadBackend::remove (const string & bucket, const string & key )
 {
-    this->backend->remove (bucket, key);
+    this->get_backend ()->remove (bucket, key);
     char msg[SPREAD_BACKEND_MAX_MESSAGE_SIZE];
     snprintf (msg, SPREAD_BACKEND_MAX_MESSAGE_SIZE, "remove %s %s", 
               bucket.c_str (), key.c_str ());
     SP_multicast (this->spread_mailbox, SAFE_MESS | SELF_DISCARD, 
                   this->spread_group.c_str (), 0, strlen (msg), msg);
-}
-
-ScanResponse SpreadBackend::scan (const string & bucket,
-                                  const string & seed, int32_t count)
-{
-    return this->backend->scan (bucket, seed, count);
-}
-
-string SpreadBackend::admin (const string & op, const string & data)
-{
-    return this->backend->admin (op, data);
-}
-
-void SpreadBackend::validate (const string & bucket, const string * key, 
-                              const string * value)
-{
-    this->backend->validate (bucket, key, value);
 }
 
 // copied from sp.c, redic that it's a function that aborts in a library rather

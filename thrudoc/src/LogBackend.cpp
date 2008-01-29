@@ -48,7 +48,7 @@ LogBackend::LogBackend (shared_ptr<ThrudocBackend> backend,
                       ", max_ops=" + buf); 
     }
 
-    this->backend = backend;
+    this->set_backend (backend);
     this->log_directory = log_directory;
     this->num_ops = 0;
     this->max_ops = max_ops;
@@ -134,20 +134,10 @@ LogBackend::~LogBackend ()
     index_file.close ();
 }
 
-vector<string> LogBackend::getBuckets ()
-{
-    return backend->getBuckets ();
-}
-
-string LogBackend::get (const string & bucket, const string & key)
-{
-    return backend->get (bucket, key);
-}
-
 void LogBackend::put (const string & bucket, const string & key,
           const string & value)
 {
-    backend->put (bucket, key, value);
+    this->get_backend ()->put (bucket, key, value);
 
     //Create raw message 
     msg_client->send_put (bucket, key, value);
@@ -159,7 +149,7 @@ void LogBackend::put (const string & bucket, const string & key,
 
 void LogBackend::remove (const std::string & bucket, const std::string & key)
 {
-    backend->remove (bucket, key);
+    this->get_backend ()->remove (bucket, key);
 
     //Create raw message
     msg_client->send_remove (bucket, key);
@@ -169,29 +159,31 @@ void LogBackend::remove (const std::string & bucket, const std::string & key)
     send_message (raw_msg);
 }
 
-ScanResponse LogBackend::scan (const string & bucket,
-                               const string & seed, int32_t count)
-{
-    return backend->scan (bucket, seed, count);
-}
-
 string LogBackend::admin (const std::string & op, const std::string & data)
 {
-    string ret = backend->admin (op, data);
+    if (op == "flush_log")
+    {
+        this->flush_log ();
+        return "done";
+    }
+    else
+    {
+        string ret = this->get_backend ()->admin (op, data);
 
-    //Create raw message
-    msg_client->send_admin (op, data);
-    string raw_msg = msg_transport->getBufferAsString ();
-    msg_transport->resetBuffer ();
+        //Create raw message
+        msg_client->send_admin (op, data);
+        string raw_msg = msg_transport->getBufferAsString ();
+        msg_transport->resetBuffer ();
 
-    send_message (raw_msg);
+        send_message (raw_msg);
 
-    return ret;
+        return ret;
+    }
 }
 
 vector<ThrudocException> LogBackend::putList (const vector<Element> & elements)
 {
-    vector<ThrudocException> ret = backend->putList (elements);
+    vector<ThrudocException> ret = this->get_backend ()->putList (elements);
 
     //Create raw message 
     msg_client->send_putList (elements);
@@ -204,7 +196,7 @@ vector<ThrudocException> LogBackend::putList (const vector<Element> & elements)
 
 vector<ThrudocException> LogBackend::removeList(const vector<Element> & elements)
 {
-    vector<ThrudocException> ret = backend->removeList (elements);
+    vector<ThrudocException> ret = this->get_backend ()->removeList (elements);
 
     //Create raw message 
     msg_client->send_removeList (elements);
@@ -213,12 +205,6 @@ vector<ThrudocException> LogBackend::removeList(const vector<Element> & elements
 
     send_message (raw_msg);
     return ret;
-}
-
-void LogBackend::validate (const std::string & bucket, const std::string * key,
-                           const std::string * value)
-{
-    backend->validate (bucket, key, value);
 }
 
 string LogBackend::get_log_filename ()
@@ -286,24 +272,28 @@ void LogBackend::send_message (string raw_message)
 
     if (this->num_ops >= this->max_ops)
     {
-        string new_log_filename = get_log_filename ();
-        LOG4CXX_INFO (logger, "send_message: new logfile=" + new_log_filename);
-
-        // time for a new file
-        // point to it in the old one
-        log_client->send_nextLog (new_log_filename);
-        // and open the new one
-        open_log_client (new_log_filename);
-        // add it to the index
-        index_file.write ((new_log_filename + "\n").c_str (), 
-                          new_log_filename.length () + 1);
-        index_file.flush ();
-
-        // just in case we happen to reopen rather than create new
-        log_transport->seekToEnd ();
-
+        this->flush_log ();
         this->num_ops = 0;
     }
+}
+
+void LogBackend::flush_log ()
+{
+    string new_log_filename = get_log_filename ();
+    LOG4CXX_INFO (logger, "flush_log: new logfile=" + new_log_filename);
+
+    // time for a new file
+    // point to it in the old one
+    log_client->send_nextLog (new_log_filename);
+    // and open the new one
+    open_log_client (new_log_filename);
+    // add it to the index
+    index_file.write ((new_log_filename + "\n").c_str (), 
+                      new_log_filename.length () + 1);
+    index_file.flush ();
+
+    // just in case we happen to reopen rather than create new
+    log_transport->seekToEnd ();
 }
 
 #endif /* HAVE_LIBBOOST_FILESYSTEM */

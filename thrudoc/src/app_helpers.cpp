@@ -160,7 +160,7 @@ shared_ptr<ThrudocBackend> create_backend (string which, int thread_count)
 #if HAVE_LIBMEMCACHED
     if (!memcached_servers.empty ())
         backend = shared_ptr<ThrudocBackend>
-            (new MemcachedBackend (memcached_servers, backend));
+            (new MemcachedBackend (backend, memcached_servers));
 #else
     if (!memcached_servers.empty ())
     {
@@ -181,8 +181,8 @@ shared_ptr<ThrudocBackend> create_backend (string which, int thread_count)
 
     if (!spread_private_name.empty ())
         backend = shared_ptr<ThrudocBackend>
-            (new SpreadBackend (spread_name, spread_private_name,
-                                spread_group, backend));
+            (new SpreadBackend (backend, spread_name, spread_private_name,
+                                spread_group));
 #else
     if (!spread_private_name.empty ())
     {

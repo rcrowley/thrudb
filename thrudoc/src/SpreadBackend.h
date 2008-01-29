@@ -7,35 +7,28 @@
 
 #if HAVE_LIBSPREAD
 
+#include "Thrudoc.h"
+#include "ThrudocPassthruBackend.h"
+
 #include <log4cxx/logger.h>
+#include <protocol/TBinaryProtocol.h>
 #include <set>
 #include <sp.h>
 #include <string>
-#include <protocol/TBinaryProtocol.h>
 #include <transport/TTransportUtils.h>
-#include "Thrudoc.h"
-#include "ThrudocBackend.h"
 
-class SpreadBackend : public ThrudocBackend
+class SpreadBackend : public ThrudocPassthruBackend
 {
     public:
-        SpreadBackend (const std::string & spread_name, 
+        SpreadBackend (boost::shared_ptr<ThrudocBackend> backend,
+                       const std::string & spread_name, 
                        const std::string & spread_private_name,
-                       const std::string & spread_group,
-                       boost::shared_ptr<ThrudocBackend> backend);
+                       const std::string & spread_group);
         ~SpreadBackend ();
 
-        std::vector<std::string> getBuckets ();
-        std::string get (const std::string & bucket, 
-                         const std::string & key);
         void put (const std::string & bucket, const std::string & key, 
                   const std::string & value);
         void remove (const std::string & bucket, const std::string & key);
-        thrudoc::ScanResponse scan (const std::string & bucket, 
-                                    const std::string & seed, int32_t count);
-        std::string admin (const std::string & op, const std::string & data);
-        void validate (const std::string & bucket, const std::string * key,
-                       const std::string * value);
 
     private:
         static log4cxx::LoggerPtr logger;
@@ -45,7 +38,6 @@ class SpreadBackend : public ThrudocBackend
         std::string spread_group;
         std::string spread_private_group;
         mailbox spread_mailbox;
-        boost::shared_ptr<ThrudocBackend> backend;
 };
 
 #endif /* HAVE_LIBSPREAD */

@@ -16,30 +16,11 @@ LoggerPtr NBackend::logger (Logger::getLogger ("NBackend"));
 
 NBackend::NBackend (vector<shared_ptr<ThrudocBackend> > backends)
 {
-    LOG4CXX_INFO (logger, "NBackend");
+    char buf[32];
+    sprintf (buf, "NBackend: backends.size=%d\n", (int)backends.size ());
+    LOG4CXX_INFO (logger, buf);
+    this->set_backend (backends[0]);
     this->backends = backends;
-}
-
-NBackend::~NBackend ()
-{
-}
-
-vector<string> NBackend::getBuckets ()
-{
-    vector<string> buckets;
-    vector<shared_ptr<ThrudocBackend> >::iterator i;
-    // TODO: might be nice to do a union of all the backends...
-    for (i = backends.begin (); i != backends.end (); i++)
-    {
-        vector<string> tns = (*i)->getBuckets ();
-        buckets.insert (buckets.end (), tns.begin (), tns.end ());
-    }
-    return buckets;
-}
-
-string NBackend::get (const string & bucket, const string & key )
-{
-    return (*backends.begin ())->get (bucket, key);
 }
 
 void NBackend::put (const string & bucket, const string & key, 
@@ -59,12 +40,6 @@ void NBackend::remove (const string & bucket, const string & key )
     {
         (*i)->remove (bucket, key);
     }
-}
-
-ScanResponse NBackend::scan (const string & bucket,
-                             const string & seed, int32_t count)
-{
-    return (*backends.begin ())->scan (bucket, seed, count);
 }
 
 string NBackend::admin (const string & op, const string & data)

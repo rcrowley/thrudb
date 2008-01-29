@@ -12,24 +12,21 @@
 #include <set>
 #include <string>
 #include "Thrudoc.h"
-#include "ThrudocBackend.h"
+#include "ThrudocPassthruBackend.h"
 
-class MemcachedBackend : public ThrudocBackend
+class MemcachedBackend : public ThrudocPassthruBackend
 {
     public:
-        MemcachedBackend (const std::string & memcached_servers,
-                          boost::shared_ptr<ThrudocBackend> backend);
+        MemcachedBackend (boost::shared_ptr<ThrudocBackend> backend,
+                          const std::string & memcached_servers);
         ~MemcachedBackend ();
 
-        std::vector<std::string> getBuckets ();
         std::string get (const std::string & bucket,
                          const std::string & key);
         void put (const std::string & bucket, const std::string & key,
                   const std::string & value);
         void remove (const std::string & bucket, const std::string & key);
-        thrudoc::ScanResponse scan (const std::string & bucket,
-                                    const std::string & seed, int32_t count);
-        std::string admin (const std::string & op, const std::string & data);
+
         void validate (const std::string & bucket, const std::string * key,
                        const std::string * value);
 
@@ -44,7 +41,6 @@ class MemcachedBackend : public ThrudocBackend
 
         pthread_key_t memcached_key;
         std::string memcached_servers;
-        boost::shared_ptr<ThrudocBackend> backend;
 };
 
 #endif /* HAVE_LIBMEMCACHED */

@@ -20,29 +20,22 @@
 #include <thrift/transport/TFileTransport.h>
 #include <thrift/transport/TTransportUtils.h>
 
-#include "ThrudocBackend.h"
+#include "ThrudocPassthruBackend.h"
 #include "EventLog.h"
 
 #define LOG_FILE_PREFIX "thrudoc-log."
 
-class LogBackend : public ThrudocBackend
+class LogBackend : public ThrudocPassthruBackend
 {
     public:
         LogBackend (boost::shared_ptr<ThrudocBackend> backend,
                     const std::string &log_directory, unsigned int max_ops);
         ~LogBackend ();
 
-        std::vector<std::string> getBuckets ();
-        std::string get (const std::string & bucket,
-                         const std::string & key);
-
         void put (const std::string & bucket, const std::string & key,
                   const std::string & value);
 
         void remove (const std::string & bucket, const std::string & key);
-
-        thrudoc::ScanResponse scan (const std::string & bucket,
-                                    const std::string & seed, int32_t count);
 
         std::string admin (const std::string & op, const std::string & data);
 
@@ -51,13 +44,8 @@ class LogBackend : public ThrudocBackend
         std::vector<thrudoc::ThrudocException> removeList
             (const std::vector<thrudoc::Element> & elements);
 
-        void validate (const std::string & bucket, const std::string * key,
-                       const std::string * value);
-
     private:
         static log4cxx::LoggerPtr logger;
-
-        boost::shared_ptr<ThrudocBackend> backend;
 
         // this will be used to create the event message
         boost::shared_ptr<facebook::thrift::transport::TMemoryBuffer> msg_transport;
@@ -74,6 +62,7 @@ class LogBackend : public ThrudocBackend
 
         std::string get_log_filename ();
         void open_log_client (std::string log_filename);
+        void flush_log ();
         Event createEvent (const std::string &msg);
         void send_message (std::string raw_message);
 };

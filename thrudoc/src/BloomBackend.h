@@ -17,7 +17,7 @@
 #include <thrift/protocol/TBinaryProtocol.h>
 #include <thrift/concurrency/Mutex.h>
 
-#include "ThrudocBackend.h"
+#include "ThrudocPassthruBackend.h"
 
 /**
  *This backend uses bloom filters to quickly disregard requests
@@ -29,13 +29,11 @@
 
 class bloom_filter;
 
-class BloomBackend : public ThrudocBackend
+class BloomBackend : public ThrudocPassthruBackend
 {
  public:
     BloomBackend( boost::shared_ptr<ThrudocBackend> backend );
     ~BloomBackend();
-
-    std::vector<std::string> getBuckets ();
 
     std::string get (const std::string & bucket,
                      const std::string & key);
@@ -43,19 +41,8 @@ class BloomBackend : public ThrudocBackend
     void put (const std::string & bucket, const std::string & key,
               const std::string & value);
 
-    void remove (const std::string & bucket, const std::string & key);
-
-    thrudoc::ScanResponse scan (const std::string & bucket,
-                                  const std::string & seed, int32_t count);
-
-    std::string admin (const std::string & op, const std::string & data);
-
-    void validate (const std::string & bucket, const std::string * key,
-                   const std::string * value);
-
  protected:
     static log4cxx::LoggerPtr logger;
-    boost::shared_ptr<ThrudocBackend> backend;
 
     bloom_filter *hit_filter;  ///<ids that were found in the store
     bloom_filter *miss_filter; ///<ids that were not found in the store

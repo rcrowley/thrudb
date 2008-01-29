@@ -16,13 +16,13 @@ using namespace std;
 // private
 LoggerPtr MemcachedBackend::logger (Logger::getLogger ("MemcachedBackend"));
 
-MemcachedBackend::MemcachedBackend (const string & memcached_servers, 
-                                    shared_ptr<ThrudocBackend> backend)
+MemcachedBackend::MemcachedBackend (shared_ptr<ThrudocBackend> backend,
+                                    const string & memcached_servers)
 {
     LOG4CXX_INFO (logger, string ("MemcachedBackend: memcached_servers=") + 
                   memcached_servers);
 
-    this->backend = backend;
+    this->set_backend (backend);
     this->memcached_servers = memcached_servers;
 
     pthread_key_create (&memcached_key, NULL);
@@ -32,12 +32,6 @@ MemcachedBackend::~MemcachedBackend ()
 {
     // TODO: how do i call memcached_free on each of the thread's objects?
     pthread_key_delete (memcached_key);
-}
-
-vector<string> MemcachedBackend::getBuckets ()
-{
-    vector<string> buckets;
-    return this->backend ? this->backend->getBuckets () : buckets;
 }
 
 string MemcachedBackend::get (const string & bucket, const string & key )
@@ -72,9 +66,9 @@ string MemcachedBackend::get (const string & bucket, const string & key )
     if (str)
         free (str);
 
-    if (value.empty () && this->backend)
+    if (value.empty ())
     {
-        value = this->backend->get (bucket, key);
+        value = this->get_backend ()->get (bucket, key);
         cache_put (cache_key, value);
     }
 
@@ -84,16 +78,14 @@ string MemcachedBackend::get (const string & bucket, const string & key )
 void MemcachedBackend::put (const string & bucket, const string & key, 
                             const string & value)
 {
-    if (this->backend)
-        this->backend->put (bucket, key, value);
+    this->get_backend ()->put (bucket, key, value);
     string cache_key = (bucket + ":" + key);
     cache_put (cache_key, value);
 }
 
 void MemcachedBackend::remove (const string & bucket, const string & key )
 {
-    if (this->backend)
-        this->backend->remove (bucket, key);
+    this->get_backend ()->remove (bucket, key);
 
     memcached_st * cache = get_cache ();
     string cache_key = (bucket + ":" + key);
@@ -111,33 +103,10 @@ void MemcachedBackend::remove (const string & bucket, const string & key )
     }
 }
 
-ScanResponse MemcachedBackend::scan (const string & bucket,
-                                     const string & seed, int32_t count)
-{
-    if (this->backend)
-        return this->backend->scan (bucket, seed, count);
-    else
-    {
-        ScanResponse scan_response;
-        return scan_response;
-    }
-}
-
-string MemcachedBackend::admin (const string & op, const string & data)
-{
-    if (this->backend)
-        return this->backend->admin (op, data);
-    else
-        return "";
-}
-
 void MemcachedBackend::validate (const string & bucket, const string * key, 
                                  const string * value)
 {
-    if (this->backend)
-        this->backend->validate (bucket, key, value);
-    else
-        ThrudocBackend::validate (bucket, key, value);
+    this->get_backend ()->validate (bucket, key, value);
 
     if (bucket.find (":") != string::npos)
     {

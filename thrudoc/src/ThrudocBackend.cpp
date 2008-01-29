@@ -10,10 +10,6 @@
 using namespace thrudoc;
 using namespace std;
 
-/* TODO:
- * - the way List happens here won't work with nested backends...
- */
-
 string ThrudocBackend::admin (const string & op, const string & data)
 {
     if (op == "echo")
