@@ -212,7 +212,6 @@ PreparedStatement::~PreparedStatement ()
         delete this->bind_params;
     if (this->bind_results)
         delete this->bind_results;
-    // TODO: query?
 }
 
 void PreparedStatement::init (Connection * connection, const char * query,
