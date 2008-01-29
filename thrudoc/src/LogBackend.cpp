@@ -239,7 +239,10 @@ void LogBackend::open_log_client (string log_filename)
     // and open up a new one
     log_transport = shared_ptr<TFileTransport>
         (new TFileTransport (log_directory + "/" + log_filename));
-    shared_ptr<TProtocol>  log_protocol (new TBinaryProtocol (log_transport));
+    // hack from jake that will keep me from seeing 2-4 second hangs on send_*
+    // thanks to transport's flushing
+    log_transport->setFlushMaxUs (100);
+    shared_ptr<TProtocol> log_protocol (new TBinaryProtocol (log_transport));
     log_client = shared_ptr<EventLogClient> (new EventLogClient (log_protocol));
 
     // start writing at the end, append
