@@ -43,6 +43,7 @@
 #include "ThrudocBackend.h"
 #include "ThrudocHandler.h"
 #include "ThrudocHandler.h"
+#include "ThruFileTransport.h"
 
 using namespace boost;
 using namespace thrudoc;
@@ -260,7 +261,7 @@ int main (int argc, char **argv)
         // blank it out so we'll open things up... HACK
         log_filename = "";
 
-        TFileProcessor * fileProcessor = NULL;
+        ThruFileProcessor * fileProcessor = NULL;
         while (1)
         {
             // check for new file
@@ -272,24 +273,22 @@ int main (int argc, char **argv)
                               log_filename);
 
                 // TODO: we have to sleep for a little bit here to give the
-                // new file time to come in to existence, as sometimes we'll
-                // beat it since thrift seems to be really slow at opening 
-                // them up...
-                sleep (5);
+                // new file time to come in to existence to make sure we don't 
+                // beat it...
+                sleep (1);
 
-                shared_ptr<TFileTransport> 
-                    rlog (new TFileTransport (log_directory + "/" +
-                                              log_filename, true));
+                shared_ptr<ThruFileReaderTransport> 
+                    rlog (new ThruFileReaderTransport (log_directory + "/" +
+                                                       log_filename));
                 boost::shared_ptr<EventLogProcessor> 
                     proc (new EventLogProcessor (replayer));
                 shared_ptr<TProtocolFactory> pfactory (new TBinaryProtocolFactory ());
 
                 if (fileProcessor)
                     delete fileProcessor;
-                fileProcessor = new TFileProcessor (proc, pfactory, rlog);
+                fileProcessor = new ThruFileProcessor (proc, pfactory, rlog);
             }
-
-            fileProcessor->process (1, true);
+            fileProcessor->process (1);
         }
 
     }

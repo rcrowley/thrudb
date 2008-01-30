@@ -39,19 +39,21 @@ using namespace thrudoc;
 LoggerPtr LogBackend::logger (Logger::getLogger ("LogBackend"));
 
 LogBackend::LogBackend (shared_ptr<ThrudocBackend> backend,
-                        const string & log_directory, unsigned int max_ops)
+                        const string & log_directory, unsigned int max_ops,
+                        unsigned int sync_wait)
 {
     {
-        char buf[32];
-        sprintf (buf, "%u", max_ops);
-        LOG4CXX_INFO (logger, "LogBackend: log_directory=" + log_directory + 
-                      ", max_ops=" + buf); 
+        char buf[1024];
+        sprintf (buf, "LogBackend: log_directory=%s, max_ops=%u, sync_wait=%u",
+                 log_directory.c_str (), max_ops, sync_wait);
+        LOG4CXX_INFO (logger, buf); 
     }
 
     this->set_backend (backend);
     this->log_directory = log_directory;
     this->num_ops = 0;
     this->max_ops = max_ops;
+    this->sync_wait = sync_wait;
 
     // if our log directory doesn't exist, create it
     if (!fs::is_directory (log_directory))
@@ -170,9 +172,9 @@ void LogBackend::remove (const std::string & bucket, const std::string & key)
 
 string LogBackend::admin (const std::string & op, const std::string & data)
 {
-    if (op == "flush_log")
+    if (op == "roll_log")
     {
-        this->flush_log ();
+        this->roll_log ();
         return "done";
     }
     else
@@ -232,11 +234,9 @@ void LogBackend::open_log_client (string log_filename)
         log_transport->flush ();
 
     // and open up a new one
-    log_transport = shared_ptr<TFileTransport>
-        (new TFileTransport (log_directory + "/" + log_filename));
-
-    // start writing at the end, append
-    log_transport->seekToEnd ();
+    log_transport = shared_ptr<ThruFileWriterTransport>
+        (new ThruFileWriterTransport (log_directory + "/" + log_filename, 
+                                      this->sync_wait));
 }
 
 
@@ -290,16 +290,16 @@ void LogBackend::send_log (string raw_message)
         Guard g(log_mutex); 
         if (this->num_ops >= this->max_ops)
         {   
-            this->flush_log ();
+            this->roll_log ();
             this->num_ops = 0;
         }
     }
 }
 
-void LogBackend::flush_log ()
+void LogBackend::roll_log ()
 {
     string new_log_filename = get_log_filename ();
-    LOG4CXX_INFO (logger, "flush_log: new logfile=" + new_log_filename);
+    LOG4CXX_INFO (logger, "roll_log: new logfile=" + new_log_filename);
 
     // time for a new file
     // point to it in the old one
@@ -310,9 +310,6 @@ void LogBackend::flush_log ()
     index_file.write ((new_log_filename + "\n").c_str (), 
                       new_log_filename.length () + 1);
     index_file.flush ();
-
-    // just in case we happen to reopen rather than create new
-    log_transport->seekToEnd ();
 }
 
 #endif /* HAVE_LIBBOOST_FILESYSTEM */

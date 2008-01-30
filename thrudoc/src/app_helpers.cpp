@@ -206,9 +206,11 @@ shared_ptr<ThrudocBackend> create_backend (string which, int thread_count)
     if(!log_directory.empty())
     {
         int max_ops = ConfigManager->read<int>("LOG_MAX_OPS", 25000);
+        int sync_wait = ConfigManager->read<int>("LOG_SYNC_WAIT", 5000000);
         backend = shared_ptr<ThrudocBackend> (new LogBackend (backend,
                                                               log_directory,
-                                                              max_ops));
+                                                              max_ops,
+                                                              sync_wait));
     }
 #endif /* HAVE_LIBBOOST_FILESYSTEM */
 

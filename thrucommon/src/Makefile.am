@@ -13,6 +13,7 @@ include_thrucommon_HEADERS = \
 			     ConfigFile.h		\
 			     memcache++.h		\
 			     MemcacheHandle.h		\
+			     ThruFileTransport.h	\
 			     RecoveryManager.h		\
 			     SpreadManager.h		\
 			     SpreadTaskFactory.h	\
@@ -28,6 +29,7 @@ libthrucommon_la_SOURCES = \
 			   gen-cpp/EventLog_types.cpp		\
 			   gen-cpp/EventLog_constants.cpp	\
 			   ConfigFile.cpp			\
+			   ThruFileTransport.cpp		\
 			   RecoveryManager.cpp			\
 			   SpreadManager.cpp			\
 			   Transaction.cpp			\

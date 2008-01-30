@@ -22,6 +22,7 @@
 
 #include "ThrudocPassthruBackend.h"
 #include "EventLog.h"
+#include "ThruFileTransport.h"
 
 #define LOG_FILE_PREFIX "thrudoc-log."
 
@@ -29,7 +30,8 @@ class LogBackend : public ThrudocPassthruBackend
 {
     public:
         LogBackend (boost::shared_ptr<ThrudocBackend> backend,
-                    const std::string &log_directory, unsigned int max_ops);
+                    const std::string &log_directory, unsigned int max_ops,
+                    unsigned int sync_wait);
         ~LogBackend ();
 
         void put (const std::string & bucket, const std::string & key,
@@ -52,7 +54,7 @@ class LogBackend : public ThrudocPassthruBackend
         boost::shared_ptr<thrudoc::ThrudocClient> msg_client;
 
         // this will be used to write to the log file
-        boost::shared_ptr<facebook::thrift::transport::TFileTransport> log_transport;
+        boost::shared_ptr<ThruFileWriterTransport> log_transport;
         boost::shared_ptr<facebook::thrift::transport::TMemoryBuffer> mem_transport;
         boost::shared_ptr<EventLogClient> mem_client;
 
@@ -61,10 +63,11 @@ class LogBackend : public ThrudocPassthruBackend
         boost::filesystem::fstream index_file;
         unsigned int num_ops;
         unsigned int max_ops;
+        unsigned int sync_wait;
 
         std::string get_log_filename ();
         void open_log_client (std::string log_filename);
-        void flush_log ();
+        void roll_log ();
         Event create_event (const std::string &msg);
         void send_log (std::string raw_message);
         void send_nextLog (std::string new_log_filename);
