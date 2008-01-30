@@ -138,10 +138,7 @@ LogBackend::LogBackend (shared_ptr<ThrudocBackend> backend,
 
 LogBackend::~LogBackend ()
 {
-    // TODO: pretty sure the flushes aren't necessary, confirm and remove
-    log_transport->flush ();
     log_transport->close ();
-    index_file.flush ();
     index_file.close ();
 }
 
