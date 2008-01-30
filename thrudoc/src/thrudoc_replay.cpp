@@ -114,7 +114,7 @@ class Replayer : public EventLogIf
             {
                 char buf[1024];
                 sprintf (buf, "log: event.timestamp=%ld, event.msg=***", 
-                         event.timestamp); // TODO: , event.message.c_str ());
+                         event.timestamp);
                 LOG4CXX_DEBUG (logger, buf);
             }
 
