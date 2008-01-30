@@ -9,6 +9,7 @@
 #include "Thrudoc.h"
 #include "ThrudocPassthruBackend.h"
 
+#include <boost/detail/atomic_count.hpp>
 #include <log4cxx/logger.h>
 #include <set>
 #include <string>
@@ -39,15 +40,15 @@ class StatsBackend : public ThrudocPassthruBackend
     private:
         static log4cxx::LoggerPtr logger;
 
-        unsigned long get_buckets_count;
-        unsigned long get_count;
-        unsigned long put_count;
-        unsigned long remove_count;
-        unsigned long scan_count;
-        unsigned long admin_count;
-        unsigned long putList_count;
-        unsigned long getList_count;
-        unsigned long removeList_count;
+        boost::detail::atomic_count get_buckets_count;
+        boost::detail::atomic_count get_count;
+        boost::detail::atomic_count put_count;
+        boost::detail::atomic_count remove_count;
+        boost::detail::atomic_count scan_count;
+        boost::detail::atomic_count admin_count;
+        boost::detail::atomic_count putList_count;
+        boost::detail::atomic_count getList_count;
+        boost::detail::atomic_count removeList_count;
 };
 
 #endif

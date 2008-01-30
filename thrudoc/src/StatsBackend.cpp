@@ -12,30 +12,23 @@ using namespace thrudoc;
 using namespace log4cxx;
 using namespace std;
 
-/* TODO
- * - this isn't thread-safe, make it so... until then counts will be (very) 
- *   slightly off/under. doing thread local counts summed up during admin calls
- *   is my personal pick for how to do this, but i'd really like to know a nice
- *   lightweight way to get at the counts in the other threads...
- */
-
 // private
 LoggerPtr StatsBackend::logger (Logger::getLogger ("StatsBackend"));
 
-StatsBackend::StatsBackend (shared_ptr<ThrudocBackend> backend)
+StatsBackend::StatsBackend (shared_ptr<ThrudocBackend> backend) :
+    get_buckets_count (0),
+    get_count (0),
+    put_count (0),
+    remove_count (0),
+    scan_count (0),
+    admin_count (0),
+    putList_count (0),
+    getList_count (0),
+    removeList_count (0)
 {
     LOG4CXX_INFO (logger, string ("StatsBackend"));
 
     this->set_backend (backend);
-    get_buckets_count = 0;
-    get_count = 0;
-    put_count = 0;
-    remove_count = 0;
-    scan_count = 0;
-    admin_count = 0;
-    putList_count = 0;
-    getList_count = 0;
-    removeList_count = 0;
 }
 
 vector<string> StatsBackend::getBuckets ()
@@ -76,9 +69,11 @@ string StatsBackend::admin (const string & op, const string & data)
     if (op == "stats")
     {
         char buf[1024];
+        // casts are require to prevent POD type problems with atomic_count
         sprintf (buf, "get_count=%lu,put_count=%lu,remove_count=%lu,scan_count=%lu,admin_count=%lu,putList_count=%lu,getList_count=%lu,removeList_count=%lu",
-                 get_count, put_count, remove_count, scan_count, admin_count,
-                 putList_count, getList_count, removeList_count);
+                 (long)get_count, (long)put_count, (long)remove_count, 
+                 (long)scan_count, (long)admin_count, (long)putList_count, 
+                 (long)getList_count, (long)removeList_count);
         return string (buf);
     }
     return this->get_backend ()->admin (op, data);
