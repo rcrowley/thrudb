@@ -267,21 +267,19 @@ Event LogBackend::create_event (const string & message)
 
 void LogBackend::send_nextLog (string new_log_filename)
 {
-    Guard g(log_mutex); 
-
     /* HACK: to get around TFileTransport flush problems, see constructor */
     mem_client->send_nextLog (new_log_filename);
     string s = mem_transport->getBufferAsString();
+    mem_transport->resetBuffer ();
     log_transport->write ((uint8_t *)s.c_str (), (uint32_t)s.length ());
 }
 
 void LogBackend::send_log (string raw_message)
 {
-    Guard g(log_mutex); 
-
     /* HACK: to get around TFileTransport flush problems, see constrctor */
     mem_client->send_log (this->create_event (raw_message));
     string s = mem_transport->getBufferAsString ();
+    mem_transport->resetBuffer ();
     log_transport->write ((uint8_t *)s.c_str (), (uint32_t)s.length ());
 
     // this is going to be fuzzy b/c of multi-thread, but that's ok
@@ -289,8 +287,12 @@ void LogBackend::send_log (string raw_message)
 
     if (this->num_ops >= this->max_ops)
     {
-        this->flush_log ();
-        this->num_ops = 0;
+        Guard g(log_mutex); 
+        if (this->num_ops >= this->max_ops)
+        {   
+            this->flush_log ();
+            this->num_ops = 0;
+        }
     }
 }
 
