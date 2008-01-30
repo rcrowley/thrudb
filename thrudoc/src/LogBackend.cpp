@@ -97,7 +97,7 @@ LogBackend::LogBackend (shared_ptr<ThrudocBackend> backend,
         // open the old log
         open_log_client (old_log_filename);
         // write a nextLog of the new logfile so that replayers can chain
-        log_client->send_nextLog (new_log_filename);
+        send_nextLog (new_log_filename);
     }
     // then open the new log
     open_log_client (new_log_filename);
@@ -123,6 +123,15 @@ LogBackend::LogBackend (shared_ptr<ThrudocBackend> backend,
     msg_transport = shared_ptr<TMemoryBuffer>(new TMemoryBuffer ());
     shared_ptr<TProtocol>  msg_protocol (new TBinaryProtocol (msg_transport));
     msg_client = shared_ptr<ThrudocClient>(new ThrudocClient (msg_protocol));
+
+    // HACK: create out file serializer, TFileTransport has some flushing
+    // issues, we're getting around them by using write directly, tho it's a
+    // mess and the real problem there needs to be fixed. at that point this
+    // stuff needs to move back to open_log_file and mem needs to be back to
+    // being log...
+    mem_transport = shared_ptr<TMemoryBuffer> (new TMemoryBuffer ());
+    shared_ptr<TProtocol> mem_protocol (new TBinaryProtocol (mem_transport));
+    mem_client = shared_ptr<EventLogClient> (new EventLogClient (mem_protocol));
 }
 
 LogBackend::~LogBackend ()
@@ -144,7 +153,7 @@ void LogBackend::put (const string & bucket, const string & key,
     string raw_msg = msg_transport->getBufferAsString ();
     msg_transport->resetBuffer ();
 
-    send_message (raw_msg);
+    send_log (raw_msg);
 }
 
 void LogBackend::remove (const std::string & bucket, const std::string & key)
@@ -156,7 +165,7 @@ void LogBackend::remove (const std::string & bucket, const std::string & key)
     string raw_msg = msg_transport->getBufferAsString ();
     msg_transport->resetBuffer ();
 
-    send_message (raw_msg);
+    send_log (raw_msg);
 }
 
 string LogBackend::admin (const std::string & op, const std::string & data)
@@ -175,7 +184,7 @@ string LogBackend::admin (const std::string & op, const std::string & data)
         string raw_msg = msg_transport->getBufferAsString ();
         msg_transport->resetBuffer ();
 
-        send_message (raw_msg);
+        send_log (raw_msg);
 
         return ret;
     }
@@ -190,7 +199,7 @@ vector<ThrudocException> LogBackend::putList (const vector<Element> & elements)
     string raw_msg = msg_transport->getBufferAsString ();
     msg_transport->resetBuffer ();
 
-    send_message (raw_msg);
+    send_log (raw_msg);
     return ret;
 }
 
@@ -203,7 +212,7 @@ vector<ThrudocException> LogBackend::removeList(const vector<Element> & elements
     string raw_msg = msg_transport->getBufferAsString ();
     msg_transport->resetBuffer ();
 
-    send_message (raw_msg);
+    send_log (raw_msg);
     return ret;
 }
 
@@ -225,18 +234,13 @@ void LogBackend::open_log_client (string log_filename)
     // and open up a new one
     log_transport = shared_ptr<TFileTransport>
         (new TFileTransport (log_directory + "/" + log_filename));
-    // hack from jake that will keep me from seeing 2-4 second hangs on send_*
-    // thanks to transport's flushing
-    log_transport->setFlushMaxUs (100);
-    shared_ptr<TProtocol> log_protocol (new TBinaryProtocol (log_transport));
-    log_client = shared_ptr<EventLogClient> (new EventLogClient (log_protocol));
 
     // start writing at the end, append
     log_transport->seekToEnd ();
 }
 
 
-Event LogBackend::createEvent (const string & message)
+Event LogBackend::create_event (const string & message)
 {
     Event event;
 
@@ -261,11 +265,24 @@ Event LogBackend::createEvent (const string & message)
     return event;
 }
 
-void LogBackend::send_message (string raw_message)
+void LogBackend::send_nextLog (string new_log_filename)
 {
     Guard g(log_mutex); 
 
-    log_client->send_log (this->createEvent (raw_message));
+    /* HACK: to get around TFileTransport flush problems, see constructor */
+    mem_client->send_nextLog (new_log_filename);
+    string s = mem_transport->getBufferAsString();
+    log_transport->write ((uint8_t *)s.c_str (), (uint32_t)s.length ());
+}
+
+void LogBackend::send_log (string raw_message)
+{
+    Guard g(log_mutex); 
+
+    /* HACK: to get around TFileTransport flush problems, see constrctor */
+    mem_client->send_log (this->create_event (raw_message));
+    string s = mem_transport->getBufferAsString ();
+    log_transport->write ((uint8_t *)s.c_str (), (uint32_t)s.length ());
 
     // this is going to be fuzzy b/c of multi-thread, but that's ok
     this->num_ops++;
@@ -284,7 +301,7 @@ void LogBackend::flush_log ()
 
     // time for a new file
     // point to it in the old one
-    log_client->send_nextLog (new_log_filename);
+    send_nextLog (new_log_filename);
     // and open the new one
     open_log_client (new_log_filename);
     // add it to the index

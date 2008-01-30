@@ -53,7 +53,9 @@ class LogBackend : public ThrudocPassthruBackend
 
         // this will be used to write to the log file
         boost::shared_ptr<facebook::thrift::transport::TFileTransport> log_transport;
-        boost::shared_ptr<EventLogClient> log_client;
+        boost::shared_ptr<facebook::thrift::transport::TMemoryBuffer> mem_transport;
+        boost::shared_ptr<EventLogClient> mem_client;
+
         facebook::thrift::concurrency::Mutex log_mutex;
         std::string log_directory;
         boost::filesystem::fstream index_file;
@@ -63,8 +65,9 @@ class LogBackend : public ThrudocPassthruBackend
         std::string get_log_filename ();
         void open_log_client (std::string log_filename);
         void flush_log ();
-        Event createEvent (const std::string &msg);
-        void send_message (std::string raw_message);
+        Event create_event (const std::string &msg);
+        void send_log (std::string raw_message);
+        void send_nextLog (std::string new_log_filename);
 };
 
 #endif
