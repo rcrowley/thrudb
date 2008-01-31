@@ -241,18 +241,19 @@ Event LogBackend::create_event (const string & message)
 {
     Event event;
 
-#if defined(HAVE_CLOCK_GETTIME)
 #define NS_PER_S 1000000000LL
+#if defined(HAVE_CLOCK_GETTIME)
     struct timespec now;
     int ret = clock_gettime (CLOCK_REALTIME, &now);
     assert (ret == 0);
     event.timestamp = (now.tv_sec * NS_PER_S) + now.tv_nsec;
 #elif defined(HAVE_GETTIMEOFDAY)
-#define US_PER_S 1000000LL
+#define US_PER_NS 1000LL
     struct timeval now;
     int ret = gettimeofday (&now, NULL);
     assert (ret == 0);
-    event.timestamp = (((int64_t)now.tv_sec) * US_PER_S) + now.tv_usec;
+    event.timestamp = (((int64_t)now.tv_sec) * NS_PER_S) + 
+        (((int64_t)now.tv_usec) * US_PER_NS);
 #else
 #error "one of either clock_gettime or gettimeofday required for LogBackend"
 #endif // defined(HAVE_GETTIMEDAY)
