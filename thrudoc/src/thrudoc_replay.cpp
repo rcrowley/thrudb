@@ -135,7 +135,8 @@ class Replayer : public EventLogIf
                 int32_t event_time = (event.timestamp / NS_PER_S) + 
                     this->delay_seconds;
                 // if that time is in the future
-                if (event_time > time (NULL))
+                int32_t sleep_time = event_time - time (NULL);
+                if (sleep_time > 0)
                 {
                     if (logger->isDebugEnabled ())
                     {
@@ -144,7 +145,7 @@ class Replayer : public EventLogIf
                         LOG4CXX_DEBUG (logger, buf);
                     }
                     // sleep until it
-                    sleep (event_time - time (NULL));
+                    sleep (sleep_time);
                 }
             }
 
@@ -152,25 +153,26 @@ class Replayer : public EventLogIf
             shared_ptr<TTransport> tbuf(new TMemoryBuffer (event.message));
             shared_ptr<TProtocol> prot = protocol_factory.getProtocol (tbuf);
 
-            // TODO: this isn't really "correct" error handling at all, 
-            // failures are ignored, nothing is logged, etc.
             try 
             {
                 processor->process(prot, prot);
             } 
             catch (TTransportException& ttx) 
             {
-                cerr << "client died: " << ttx.what() << endl;
-                throw;
+                LOG4CXX_ERROR (logger, 
+                               string ("log: client transport error what=") +
+                               ttx.what ());
+                throw ttx;
             } 
             catch (TException& x) 
             {
-                cerr << "exception: " << x.what() << endl;
-                throw;
+                LOG4CXX_ERROR (logger, string ("log: client error what=") +
+                               x.what ());
+                throw x;
             } 
             catch (...) 
             {
-                cerr << "uncaught exception." << endl;
+                LOG4CXX_ERROR (logger, "log: client 'other' error");
                 throw;
             }
 
