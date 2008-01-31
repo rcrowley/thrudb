@@ -58,11 +58,6 @@ using namespace std;
 
 LoggerPtr logger (Logger::getLogger ("thrudoc_replay"));
 
-/*
- * TODO:
- * - support delayed replay
- */
-
 //print usage and die
 inline void usage ()
 {
@@ -75,10 +70,17 @@ inline void usage ()
 class Replayer : public EventLogIf
 {
     public:
-        Replayer (shared_ptr<ThrudocBackend> backend, string current_filename) 
+        Replayer (shared_ptr<ThrudocBackend> backend, string current_filename,
+                  uint32_t delay_seconds) 
         {
+            char buf[128];
+            sprintf (buf, "Replayer: current_filename=%s, delay_seconds=%d", 
+                     current_filename.c_str (), delay_seconds);
+            LOG4CXX_INFO (logger, buf);
+
             this->backend = backend;
             this->current_filename = current_filename;
+            this->delay_seconds = delay_seconds;
 
             this->handler = shared_ptr<ThrudocHandler>
                 (new ThrudocHandler (this->backend));
@@ -123,6 +125,27 @@ class Replayer : public EventLogIf
                 // we're already at or past this event
                 LOG4CXX_DEBUG (logger, "    skipping");
                 return;
+            }
+
+#define NS_PER_S 1000000000LL
+            if (this->delay_seconds)
+            {
+                // we're supposed to be delaying, figure out when the event
+                // should happen
+                int32_t event_time = (event.timestamp / NS_PER_S) + 
+                    this->delay_seconds;
+                // if that time is in the future
+                if (event_time > time (NULL))
+                {
+                    if (logger->isDebugEnabled ())
+                    {
+                        char buf[32];
+                        sprintf (buf, "log: delaying until: %d", event_time);
+                        LOG4CXX_DEBUG (logger, buf);
+                    }
+                    // sleep until it
+                    sleep (event_time - time (NULL));
+                }
             }
 
             // do these really have to be shared pointers?
@@ -190,6 +213,7 @@ class Replayer : public EventLogIf
         string current_filename;
         int64_t current_position;
         time_t last_position_flush;
+        uint32_t delay_seconds;
 };
 
 LoggerPtr Replayer::logger (Logger::getLogger ("Replayer"));
@@ -255,9 +279,13 @@ int main (int argc, char **argv)
         string which = ConfigManager->read<string> ("BACKEND", "mysql");
         shared_ptr<ThrudocBackend> backend = create_backend (which, 1);
 
+        int32_t delay_seconds = 
+            ConfigManager->read<int32_t> ("REPLAY_DELAY_SECONDS", 0);
+
         // create our replayer with initial log_filename
         boost::shared_ptr<Replayer> replayer (new Replayer (backend, 
-                                                            log_filename));
+                                                            log_filename,
+                                                            delay_seconds));
         // blank it out so we'll open things up... HACK
         log_filename = "";
 
