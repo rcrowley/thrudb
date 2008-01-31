@@ -49,6 +49,11 @@ LogBackend::LogBackend (shared_ptr<ThrudocBackend> backend,
     this->max_ops = max_ops;
     this->sync_wait = sync_wait;
 
+    // create our serializer
+    msg_transport = shared_ptr<TMemoryBuffer>(new TMemoryBuffer ());
+    shared_ptr<TProtocol>  msg_protocol (new TBinaryProtocol (msg_transport));
+    msg_client = shared_ptr<ThrudocClient>(new ThrudocClient (msg_protocol));
+
     // if our log directory doesn't exist, create it
     if (!fs::is_directory (log_directory))
     {
@@ -91,12 +96,12 @@ LogBackend::LogBackend (shared_ptr<ThrudocBackend> backend,
     if (!old_log_filename.empty ())
     {
         // open the old log
-        open_log_client (old_log_filename);
+        open_log_client (old_log_filename, true);
         // write a nextLog of the new logfile so that replayers can chain
         send_nextLog (new_log_filename);
     }
     // then open the new log
-    open_log_client (new_log_filename);
+    open_log_client (new_log_filename, false);
 
     // write the new logfile to the index
     index_file.open (log_directory + "/" + LOG_FILE_PREFIX + "index", 
@@ -114,20 +119,6 @@ LogBackend::LogBackend (shared_ptr<ThrudocBackend> backend,
 
     // make sure our addition makes it to disk
     index_file.flush ();
-
-    // create our serializer
-    msg_transport = shared_ptr<TMemoryBuffer>(new TMemoryBuffer ());
-    shared_ptr<TProtocol>  msg_protocol (new TBinaryProtocol (msg_transport));
-    msg_client = shared_ptr<ThrudocClient>(new ThrudocClient (msg_protocol));
-
-    // HACK: create out file serializer, TFileTransport has some flushing
-    // issues, we're getting around them by using write directly, tho it's a
-    // mess and the real problem there needs to be fixed. at that point this
-    // stuff needs to move back to open_log_file and mem needs to be back to
-    // being log...
-    mem_transport = shared_ptr<TMemoryBuffer> (new TMemoryBuffer ());
-    shared_ptr<TProtocol> mem_protocol (new TBinaryProtocol (mem_transport));
-    mem_client = shared_ptr<EventLogClient> (new EventLogClient (mem_protocol));
 }
 
 LogBackend::~LogBackend ()
@@ -273,9 +264,10 @@ string LogBackend::get_log_filename ()
     return buf; 
 }
 
-void LogBackend::open_log_client (string log_filename)
+void LogBackend::open_log_client (string log_filename, bool imediate_sync)
 {
-    LOG4CXX_INFO (logger, "open_log_client: log_filename=" + log_filename);
+    LOG4CXX_INFO (logger, "open_log_client: log_filename=" + log_filename + 
+                  ", imediate_sync=" + (imediate_sync ? "true" : "false"));
 
     // flush old log file
     if (log_transport)
@@ -284,7 +276,9 @@ void LogBackend::open_log_client (string log_filename)
     // and open up a new one
     log_transport = shared_ptr<ThruFileWriterTransport>
         (new ThruFileWriterTransport (log_directory + "/" + log_filename, 
-                                      this->sync_wait));
+                                      imediate_sync ? 0 : this->sync_wait));
+    shared_ptr<TProtocol> log_protocol (new TBinaryProtocol (log_transport));
+    log_client = shared_ptr<EventLogClient> (new EventLogClient (log_protocol));
 }
 
 
@@ -316,20 +310,12 @@ Event LogBackend::create_event (const string & message)
 
 void LogBackend::send_nextLog (string new_log_filename)
 {
-    /* HACK: to get around TFileTransport flush problems, see constructor */
-    mem_client->send_nextLog (new_log_filename);
-    string s = mem_transport->getBufferAsString();
-    mem_transport->resetBuffer ();
-    log_transport->write ((uint8_t *)s.c_str (), (uint32_t)s.length ());
+    log_client->send_nextLog (new_log_filename);
 }
 
 void LogBackend::send_log (string raw_message)
 {
-    /* HACK: to get around TFileTransport flush problems, see constrctor */
-    mem_client->send_log (this->create_event (raw_message));
-    string s = mem_transport->getBufferAsString ();
-    mem_transport->resetBuffer ();
-    log_transport->write ((uint8_t *)s.c_str (), (uint32_t)s.length ());
+    log_client->send_log (this->create_event (raw_message));
 
     // this is going to be fuzzy b/c of multi-thread, but that's ok
     this->num_ops++;
@@ -354,7 +340,7 @@ void LogBackend::roll_log ()
     // point to it in the old one
     send_nextLog (new_log_filename);
     // and open the new one
-    open_log_client (new_log_filename);
+    open_log_client (new_log_filename, false);
     // add it to the index
     index_file.write ((new_log_filename + "\n").c_str (), 
                       new_log_filename.length () + 1);
