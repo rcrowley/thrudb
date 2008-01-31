@@ -62,9 +62,14 @@ ThruFileWriterTransport::ThruFileWriterTransport (string path, uint32_t sync_wai
 
 ThruFileWriterTransport::~ThruFileWriterTransport ()
 {
+    // close should sync...
     if (this->fd)
         ::close (this->fd);
-    pthread_join(fsync_thread, NULL);
+    // setting fd to 0 will signal the writer thread, if any, to exit
+    this->fd = 0;
+    // TODO: i'd rather look to see if there's a fsync_thread
+    if (this->sync_wait > 0)
+        pthread_join(fsync_thread, NULL);
 }
 
 void ThruFileWriterTransport::write(const uint8_t* buf, uint32_t len)
@@ -94,7 +99,8 @@ void * ThruFileWriterTransport::start_sync_thread (void * ptr)
 
 void ThruFileWriterTransport::fsync_thread_run ()
 {
-    while (1)
+    // once the fd goes away we'll end
+    while (this->fd)
     {
         LOG4CXX_DEBUG (logger, "fsync_thread_run: ");
         {

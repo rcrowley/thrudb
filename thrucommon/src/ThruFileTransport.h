@@ -27,6 +27,9 @@ class ThruFileReaderTransport : public facebook::thrift::transport::TTransport
         int fd;
 };
 
+// NOTE: we don't implement a flush b/c the gen'd clients are calling it
+// constantly, and if we did that would make everything sync, annoying, but
+// can't do anything about it.
 class ThruFileWriterTransport : public facebook::thrift::transport::TTransport
 {
     public:
