@@ -302,9 +302,9 @@ int main (int argc, char **argv)
                 LOG4CXX_INFO (logger, "opening=" + log_directory + "/" + 
                               log_filename);
 
-                // TODO: we have to sleep for a little bit here to give the
-                // new file time to come in to existence to make sure we don't 
-                // beat it...
+                // we have to sleep for a little bit here to give the new file
+                // time to come in to existence to make sure we don't beat
+                // it...
                 sleep (1);
 
                 shared_ptr<ThruFileReaderTransport> 
