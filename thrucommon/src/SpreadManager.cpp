@@ -339,7 +339,7 @@ void _SpreadManager::processTransactionStart()
 
     if( mparts.size() < 2 ){
         char buf[64];
-        sprintf(buf, "%d", mparts.size());
+        sprintf(buf, "%d", (int)mparts.size());
         LOG4CXX_ERROR( logger, string("transaction_start::Invalid arg count: ")+mparts[0]+buf);
         return;
     }
@@ -472,7 +472,7 @@ bool _SpreadManager::startTransaction( boost::shared_ptr<Transaction> t )
         if( (members.size()+1) < quorum_size ){
 
             char buf[64];
-            sprintf(buf, "%d %d", members.size(),quorum_size);
+            sprintf(buf, "%d %d", (int)members.size(), (int)quorum_size);
 
             LOG4CXX_DEBUG(logger,string("Members less than required for writes: ")+buf );
 
