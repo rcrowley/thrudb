@@ -93,7 +93,7 @@ AC_CHECK_HEADERS([log4cxx/logger.h],,
 
 # misc
 AC_C_CONST
-AC_CHECK_FUNCS([clock_gettime gettimeofday memset socket strcasecmp strchr strdup])
+AC_CHECK_FUNCS([clock_gettime fdatasync fsync gettimeofday memset socket strcasecmp strchr strdup])
 AC_CHECK_HEADERS([netinet/in.h stdlib.h string.h sys/param.h])
 AC_C_INLINE
 AC_FUNC_ALLOCA

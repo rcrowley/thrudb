@@ -1,5 +1,11 @@
 /* based on TFileTransport, but much simplier */
 
+#ifdef HAVE_CONFIG_H
+#include "thrucommon_config.h"
+#endif
+/* hack to work around thrift and log4cxx installing config.h's */
+#undef HAVE_CONFIG_H 
+
 #include "ThruFileTransport.h"
 #include "transport/TTransportUtils.h"
 
@@ -87,7 +93,13 @@ void ThruFileWriterTransport::write(const uint8_t* buf, uint32_t len)
         exit (-1);
     }
     if (this->sync_wait == 0)
+#if HAVE_FDATASYNC
         fdatasync (this->fd);
+#elif HAVE_FSYNC
+        fsync (this->fd);
+#else
+#error "either fdatasync or fsync is required to use use ThruFileTransport"
+#endif
 }
 
 void * ThruFileWriterTransport::start_sync_thread (void * ptr)
@@ -105,7 +117,13 @@ void ThruFileWriterTransport::fsync_thread_run ()
         LOG4CXX_DEBUG (logger, "fsync_thread_run: ");
         {
             Guard g(write_mutex);
+#if HAVE_FDATASYNC
             fdatasync (this->fd);
+#elif HAVE_FSYNC
+            fsync (this->fd);
+#else
+#error "either fdatasync or fsync is required to use use ThruFileTransport"
+#endif
         }
         usleep (this->sync_wait);
     }
