@@ -54,7 +54,9 @@ void ThrudexSpreadTask::ThrudexSpreadTask::run()
 
     const string raw_msg = transaction->getRawBuffer();
 
-    boost::shared_ptr<TTransport> buf(new TMemoryBuffer( raw_msg ) );
+    boost::shared_ptr<TTransport> buf(new TMemoryBuffer
+                                      ( (uint8_t*)raw_msg.c_str(), 
+                                        raw_msg.length()) );
 
     boost::shared_ptr<TProtocol> prot = protocol_factory.getProtocol(buf);
 
