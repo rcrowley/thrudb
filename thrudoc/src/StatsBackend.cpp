@@ -65,7 +65,6 @@ ScanResponse StatsBackend::scan (const string & bucket,
 
 string StatsBackend::admin (const string & op, const string & data)
 {
-    ++admin_count;
     if (op == "stats")
     {
         char buf[1024];
@@ -76,6 +75,7 @@ string StatsBackend::admin (const string & op, const string & data)
                  (long)getList_count, (long)removeList_count);
         return string (buf);
     }
+    ++admin_count;
     return this->get_backend ()->admin (op, data);
 }
 
