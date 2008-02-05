@@ -27,7 +27,7 @@ AC_ARG_WITH(memcached,
     [with_memcached=$withval],
     [with_memcached=yes])
 if test "$with_memcached" != "no"; then
-    PKG_CHECK_MODULES(MEMCACHED, [libmemcached],
+    PKG_CHECK_MODULES(MEMCACHED, [libmemcached >= 0.14],
                       AC_DEFINE([HAVE_LIBMEMCACHED], [1], [Define to 1 if you have the libmemcached library (-lmemcached)]))
 fi
 
@@ -42,24 +42,6 @@ if test "$with_spread" != "no"; then
                  AC_MSG_ERROR([You must install spread; please install libraries and development files]))
     AC_CHECK_HEADERS([sp.h],,
                      AC_MSG_ERROR([sp.h missing; please add spread development files]))
-fi
-
-# s3
-AC_ARG_WITH(s3,
-    AC_HELP_STRING([--with-s3],
-                   [build in S3 backend support (default is yes]),
-    [with_s3=$withval],
-    [with_s3=yes])
-if test "$with_s3" != "no"; then
-    # expat
-    AC_CHECK_LIB(expat, [open], [],
-                 AC_MSG_ERROR([You must install expat; please install libraries and development files]))
-    AC_CHECK_HEADERS([expat.h],,
-                     AC_MSG_ERROR([expat.h missing; please add expat development files]))
-
-    # curl
-    PKG_CHECK_MODULES(CURL, [libcurl],
-                      AC_DEFINE([HAVE_LIBCURL], [1], [Define to 1 if you have the libcurl library (-lcurl)]))
 fi
 
 # uuid

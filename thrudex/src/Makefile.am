@@ -13,7 +13,7 @@ thrudex_SOURCES = \
 		  main.cpp
 
 thrudex_CPPFLAGS = -Wall -Igen-cpp $(MEMCACHED_CFLAGS) $(CURL_CFLAGS) $(THRIFTNB_CFLAGS) $(THRUCOMMON_CFLAGS) $(SSL_CFLAGS) $(UUID_CFLAGS)
-thrudex_LDFLAGS = -Wall $(CURL_LIBS) $(THRIFTNB_LIBS) $(THRUCOMMON_LIBS) $(SSL_LIBS) $(UUID_LIBS) -levent
+thrudex_LDFLAGS = -Wall $(CURL_LIBS) $(EVENT_LIBS) $(MEMCACHED_LIBS) $(THRIFTNB_LIBS) $(THRUCOMMON_LIBS) $(SSL_LIBS) $(UUID_LIBS) 
 
 thrudex_play_SOURCES = \
 		  gen-cpp/Thrudex.cpp			\
@@ -22,7 +22,7 @@ thrudex_play_SOURCES = \
 		  play.cpp
 
 thrudex_play_CPPFLAGS = -Wall -Igen-cpp $(MEMCACHED_CFLAGS) $(CURL_CFLAGS) $(THRIFTNB_CFLAGS) $(THRUCOMMON_CFLAGS) $(SSL_CFLAGS) $(UUID_CFLAGS)
-thrudex_play_LDFLAGS = -Wall $(CURL_LIBS) $(THRIFTNB_LIBS) $(THRUCOMMON_LIBS) $(SSL_LIBS) $(UUID_LIBS) -levent
+thrudex_play_LDFLAGS = -Wall $(CURL_LIBS) $(EVENT_LIBS) $(MEMCACHED_LIBS) $(THRIFTNB_LIBS) $(THRUCOMMON_LIBS) $(SSL_LIBS) $(UUID_LIBS) 
 
 gen-cpp/Thrudex.cpp: Thrudex.thrift
 	${THRIFT} -cpp $<

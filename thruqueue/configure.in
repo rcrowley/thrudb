@@ -22,17 +22,10 @@ PKG_CHECK_MODULES(THRUCOMMON, [thrucommon],
 AC_PATH_PROG(THRIFT, thrift, thrift, $PATH:/usr/local/bin:/usr/bin)
 PKG_CHECK_MODULES(THRIFTNB, [thrift-nb], 
                   AC_DEFINE([HAVE_THRIFTNB], [1], [Define to 1 if you have the thriftnb library (-lthriftnb)]))
-
-# memcached
-AC_ARG_WITH(memcached,
-    AC_HELP_STRING([--with-memcached],
-                   [build in BerkeleyDB backend support (default is yes]),
-    [with_memcached=$withval],
-    [with_memcached=yes])
-if test "$with_memcached" != "no"; then
-    PKG_CHECK_MODULES(MEMCACHED, [libmemcached],
-                      AC_DEFINE([HAVE_LIBMEMCACHED], [1], [Define to 1 if you have the libmemcached library (-lmemcached)]))
-fi
+# NOTE: this is a workaround for a bug in the thrift-nb pkg-config file, it
+# depends on libevent, but doesn't include it
+AC_CHECK_LIB(event, [open], [],
+             AC_MSG_ERROR([You must install libevent; please install libraries and development files before building thrift]))
 
 # spread
 AC_ARG_WITH(spread,
