@@ -51,6 +51,9 @@ sub _leave
     }
 }
 
+# subscribing to everything is not really possible, we'll only listen to groups
+# we've seen explicitly in a group param here, or joined otherwise so keep that 
+# in mind
 sub subscribe
 {
     my ($self, $sender, $group, $mess_type, $callback) = @_;
@@ -74,6 +77,7 @@ sub queue
     };
 }
 
+# -1 means don't wait for any. 0 means go forever, > 0 means receive that many
 sub run
 {
     my ($self, $count) = @_;
@@ -144,7 +148,8 @@ sub _dispatch
     # if we haven't installed any callbacks, there's no reason to continue
     return unless ($self->{callbacks});
     # don't dispatch things we sent out
-    return if ($sender eq $self->{private_group});
+    return if (($sender eq $self->{private_group}) and 
+        not $self->{see_self});
 
     # callbacks that match everything
     $self->_dispatch_callbacks ($self->{callbacks}{$sender}{$group}{$mess_type},
