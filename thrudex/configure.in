@@ -18,6 +18,9 @@ AC_LANG(C++)
 PKG_CHECK_MODULES(THRUCOMMON, [thrucommon],
                   AC_DEFINE([HAVE_THRUCOMMON], [1], [Define to 1 if you have the thrucommon library (-lthrucommon)]))
 
+# work around for CLucene weirdness on debian systems
+CXXFLAGS="-I/usr/lib $CXXFLAGS"
+
 # CLucene
 AC_CHECK_LIB(clucene, [open], [],
              AC_MSG_ERROR([You must install CLucene; please install libraries and development files]))
@@ -28,10 +31,6 @@ AC_CHECK_HEADERS([CLucene.h],,
 AC_PATH_PROG(THRIFT, thrift, thrift, $PATH:/usr/local/bin:/usr/bin)
 PKG_CHECK_MODULES(THRIFTNB, [thrift-nb], 
                   AC_DEFINE([HAVE_THRIFTNB], [1], [Define to 1 if you have the thriftnb library (-lthriftnb)]))
-# NOTE: this is a workaround for a bug in the thrift-nb pkg-config file, it
-# depends on libevent, but doesn't include it
-AC_CHECK_LIB(event, [open], [],
-             AC_MSG_ERROR([You must install libevent; please install libraries and development files before building thrift]))
 
 # memcached
 AC_ARG_WITH(memcached,

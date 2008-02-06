@@ -7,5 +7,5 @@ Name: Thrucommon
 Description: Thrucommon C++ library
 Version: @VERSION@
 Requires: thrift
-Libs: -L${libdir} -lthrucommon
+Libs: -L${libdir} -lthrucommon -levent
 Cflags: -I${includedir}/thrucommon
