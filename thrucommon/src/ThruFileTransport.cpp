@@ -23,6 +23,10 @@ using namespace facebook::thrift::transport;
 using namespace log4cxx;
 using namespace std;
 
+// TODO: what about the case where we're destruting and get a write from
+// another thread before that happens, not sure what we can do about it, might
+// be up to the using code
+
 LoggerPtr ThruFileReaderTransport::logger 
 (Logger::getLogger ("ThruFileReaderTransport"));
 LoggerPtr ThruFileWriterTransport::logger 
@@ -32,6 +36,9 @@ LoggerPtr ThruFileProcessor::logger
 
 ThruFileWriterTransport::ThruFileWriterTransport (string path, uint32_t sync_wait)
 {
+    // don't let people use us until we're done initing
+    Guard g(write_mutex);
+
     char buf[512];
     sprintf (buf, "ThruFileWriterTransport: path=%s, sync_wait=%u\n",
              path.c_str (), sync_wait);
@@ -68,6 +75,9 @@ ThruFileWriterTransport::ThruFileWriterTransport (string path, uint32_t sync_wai
 
 ThruFileWriterTransport::~ThruFileWriterTransport ()
 {
+    LOG4CXX_INFO (logger, "~ThruFileWriterTransport");
+    // don't close things out from under other people
+    Guard g(write_mutex);
     // close should sync...
     if (this->fd)
         ::close (this->fd);
@@ -150,6 +160,7 @@ ThruFileReaderTransport::ThruFileReaderTransport (string path)
 
 ThruFileReaderTransport::~ThruFileReaderTransport ()
 {
+    LOG4CXX_INFO (logger, "~ThruFileReaderTransport");
     if (this->fd)
         ::close (this->fd);
 }
