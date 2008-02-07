@@ -12,6 +12,7 @@
 
 #include <sys/stat.h>
 #include <string>
+//#include <wstring>
 #include <vector>
 #include <iostream>
 #include <uuid/uuid.h>
@@ -123,6 +124,48 @@ inline std::string generateMD5( const std::string &id ){
     md5hex += std::string("1977");
 
     return md5hex;
+}
+
+
+inline wstring build_wstring( const std::string &str )
+{
+    std::wstring wtmp;
+
+    wchar_t    tmp_wchar;
+    int        nchar;
+    mbstate_t  ps;
+    const char *c_str = str.c_str();
+    size_t size       = str.size();
+
+    memset(&ps, 0, sizeof(ps));
+    wtmp = L"";
+
+    while (c_str && size) {
+        nchar = mbrtowc(&tmp_wchar, c_str, size, &ps);
+
+        if (nchar == -1) {
+            c_str++;
+            size--;
+            continue;
+        }
+
+        //signals end of str
+        if (nchar == 0)
+            break;
+
+        wtmp    += tmp_wchar;
+        c_str   += nchar;
+        size    -= nchar;
+    }
+
+    return wtmp;
+}
+
+inline void wtrim(wstring &s){
+
+  s.erase(0,s.find_first_not_of(L" \n\r\t"));
+
+  s.erase(s.find_last_not_of(L" \n\r\t")+1);
 }
 
 #endif

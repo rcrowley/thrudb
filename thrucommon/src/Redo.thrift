@@ -1,19 +1,8 @@
-struct RedoMessage
-{
-        1:i32              timestamp,
-        2:string           transaction_id,
-        3:string           message
-}
-
-struct S3Message
-{
-        1:i32              timestamp,
-        2:string           transaction_id
-}
-
 service Redo
 {
-        void      log(1:RedoMessage m),
-        void      s3log(1:S3Message m)   #info to keep track of which items have been sent to s3
+        void      startup   (1:i64 timestamp),
+        void      log       (1:i64 timestamp, 2:string transaction_id, 3:string log_message),
+        void      commit    (1:i64 timestamp, 2:string transaction_id),
+        void      fail      (1:i64 timestamp, 2:string transaction_id)
 }
 
