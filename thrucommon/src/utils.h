@@ -127,7 +127,7 @@ inline std::string generateMD5( const std::string &id ){
 }
 
 
-inline wstring build_wstring( const std::string &str )
+inline std::wstring build_wstring( const std::string &str )
 {
     std::wstring wtmp;
 
@@ -161,7 +161,7 @@ inline wstring build_wstring( const std::string &str )
     return wtmp;
 }
 
-inline void wtrim(wstring &s){
+inline void wtrim(std::wstring &s){
 
   s.erase(0,s.find_first_not_of(L" \n\r\t"));
 
