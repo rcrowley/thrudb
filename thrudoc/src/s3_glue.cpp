@@ -131,7 +131,7 @@ static size_t  buffer_read(void  *buffer,  size_t  size,  size_t  nmemb,  void *
 }
 
 
-static void startElement(void *userData, const char *name, const char **atts)
+static void startElement(void *userData, const char *name, const char ** /* atts */)
 {
     class s3_result *einfo = (class s3_result *)userData;
     einfo->depth++;

@@ -359,9 +359,6 @@ void Connection::reset_connection ()
 {
     LOG4CXX_DEBUG (logger, "reset_connection");
 
-    // TODO: figure out how to get .clear () to do the deletes for us if
-    // possible?
-
     // get rid of all of it's prepared statements, we'll reconnect,
     // but they'll be bad now
     map<string, PreparedStatement *>::iterator i;

@@ -576,7 +576,7 @@ namespace mysql {
             pthread_key_t connections_key;
     };
 
-};
+}
 #endif /* HAVE_LIBMYSQLCLIENT_R */
 
 #endif

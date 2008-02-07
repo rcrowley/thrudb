@@ -378,7 +378,8 @@ void DiskBackend::validate (const string & bucket, const string * key,
 }
 
 void DiskBackend::get_dir_pieces (string & d1, string & d2, string & d3,
-                                  const string & bucket, const string & key)
+                                  const string & /* bucket */,
+                                  const string & key)
 {
     // we partition by the md5 of the key so that we'll get an even
     // distrobution of keys across partitions, we still store with key tho

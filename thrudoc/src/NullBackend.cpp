@@ -29,34 +29,34 @@ vector<string> NullBackend::getBuckets ()
     return buckets;
 }
 
-string NullBackend::get (const string & bucket, const string & key )
+string NullBackend::get (const string & /* bucket */, const string & /* key */)
 {
     return "";
 }
 
-void NullBackend::put (const string & bucket, const string & key, 
-                    const string & value)
+void NullBackend::put (const string & /* bucket */, const string & /* key */, 
+                       const string & /* value */)
 {
 }
 
-void NullBackend::remove (const string & bucket, const string & key )
+void NullBackend::remove (const string & /* bucket */, const string & /* key */)
 {
 }
 
-ScanResponse NullBackend::scan (const string & bucket,
-                             const string & seed, int32_t count)
+ScanResponse NullBackend::scan (const string & /* bucket */,
+                                const string & /* seed */, int32_t /* count */)
 {
     ScanResponse scan_response;
     return scan_response;
 }
 
-string NullBackend::admin (const string & op, const string & data)
+string NullBackend::admin (const string & /* op */, const string & /* data */)
 {
     return "";
 }
 
 void NullBackend::validate (const string & bucket, const string * key, 
-                         const string * value)
+                            const string * value)
 {
     ThrudocBackend::validate (bucket, key, value);
 }
