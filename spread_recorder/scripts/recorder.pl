@@ -26,40 +26,74 @@ $env->set_flags (
     BDB::CREATE, 1);
 
 my %dbs;
+# TODO: this needs to read in the max of lookup and start ++
+my $logical_clock = 0;
 
 # general recorder
 $conn->subscribe (undef, 'channel', 1, sub { 
         my ($conn, $sender, $group, $mess_type, $message) = @_;
-        db_put (db_for_group ($group), undef, message_to_key ($message),
-            $message);
-        printf "rec: %s - %s - %s\n", $group, $sender, $message;
-
+        # get the uuid
+        my $uuid = parse_uuid ($message);
+        # store the uuid to logical_clock
+        my $packed_clock = pack ('I', $logical_clock);
+        db_put (db_for_group ($group . '.lookup'), undef, $uuid, 
+            $packed_clock);
+        # store the logical_clock to message
+        db_put (db_for_group ($group), undef, $packed_clock,
+            sprintf ("%s;%d;%s", $sender, $mess_type, $message));
+        printf "store: %d - %s\n", $logical_clock, substr ($message, 0, 30);
+        $logical_clock++;
         1;
     });
 
 # catch me up
 $conn->subscribe (undef, 'channel', 101, sub { 
         my ($conn, $sender, $group, $mess_type, $message) = @_;
-        printf "catch: %s - %s - %s\n", $group, $sender, $message;
+        printf "catch: %s - %s - %s\n", $group, $sender, 
+            substr ($message, 0, 30);
+
+        my $resp;
+
+        # message is the last message the client received
+        my $uuid = parse_uuid ($message);
+        unless ($uuid)
+        {
+            $resp = ";;none";
+            goto done;
+        }
+
+        # lookup the logical_clock
+        my $clock;
+        db_get (db_for_group ($group . '.lookup'), undef, $uuid, 
+            $clock);
+        if ($! == BDB::NOTFOUND)
+        {
+            $resp = ";;none";
+            goto done;
+        }
 
         # find the "next" message
         my $cur = db_for_group ($group)->cursor (undef, BDB::READ_UNCOMMITTED);
-        my $data;
         # find the one they passed in
-        db_c_get ($cur, message_to_key ($message), $data, BDB::SET_RANGE);
-        # TODO: error handling
+        $resp = '';
+        my $key = $clock;
+        db_c_get ($cur, $key, $resp, BDB::SET_RANGE);
+        if ($! == BDB::NOTFOUND)
+        {
+            $resp = ";;none";
+            goto done;
+        }
         # and move to the next
-        db_c_get ($cur, message_to_key ($message), $data, BDB::NEXT);
-        my $resp = "none";
-        if ($!)
+        db_c_get ($cur, $key, $resp, BDB::NEXT);
+        if ($! == BDB::NOTFOUND)
         {
-            warn $!."\n";
+            $resp = ";;none";
+            goto done;
         }
-        elsif (defined $data)
-        {
-            $resp = $data;
-        }
-        printf "resp: %s - %s\n", $sender, $resp;
+
+done:
+        printf "resp: %s - %d - %s\n", $sender, unpack ("I", $clock),
+            substr ($resp, 0, 30);
         $conn->queue ($sender, 101, $resp);
         db_c_close ($cur);
 
@@ -68,7 +102,7 @@ $conn->subscribe (undef, 'channel', 101, sub {
 
 $conn->run;
 
-sub message_to_key 
+sub parse_uuid
 {
     $_[0] =~ /^(\d+\.\d+)/;
     return $1;
