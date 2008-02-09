@@ -19,6 +19,7 @@ include_thrucommon_HEADERS = \
 			     SpreadTaskFactory.h	\
 			     Transaction.h		\
 			     TransactionManager.h	\
+			     bloom_filter.hpp		\
 			     utils.h
 
 libthrucommon_la_SOURCES = \
