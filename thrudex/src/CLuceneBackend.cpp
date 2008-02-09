@@ -74,12 +74,6 @@ void CLuceneBackend::addIndex(const string &index)
     if(this->isValidIndex(index))
         return;
 
-    RWGuard g(mutex,true);
-
-    //Is index already loaded? (double check)
-    if(this->isValidIndex(index))
-        return;
-
     index_cache[index] =
         shared_ptr<CLuceneIndex>(new CLuceneIndex(idx_root,index,analyzer));
 }
@@ -205,7 +199,7 @@ string CLuceneBackend::admin(const std::string &op, const std::string &data)
             name[i] = tolower(name[i]);
         }
 
-
+        LOG4CXX_INFO(logger, "Creating index:"+name);
         this->addIndex(name);
 
         return "ok";
