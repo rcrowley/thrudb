@@ -135,7 +135,7 @@ private:
 
 
     // libevent Handler wrapper
-    static void eventHandler(int _fd, short which, void* v) {
+    static void eventHandler(int /* _fd */, short /* which */, void* v) {
         ((_SpreadManager*)v)->readMessage();
     }
 };

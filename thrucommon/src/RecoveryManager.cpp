@@ -42,7 +42,7 @@ public:
         last_m = m;
     }
 
-    void        s3log(const S3Message &m){
+    void        s3log(const S3Message & /* m */){
         //na
     }
 

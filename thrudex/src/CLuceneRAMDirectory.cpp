@@ -96,7 +96,7 @@ void CLuceneRAMDirectory::_copyFromDir(Directory* dir, bool closeDir)
         int64_t len = is->length();
         int64_t readCount = 0;
         while (readCount < len) {
-            int32_t toRead = (int32_t)(readCount + CL_NS(store)::BufferedIndexOutput::BUFFER_SIZE > len ? len - readCount : CL_NS(store)::BufferedIndexOutput::BUFFER_SIZE);
+            int32_t toRead = (readCount + CL_NS(store)::BufferedIndexOutput::BUFFER_SIZE > len ? len - readCount : (int32_t)CL_NS(store)::BufferedIndexOutput::BUFFER_SIZE);
             is->readBytes(buf, toRead);
             os->writeBytes(buf, toRead);
             readCount += toRead;

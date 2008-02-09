@@ -193,7 +193,7 @@ string CLuceneBackend::admin(const std::string &op, const std::string &data)
 
         string name = data;
 
-        for(int i=0; i<name.size(); i++){
+        for(unsigned int i=0; i<name.size(); i++){
             if( !isascii(name[i]) )
                 name[i] = '_';
 
