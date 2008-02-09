@@ -30,7 +30,7 @@ my %dbs;
 my $logical_clock = 0;
 
 # general recorder
-$conn->subscribe (undef, 'channel', 1, sub { 
+$conn->subscribe (undef, 'thrudoc', 1, sub { 
         my ($conn, $sender, $group, $mess_type, $message) = @_;
         # get the uuid
         my $uuid = parse_uuid ($message);
@@ -41,16 +41,16 @@ $conn->subscribe (undef, 'channel', 1, sub {
         # store the logical_clock to message
         db_put (db_for_group ($group), undef, $packed_clock,
             sprintf ("%s;%d;%s", $sender, $mess_type, $message));
-        printf "store: %d - %s\n", $logical_clock, substr ($message, 0, 30);
+        printf "store: %d - %s\n", $logical_clock, substr ($message, 0, 50);
         $logical_clock++;
         1;
     });
 
 # catch me up
-$conn->subscribe (undef, 'channel', 101, sub { 
+$conn->subscribe (undef, 'thrudoc', 101, sub { 
         my ($conn, $sender, $group, $mess_type, $message) = @_;
         printf "catch: %s - %s - %s\n", $group, $sender, 
-            substr ($message, 0, 30);
+            substr ($message, 0, 40);
 
         my $resp;
 
@@ -93,7 +93,7 @@ $conn->subscribe (undef, 'channel', 101, sub {
 
 done:
         printf "resp: %s - %d - %s\n", $sender, unpack ("I", $clock),
-            substr ($resp, 0, 30);
+            substr ($resp, 0, 50);
         $conn->queue ($sender, 101, $resp);
         db_c_close ($cur);
 
@@ -104,7 +104,7 @@ $conn->run;
 
 sub parse_uuid
 {
-    $_[0] =~ /^(\d+\.\d+)/;
+    $_[0] =~ /^([\w\-]+)/;
     return $1;
 }
 

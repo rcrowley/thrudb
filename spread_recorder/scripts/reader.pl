@@ -11,7 +11,7 @@ my $conn = new Spread::Connection ('reader');
 # listener
 my $last_message;
 my %messages;
-$conn->subscribe (undef, 'channel', 1, sub { 
+$conn->subscribe (undef, 'thrudoc', 1, sub { 
         my ($conn, $sender, $group, $mess_type, $message) = @_;
         printf "rec: %s - %s - %s\n", $group, $sender, $message;
         $messages{$group}{$message}++;
@@ -40,9 +40,9 @@ $conn->subscribe (undef, $conn->{private_group}, 101, sub {
         else
         {
             # store the catch-up message
-            $messages{'channel'}{$message}++;
+            $messages{'thrudoc'}{$message}++;
             # ask for the next
-            $conn->queue ('channel', 101, $message);
+            $conn->queue ('thrudoc', 101, $message);
         }
 
         1;
@@ -59,7 +59,7 @@ $SIG{INT} = sub {
     
         return $as <=> $bs if ($as and $bs);
         return $a <=> $b;
-    } keys %{$messages{channel}}]);
+    } keys %{$messages{thrudoc}}]);
     exit 0;
 };
 
@@ -69,9 +69,9 @@ $conn->run (5);
 $replay_from = $last_message;
 
 # sleep for a bit, going around things to leave and then rejoin us
-$conn->_leave ('channel');
+$conn->_leave ('thrudoc');
 sleep (5);
-$conn->_join ('channel');
+$conn->_join ('thrudoc');
 
 # run 1 interation to get the first back
 $conn->run (1);
@@ -79,7 +79,7 @@ $first_back = $last_message;
 
 printf "looking for stuff between '%s' and '%s'\n", $replay_from, $first_back;
 # ask to be caught up
-$conn->queue ('channel', 101, $replay_from);
+$conn->queue ('thrudoc', 101, $replay_from);
 
 # run forever
 $conn->run;

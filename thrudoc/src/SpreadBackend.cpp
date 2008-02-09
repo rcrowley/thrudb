@@ -4,9 +4,13 @@
 /* hack to work around thrift and log4cxx installing config.h's */
 #undef HAVE_CONFIG_H 
 
+#if HAVE_LIBSPREAD
+
 #include "SpreadBackend.h"
 
-#if HAVE_LIBSPREAD
+#if HAVE_LIBUUID
+#include <uuid/uuid.h>
+#endif
 
 // should be max expected key + max bucket + ~10. truncation will 
 // occur otherwise
@@ -67,25 +71,45 @@ SpreadBackend::~SpreadBackend ()
     SP_disconnect (spread_mailbox);
 }
 
+string SpreadBackend::generate_uuid ()
+{
+    uuid_t uuid;
+    uuid_generate(uuid);
+    char uuid_str[37];
+    uuid_unparse_lower(uuid, uuid_str);
+    return string (uuid_str);
+}
+
 void SpreadBackend::put (const string & bucket, const string & key, 
                          const string & value)
 {
     this->get_backend ()->put (bucket, key, value);
     char msg[SPREAD_BACKEND_MAX_MESSAGE_SIZE];
-    snprintf (msg, SPREAD_BACKEND_MAX_MESSAGE_SIZE, "put %s %s", 
-              bucket.c_str (), key.c_str ());
+    snprintf (msg, SPREAD_BACKEND_MAX_MESSAGE_SIZE, "%s put %s %s", 
+              generate_uuid ().c_str (), bucket.c_str (), key.c_str ());
     SP_multicast (this->spread_mailbox, SAFE_MESS | SELF_DISCARD, 
-                  this->spread_group.c_str (), 0, strlen (msg), msg);
+                  this->spread_group.c_str (), 1, strlen (msg), msg);
 }
 
 void SpreadBackend::remove (const string & bucket, const string & key )
 {
     this->get_backend ()->remove (bucket, key);
     char msg[SPREAD_BACKEND_MAX_MESSAGE_SIZE];
-    snprintf (msg, SPREAD_BACKEND_MAX_MESSAGE_SIZE, "remove %s %s", 
-              bucket.c_str (), key.c_str ());
+    snprintf (msg, SPREAD_BACKEND_MAX_MESSAGE_SIZE, "%s remove %s %s", 
+              generate_uuid ().c_str (), bucket.c_str (), key.c_str ());
     SP_multicast (this->spread_mailbox, SAFE_MESS | SELF_DISCARD, 
-                  this->spread_group.c_str (), 0, strlen (msg), msg);
+                  this->spread_group.c_str (), 1, strlen (msg), msg);
+}
+
+string SpreadBackend::admin (const string & op, const string & data)
+{
+    string ret = this->get_backend ()->admin (op, data);
+    char msg[SPREAD_BACKEND_MAX_MESSAGE_SIZE];
+    snprintf (msg, SPREAD_BACKEND_MAX_MESSAGE_SIZE, "%s admin %s %s", 
+              generate_uuid ().c_str (), op.c_str (), data.c_str ());
+    SP_multicast (this->spread_mailbox, SAFE_MESS | SELF_DISCARD, 
+                  this->spread_group.c_str (), 1, strlen (msg), msg);
+    return ret;
 }
 
 // copied from sp.c, redic that it's a function that aborts in a library rather

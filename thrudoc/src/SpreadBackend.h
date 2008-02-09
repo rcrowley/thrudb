@@ -29,6 +29,7 @@ class SpreadBackend : public ThrudocPassthruBackend
         void put (const std::string & bucket, const std::string & key, 
                   const std::string & value);
         void remove (const std::string & bucket, const std::string & key);
+        std::string admin (const std::string & op, const std::string & data);
 
     private:
         static log4cxx::LoggerPtr logger;
@@ -38,6 +39,8 @@ class SpreadBackend : public ThrudocPassthruBackend
         std::string spread_group;
         std::string spread_private_group;
         mailbox spread_mailbox;
+
+        std::string generate_uuid ();
 };
 
 #endif /* HAVE_LIBSPREAD */
