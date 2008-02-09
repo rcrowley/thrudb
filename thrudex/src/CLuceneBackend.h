@@ -31,6 +31,8 @@ class CLuceneBackend : public ThrudexBackend
     void  remove(const thrudex::Element     &e);
     void  search(const thrudex::SearchQuery &s, thrudex::SearchResponse &r);
 
+    std::string admin(const std::string &op, const std::string &data);
+
  private:
 
     static log4cxx::LoggerPtr logger;

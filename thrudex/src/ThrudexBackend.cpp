@@ -117,8 +117,8 @@ string ThrudexBackend::admin (const string & op, const string & data)
     }
     else if (op == "get_log_position")
     {
-
+        return "";
     }
 
-    return "";
+
 }

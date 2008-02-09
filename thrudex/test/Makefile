@@ -9,8 +9,8 @@ target: all
 # Tools
 THRIFT = `which thrift`
 
-all: ../src.new/Thrudex.thrift
-	$(THRIFT) -perl ../src.new/Thrudex.thrift
+all: ../src/Thrudex.thrift
+	$(THRIFT) -perl ../src/Thrudex.thrift
 
 clean:
 	rm -fr gen-perl

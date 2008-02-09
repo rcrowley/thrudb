@@ -185,3 +185,31 @@ void CLuceneBackend::search(const thrudex::SearchQuery &q, thrudex::SearchRespon
 
     index_cache[q.index]->search(q,r);
 }
+
+
+string CLuceneBackend::admin(const std::string &op, const std::string &data)
+{
+    if(op == "create_index"){
+
+        string name = data;
+
+        for(int i=0; i<name.size(); i++){
+            if( !isascii(name[i]) )
+                name[i] = '_';
+
+
+            if(name[i] == '\t' || name[i] == '|' || name[i] == '\n' || name[i] == '.' ||
+               name[i] == '\\' || name[i] == '/' )
+                name[i] = '_';
+
+            name[i] = tolower(name[i]);
+        }
+
+
+        this->addIndex(name);
+
+        return "ok";
+    }
+
+    return "";
+}
