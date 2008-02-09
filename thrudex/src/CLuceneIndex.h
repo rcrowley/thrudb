@@ -62,7 +62,7 @@ class CLuceneIndex : public facebook::thrift::concurrency::Runnable
     boost::shared_ptr<facebook::thrift::concurrency::Thread> monitor_thread;
 
     static log4cxx::LoggerPtr                        logger;
-    facebook::thrift::concurrency::ReadWriteMutex    mutex;
+    facebook::thrift::concurrency::Mutex             mutex;
 
     const std::string                                index_root;
     const std::string                                index_name;
@@ -85,6 +85,7 @@ class CLuceneIndex : public facebook::thrift::concurrency::Runnable
 
     boost::shared_ptr<lucene::store::CLuceneRAMDirectory>  ram_directory;
     boost::shared_ptr<lucene::store::CLuceneRAMDirectory>  ram_prev_directory;
+    boost::shared_ptr<lucene::store::CLuceneRAMDirectory>  ram_prev_prev_directory;
 
     boost::shared_ptr<lucene::search::IndexSearcher> ram_searcher;
     boost::shared_ptr<lucene::search::IndexSearcher> ram_prev_searcher;

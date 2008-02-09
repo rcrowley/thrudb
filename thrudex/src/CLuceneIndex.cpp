@@ -93,8 +93,12 @@ CLuceneIndex::CLuceneIndex(const string &index_root, const string &index_name, s
             reader->close();
         }
 
-        ram_directory = shared_ptr<CLuceneRAMDirectory> (new CLuceneRAMDirectory());
+        ram_directory = shared_ptr<CLuceneRAMDirectory>(new CLuceneRAMDirectory());
+        ram_directory->__cl_addref(); //trick clucene's lame ref counters
+
         ram_prev_directory = shared_ptr<CLuceneRAMDirectory> (new CLuceneRAMDirectory());
+        ram_directory->__cl_addref(); //trick clucene's lame ref counters
+
         ram_bloom     = shared_ptr<bloom_filter> (new bloom_filter(filter_space,1.0/(1.0 * filter_space), ((int) filter_space*rand())));
         ram_searcher  = shared_ptr<IndexSearcher>(new IndexSearcher(ram_directory.get()));
 
@@ -144,13 +148,15 @@ CLuceneIndex::~CLuceneIndex()
 shared_ptr<MultiSearcher> CLuceneIndex::getSearcher()
 {
 
-    RWGuard wg( mutex, true );
+    Guard g( mutex );
 
     if(last_refresh < last_modified || last_refresh < last_synched){
 
+        modifier->flush();
+
         ram_searcher  = shared_ptr<IndexSearcher>(new IndexSearcher( ram_directory.get() ));
 
-        //since clucene is ptr based we need to get the
+        //since clucene doesn't use shared_ptr we need to get the
         //underlying ptr
         Searchable *searchers[4];
         searchers[0] = ram_searcher.get();
@@ -166,7 +172,7 @@ shared_ptr<MultiSearcher> CLuceneIndex::getSearcher()
 
         searcher  = shared_ptr<MultiSearcher>( new MultiSearcher( searchers ) );
 
-        last_modified = Util::currentTime();
+        last_refresh = Util::currentTime();
 
         LOG4CXX_DEBUG(logger,"Created new searcher");
     }
@@ -181,13 +187,12 @@ void CLuceneIndex::put( const string &key, lucene::document::Document *doc )
     assert(!key.empty());
 
 
-    RWGuard g( mutex, true );
+    Guard g( mutex );
 
 
     //always put into memory (we will merge to disk later)
     shared_ptr<IndexModifier> l_modifier  = modifier;
     shared_ptr<bloom_filter>  l_ram_bloom = ram_bloom;
-
 
     //if update to a doc in memory old copy first
     if( ram_bloom->contains( key ) ){
@@ -202,7 +207,6 @@ void CLuceneIndex::put( const string &key, lucene::document::Document *doc )
     }
 
     l_modifier->addDocument(doc);
-    l_modifier->flush();
 
     l_ram_bloom->insert( key );
 
@@ -211,7 +215,7 @@ void CLuceneIndex::put( const string &key, lucene::document::Document *doc )
 
 void CLuceneIndex::remove(const string &key)
 {
-    RWGuard g(mutex,true);
+    Guard g(mutex);
 
     shared_ptr<bloom_filter>  l_disk_bloom   = disk_bloom;
     shared_ptr<bloom_filter>  l_ram_bloom    = ram_bloom;
@@ -231,7 +235,7 @@ void CLuceneIndex::remove(const string &key)
         Term      *t = new Term(DOC_KEY, wkey.c_str() );
 
         l_modifier->deleteDocuments(t);
-        l_modifier->flush();
+        //l_modifier->flush();
 
         last_modified = Util::currentTime();
 
@@ -245,6 +249,7 @@ void CLuceneIndex::search(const thrudex::SearchQuery &q, thrudex::SearchResponse
 
     LOG4CXX_DEBUG(logger,"Searching in: ("+q.index+")");
 
+    shared_ptr<CLuceneRAMDirectory> l_ram_prev_directory = ram_prev_directory;
 
     shared_ptr<MultiSearcher> l_searcher = this->getSearcher();
 
@@ -393,7 +398,7 @@ void CLuceneIndex::sync()
 {
     //Any updates
     {
-        RWGuard g(mutex);
+        Guard g(mutex);
         if(last_modified <= last_synched)
             return;
     }
@@ -410,9 +415,12 @@ void CLuceneIndex::sync()
 
     //replace index handles
     {
-        RWGuard g(mutex,true);
+        Guard g(mutex);
 
         syncing = true; //this flag alters the search code to include prev searcher
+
+        //Flush old writer
+        modifier->flush();
 
         //Grab old handles
         l_ram_bloom    = ram_bloom;
@@ -422,10 +430,13 @@ void CLuceneIndex::sync()
 
         //create new handles
         ram_directory = shared_ptr<CLuceneRAMDirectory>(new CLuceneRAMDirectory());
+        ram_directory->__cl_addref(); //trick clucene's lame ref counters
+
         ram_bloom     = shared_ptr<bloom_filter> (new bloom_filter(filter_space,1.0/(1.0 * filter_space), ((int) filter_space*rand())));
         modifier      = shared_ptr<IndexModifier>(new IndexModifier(ram_directory.get(),analyzer.get(),true));
 
-        ram_prev_directory = l_ram_directory;
+        ram_prev_prev_directory = ram_prev_directory;
+        ram_prev_directory      = l_ram_directory;
 
         disk_deletes  = shared_ptr<set<string> >(new set<string>());
     }
@@ -452,21 +463,21 @@ void CLuceneIndex::sync()
 
     LOG4CXX_DEBUG(logger,"Deleted old ids");
 
-    //Now merge in the ram
-    shared_ptr<IndexWriter> disk_writer(new IndexWriter(idx_path.c_str(),analyzer.get(),true,true));
+    {
+        //Now merge in the ram
+        shared_ptr<IndexWriter> disk_writer(new IndexWriter(idx_path.c_str(),analyzer.get(),false,false));
 
-    Directory *dirs[2];
+        Directory *dirs[2];
 
-    dirs[0] = l_ram_directory.get();
-    dirs[1] = NULL;
+        dirs[0] = l_ram_directory.get();
+        dirs[1] = NULL;
 
-    disk_writer->addIndexes(dirs);
-    disk_writer->close();
+        disk_writer->addIndexes(dirs);
+        disk_writer->close();
 
-
-    LOG4CXX_DEBUG(logger,"Merged");
-
-    //Search new index (big perf hit so get it over now)
+        LOG4CXX_DEBUG(logger,"Merged");
+    }
+        //Search new index (big perf hit so get it over now)
     shared_ptr<IndexSearcher> l_disk_searcher(new IndexSearcher(idx_path.c_str()));
     wstring q = wstring(DOC_KEY)+wstring(L":1234");
 
@@ -479,7 +490,7 @@ void CLuceneIndex::sync()
 
     //replace index handles
     {
-        RWGuard g(mutex,true);
+        Guard g(mutex);
 
         syncing = false; //this flag alters the search code to include prev searcher
 
