@@ -29,8 +29,7 @@ use constant THRUDOC_PORT    => 11291;
 
 use constant THRUDOC_BUCKET  => "bookmarks";
 
-use constant THRUDEX_DOMAIN => "tutorial";
-use constant THRUDEX_INDEX  => "bookmarks";
+use constant THRUDEX_INDEX   => "bookmarks";
 
 
 sub new
@@ -116,6 +115,9 @@ sub connect_to_thrudex
         $self->{thrudex}  = new ThrudexClient($protocol);
 
         $transport->open();
+
+        $self->{thrudex}->admin("create_index", THRUDEX_INDEX());
+
     }; if($@){
         die $@->{message} if UNIVERSAL::isa($@,"Thrift::TException");
         die $@;
@@ -145,8 +147,6 @@ sub load_tsv_file
     }
 
     close(BMFILE);
-
-    $self->{thrudex}->commitAll();
 
     my $t1 = gettimeofday();
 
@@ -203,10 +203,9 @@ sub index_bookmark
     #Indexing requires mapping the fields in our
     #bookmark object to a Thrudex Document
     #
-    my $doc      = new Thrudex::DocMsg();
+    my $doc      = new Thrudex::Document();
 
-    $doc->docid($id);
-    $doc->domain( THRUDEX_DOMAIN() );
+    $doc->key($id);
     $doc->index ( THRUDEX_INDEX()  );
 
     my $field = new Thrudex::Field();
@@ -214,7 +213,7 @@ sub index_bookmark
     #
     #title
     #
-    $field->name("title");
+    $field->key("title");
     $field->value($b->title);
     $field->sortable(1);
     push(@{$doc->{fields}}, $field);
@@ -223,11 +222,11 @@ sub index_bookmark
     #tags
     #
     $field = new Thrudex::Field();
-    $field->name("tags");
+    $field->key("tags");
     $field->value($b->tags);
     push(@{$doc->{fields}}, $field);
 
-    $thrudex->add( $doc );
+    $thrudex->put( $doc );
 }
 
 sub remove_all
@@ -254,19 +253,15 @@ sub remove_all
 
             foreach my $el (@{ $r->elements }){
                 #
-                my $rm = new Thrudex::RemoveMsg();
-                $rm->domain( THRUDEX_DOMAIN() );
+                my $rm = new Thrudex::Element();
                 $rm->index ( THRUDEX_INDEX()  );
-                $rm->docid($el->key);
+                $rm->key($el->key);
 
                 push(@thrudex_docs, $rm);
             }
 
             $thrudex->removeList(\@thrudex_docs);
             $thrudoc->removeList($r->elements);
-
-            $thrudex->commitAll();
-
         }
 
         $seed = $r->{seed};
@@ -294,9 +289,8 @@ sub find
 
     my $thrudex = $self->{thrudex};
     my $thrudoc  = $self->{thrudoc};
-    my $query    = new Thrudex::QueryMsg();
+    my $query    = new Thrudex::SearchQuery();
 
-    $query->domain( THRUDEX_DOMAIN() );
     $query->index(  THRUDEX_INDEX() );
     $query->query($terms);
 
@@ -306,15 +300,15 @@ sub find
     $query->randomize(1)               if exists $options->{random};
     $query->sortby($options->{sortby}) if exists $options->{sortby};
 
-    my $ids = $thrudex->query( $query );
+    my $ids = $thrudex->search( $query );
 
     return unless defined $ids;
 
     print "Found ".$ids->total." bookmarks\n";
 
-    if(@{$ids->{ids}} > 0){
+    if(@{$ids->{elements}} > 0){
 
-        my $response = $thrudoc->getList( $self->create_doc_list($ids->{ids}) );
+        my $response = $thrudoc->getList( $self->create_doc_list($ids->{elements}) );
 
         my @bookmarks;
 
@@ -350,7 +344,7 @@ sub create_doc_list
         my $el = new Thrudoc::Element();
 
         $el->bucket( THRUDOC_BUCKET() );
-        $el->key( $id );
+        $el->key( $id->key );
 
         push(@docs,$el);
     }
