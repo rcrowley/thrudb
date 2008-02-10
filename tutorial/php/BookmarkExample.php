@@ -25,7 +25,6 @@ define("THRUDOC_PORT",  11291 );
 
 define("THRUDOC_BUCKET", "bookmarks");
 
-define("THRUDEX_DOMAIN", "tutorial");
 define("THRUDEX_INDEX",  "bookmarks");
 
 class BookmarkManager {
@@ -56,13 +55,15 @@ class BookmarkManager {
 
     private function connect_to_thrudex()
     {
-        //Thrudoc connection
+        //Thrudex connection
         $socket         = new TSocket('localhost', THRUDEX_PORT);
         $transport      = new TFramedTransport($socket);
         $protocol       = new TBinaryProtocol($transport);
         $this->thrudex = new ThrudexClient($protocol);
 
         $transport->open();
+
+        $this->thrudex->admin("create_index", THRUDEX_INDEX);
     }
 
     private function serialize_bookmark($b)
@@ -108,8 +109,6 @@ class BookmarkManager {
 
         fclose($fh);
 
-        $this->thrudex->commitAll();
-
         $t1 = gettimeofday(true);
 
         print "*Indexed file in: ".($t1-$t0)."*\n\n";
@@ -137,10 +136,9 @@ class BookmarkManager {
 
     private function index_bookmark( $id, $b )
     {
-        $doc      = new Thrudex_DocMsg();
+        $doc      = new Thrudex_Document();
 
-        $doc->docid  = $id;
-        $doc->domain = THRUDEX_DOMAIN;
+        $doc->key    = $id;
         $doc->index  = THRUDEX_INDEX;
 
         $fields = array();
@@ -149,7 +147,7 @@ class BookmarkManager {
         //
         //title
         //
-        $field->name     = "title";
+        $field->key      = "title";
         $field->value    = $b->title;
         $field->sortable = true;
         array_push( $fields, $field);
@@ -159,13 +157,13 @@ class BookmarkManager {
         //
         //tag
         //
-        $field->name  = "tags";
+        $field->key   = "tags";
         $field->value = $b->tags;
         array_push( $fields, $field);
 
         $doc->fields = $fields;
 
-        $this->thrudex->add( $doc );
+        $this->thrudex->put( $doc );
     }
 
     function remove_all()
@@ -184,20 +182,17 @@ class BookmarkManager {
                 break;
 
             foreach($r->elements as $id){
-                $rm = new Thrudex_RemoveMsg();
-                $rm->domain = THRUDEX_DOMAIN;
-                $rm->index  = THRUDEX_INDEX;
-                $rm->docid  = $id->key;
+                $el = new Thrudex_Element();
+                $el->index  = THRUDEX_INDEX;
+                $el->key    = $id->key;
 
-                array_push( $docs, $rm );
+                array_push( $docs, $el );
             }
 
              $this->thrudex->removeList($docs);
              $this->thrudoc->removeList($r->elements);
 
              $seed = $r->seed;
-
-             $this->thrudex->commitAll();
 
         }while( count($r->elements) >= $limit );
 
@@ -214,9 +209,8 @@ class BookmarkManager {
 
         $t0 = gettimeofday(true);
 
-        $query    = new Thrudex_QueryMsg();
+        $query    = new Thrudex_SearchQuery();
 
-        $query->domain =  THRUDEX_DOMAIN;
         $query->index  =  THRUDEX_INDEX;
         $query->query  = $terms;
 
@@ -230,12 +224,12 @@ class BookmarkManager {
             $query->sortby    = $options["sortby"];
 
 
-        $ids = $this->thrudex->query( $query );
+        $els = $this->thrudex->search( $query );
 
-        print "Found ".$ids->total." bookmarks\n";
+        print "Found ".$els->total." bookmarks\n";
 
-        if( count( $ids->ids ) > 0 ){
-            $response  = $this->thrudoc->getList( $this->create_doc_list($ids->ids) );
+        if( count( $els->elements ) > 0 ){
+            $response  = $this->thrudoc->getList( $this->create_doc_list($els->elements) );
             $bookmarks = array();
 
             foreach( $response as $doc ){
@@ -260,7 +254,7 @@ class BookmarkManager {
         foreach( $ids as $id ){
             $doc = new Thrudoc_Element();
 
-            $doc->key    = $id;
+            $doc->key    = $id->key;
             $doc->bucket = THRUDOC_BUCKET;
 
             array_push( $docs, $doc );
