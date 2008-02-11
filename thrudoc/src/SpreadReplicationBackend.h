@@ -8,12 +8,15 @@
 #if HAVE_LIBMEMCACHED && HAVE_LIBUUID
 
 #include <log4cxx/logger.h>
+#include <queue>
 #include <sp.h>
 #include <string>
 #include <uuid/uuid.h>
 
 #include "Thrudoc.h"
 #include "ThrudocPassthruBackend.h"
+
+class SpreadReplicationMessage;
 
 /* NOTE: this is not exactly a normal passthrough backend even tho it kinda
  * looks like one. we use the passthrough, but there's spread in between
@@ -49,9 +52,13 @@ class SpreadReplicationBackend : public ThrudocPassthruBackend
         mailbox spread_mailbox;
         pthread_t listener_thread;
         bool listener_thread_go;
+        bool listener_live;
+        std::queue<SpreadReplicationMessage *> pending_messages;
 
         void listener_thread_run ();
-
+        void handle_message ();
+        void do_message (SpreadReplicationMessage * message);
+        void request_next (SpreadReplicationMessage * message);
 };
 
 #endif /* HAVE_LIBMEMCACHED */

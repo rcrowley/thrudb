@@ -2,7 +2,7 @@
 #include "thrudoc_config.h"
 #endif
 /* hack to work around thrift and log4cxx installing config.h's */
-#undef HAVE_CONFIG_H 
+#undef HAVE_CONFIG_H
 
 #include "SpreadReplicationBackend.h"
 
@@ -32,11 +32,11 @@ string SP_error_to_string (int error);
 LoggerPtr SpreadReplicationBackend::logger (Logger::getLogger ("SpreadReplicationBackend"));
 
 SpreadReplicationBackend::SpreadReplicationBackend (shared_ptr<ThrudocBackend> backend,
-                                                    const string & spread_name, 
+                                                    const string & spread_name,
                                                     const string & spread_private_name,
-                                                    const string & spread_group) 
+                                                    const string & spread_group)
 {
-    LOG4CXX_INFO (logger, string ("SpreadReplicationBackend: spread_name=") + 
+    LOG4CXX_INFO (logger, string ("SpreadReplicationBackend: spread_name=") +
                   spread_name + ", spread_private_name=" +
                   spread_private_name + ", spread_group=" + spread_group);
 
@@ -46,7 +46,7 @@ SpreadReplicationBackend::SpreadReplicationBackend (shared_ptr<ThrudocBackend> b
     this->spread_group = spread_group;
 
     char private_group[MAX_GROUP_NAME];
-    int ret = SP_connect (this->spread_name.c_str (), 
+    int ret = SP_connect (this->spread_name.c_str (),
                           this->spread_private_name.c_str (), 0, 1,
                           &this->spread_mailbox, private_group);
     if (ret < 0)
@@ -59,7 +59,7 @@ SpreadReplicationBackend::SpreadReplicationBackend (shared_ptr<ThrudocBackend> b
     }
 
     this->spread_private_group = string (private_group);
-    LOG4CXX_INFO (logger, "SpreadBackend: private_group=" + 
+    LOG4CXX_INFO (logger, "SpreadBackend: private_group=" +
                   this->spread_private_group);
 
     ret = SP_join (this->spread_mailbox, this->spread_group.c_str ());
@@ -73,8 +73,8 @@ SpreadReplicationBackend::SpreadReplicationBackend (shared_ptr<ThrudocBackend> b
     }
 
     // create the listener thread
-    if (pthread_create(&listener_thread, NULL, start_listener_thread, 
-                       (void *)this) != 0) 
+    if (pthread_create(&listener_thread, NULL, start_listener_thread,
+                       (void *)this) != 0)
     {
         char error[] = "SpreadReplicationBackend: start_listener_thread failed\n";
         LOG4CXX_ERROR (logger, error);
@@ -83,42 +83,46 @@ SpreadReplicationBackend::SpreadReplicationBackend (shared_ptr<ThrudocBackend> b
         throw e;
     }
     listener_thread_go = true;
+    listener_live = true;
 }
 
 SpreadReplicationBackend::~SpreadReplicationBackend ()
 {
+    LOG4CXX_INFO (logger, "~SpreadReplicationBackend");
     this->listener_thread_go = false;
     // TODO: make sure there's a thread to join
     pthread_join(listener_thread, NULL);
     SP_disconnect (this->spread_mailbox);
 }
 
-// TODO: these are going to return success, etc. without us really knowing if
-// they're going to, that kinda sucks. best we can do is validate tho it's also
-// kinda funky that putValue will return an id that may never come in to
-// existence
+// TODO: these 3 modify functions need to wait for their uuid to be processed
+// on the local host, and return the result of that processing. that's going to
+// be pretty freaking complicated to do well. worse than that we somehow have
+// to differentiate between errors/exceptions that should stop replciation b/c
+// we're in or going in to an invalid state and normal user caused
+// errors/exceptions.... :(
 
 // TODO: implement circuit breaker pattern around spread...
 
 // TODO: implement a get that will (optionally) reflect things that we've sent
 // out via spread, but haven't heard back about yet.
 
-void SpreadReplicationBackend::put (const string & bucket, const string & key, 
+void SpreadReplicationBackend::put (const string & bucket, const string & key,
                                     const string & value)
 {
     char msg[SPREAD_BACKEND_MAX_MESSAGE_SIZE];
-    snprintf (msg, SPREAD_BACKEND_MAX_MESSAGE_SIZE, "%s p %s %s %s", 
+    snprintf (msg, SPREAD_BACKEND_MAX_MESSAGE_SIZE, "%s p %s %s %s",
               generate_uuid ().c_str (), bucket.c_str (), key.c_str (),
               value.c_str ());
     SP_multicast (this->spread_mailbox, SAFE_MESS, this->spread_group.c_str (),
                   ORIG_MESSAGE_TYPE, strlen (msg), msg);
 }
 
-void SpreadReplicationBackend::remove (const string & bucket, 
+void SpreadReplicationBackend::remove (const string & bucket,
                                        const string & key )
 {
     char msg[SPREAD_BACKEND_MAX_MESSAGE_SIZE];
-    snprintf (msg, SPREAD_BACKEND_MAX_MESSAGE_SIZE, "%s r %s %s", 
+    snprintf (msg, SPREAD_BACKEND_MAX_MESSAGE_SIZE, "%s r %s %s",
               generate_uuid ().c_str (), bucket.c_str (), key.c_str ());
     SP_multicast (this->spread_mailbox, SAFE_MESS, this->spread_group.c_str (),
                   ORIG_MESSAGE_TYPE, strlen (msg), msg);
@@ -127,15 +131,14 @@ void SpreadReplicationBackend::remove (const string & bucket,
 string SpreadReplicationBackend::admin (const string & op, const string & data)
 {
     char msg[SPREAD_BACKEND_MAX_MESSAGE_SIZE];
-    snprintf (msg, SPREAD_BACKEND_MAX_MESSAGE_SIZE, "%s a %s %s", 
+    snprintf (msg, SPREAD_BACKEND_MAX_MESSAGE_SIZE, "%s a %s %s",
               generate_uuid ().c_str (), op.c_str (), data.c_str ());
     SP_multicast (this->spread_mailbox, SAFE_MESS, this->spread_group.c_str (),
                   ORIG_MESSAGE_TYPE, strlen (msg), msg);
     // for the most part admin operations are idempotent, so we'll go ahead
     // and run this one locally to get an idea of what will happen via spread
-    // and so we can return something "correct" to the caller ... 
-    // TODO: is this the best approach?
-    return this->get_backend ()->admin (op, data); 
+    // and so we can return something "correct" to the caller ...
+    return this->get_backend ()->admin (op, data);
 }
 
 void SpreadReplicationBackend::validate (const std::string & bucket,
@@ -181,140 +184,277 @@ void * SpreadReplicationBackend::start_listener_thread (void * ptr)
     return NULL;
 }
 
-int parse_orig_message (char * mess, char * uuid, char * op, 
-                        char * bucket, char * key, char * value)
-{
-    return sscanf (mess, "%s %c %s %s %s", uuid, op, bucket, key, value);
-}
-
-int parse_replay_message (char * mess, char * orig_sender, 
-                          int16_t * orig_message_type, char * uuid, char * op, 
-                          char * bucket, char * key, char * value)
-{
-    return sscanf (mess, "%s;%hu;%s %c %s %s %s", orig_sender, 
-                   orig_message_type, uuid, op, bucket, key, value);
-}
-
 void SpreadReplicationBackend::listener_thread_run ()
 {
-    service service_type;
-    char sender[MAX_GROUP_NAME];
-    char max_groups = 5;
-    int num_groups;
-    char groups[max_groups][MAX_GROUP_NAME];
-    int16_t mess_type;
-    int endian_mismatch;
-    int max_mess_len = SPREAD_BACKEND_MAX_MESSAGE_SIZE;
-    char mess[SPREAD_BACKEND_MAX_MESSAGE_SIZE];
-
-    char last_uuid[UUID_LEN + 1];
-    last_uuid[UUID_LEN] = '\0';
-
-    int mess_len;
     while (this->listener_thread_go)
     {
-        // TODO: poll so that we're non-blocking
-
-        // TODO: is spread thread safe, enough, can we multi-thread write,
-        // and single thread read all at the same time?
-        mess_len = SP_receive (this->spread_mailbox, &service_type, sender,
-                               max_groups, &num_groups, groups, &mess_type, 
-                               &endian_mismatch, max_mess_len, mess);
-        if (mess_len > 0)
+        int ret = SP_poll (this->spread_mailbox);
+        if (ret > 0)
         {
-            mess[mess_len] = '\0';
-
-            char uuid[UUID_LEN];
-            char op = 0;
-            char bucket[MAX_BUCKET_SIZE];
-            char key[MAX_KEY_SIZE];
-            char value[MAX_VALUE_SIZE];
-            if (mess_type == ORIG_MESSAGE_TYPE)
-            {
-                parse_orig_message (mess, uuid, &op, bucket, key, value);
-            }
-            else if (mess_type == REPLAY_MESSAGE_TYPE)
-            {
-                char orig_sender[MAX_GROUP_NAME];
-                int16_t orig_mess_type;
-                parse_replay_message (mess, orig_sender, &orig_mess_type, uuid, 
-                                      &op, bucket, key, value);
-            }
-
             try
             {
-                switch (op)
-                {
-                    case 'p':
-                        LOG4CXX_DEBUG (logger, string ("replication: put: bucket=") + 
-                                       bucket + ", key=" + key + ", value=" + 
-                                       value);
-                        this->get_backend ()->put (bucket, key, value);
-                        break;
-                    case 'r':
-                        LOG4CXX_DEBUG (logger, string ("replication remove: bucket=") + 
-                                       bucket + ", key=" + key);
-                        this->get_backend ()->remove (bucket, key);
-                        break;
-                    case 'a':
-                        LOG4CXX_DEBUG (logger, string ("replication admin: op=") + 
-                                       bucket + ", data=" + key);
-                        this->get_backend ()->admin (bucket, key);
-                        break;
-                    case 0:
-                    default:
-                        LOG4CXX_DEBUG (logger, string ("replication admin: unknown op"));
-                        break;
-                }
-                // copy over the last uuid we've completed
-                memcpy (last_uuid, uuid, UUID_LEN);
-                // flush_last every so often
+                handle_message ();
             }
             catch (ThrudocException & e)
             {
-                // we had an exception, so we'll stop replication now
+                LOG4CXX_ERROR (logger, "listener_thread_run: exception e.what=" +
+                               e.what);
+                // stop the replication thread
                 this->listener_thread_go = false;
-                LOG4CXX_ERROR (logger, string ("replication failure: uuid=") +
-                               uuid + ", what=" + e.what);
-                LOG4CXX_ERROR (logger, string ("replication failure: last successful uuid=") + 
-                               last_uuid);
-                // force flush_last now, note it's the old last
             }
+        }
+        else if (ret == 0)
+        {
+            usleep (250000);
         }
         else
         {
-            // spread error
-            string msg;
-            switch (mess_type)
-            {
-                case ILLEGAL_SESSION:
-                    // ILLEGAL_SESSION - The mbox given to receive on was illegal.
-                    msg = "replication: spread error ILLEGAL_SESSION, stopping";
-                    this->listener_thread_go = false;
-                    break;
-                case ILLEGAL_MESSAGE:
-                    // ILLEGAL_MESSAGE - The message had an illegal structure, like a scatter not filled out correctly.
-                    msg = "replication: spread error ILLEGAL_MESSAGE, ignoring";
-                    break;
-                case CONNECTION_CLOSED:
-                    // CONNECTION_CLOSED - During  communication  to  receive  the  message  communication errors occured and the receive could not be completed.  
-                    msg = "replication: spread error CONNECTION_CLOSED";
-                    // TODO: try and reconnect
-                    break;
-                case GROUPS_TOO_SHORT:
-                    // GROUPS_TOO_SHORT - If the groups array is too short to hold  the  entire  list  of groups this message was sent to then this error is returned and the num_groups field will be set to the negative of the  number of groups needed.
-                    msg = "replication: spread error GROUPS_TOO_SHORT, stopping";
-                    this->listener_thread_go = false;
-                    break;
-                case BUFFER_TOO_SHORT:
-                    // BUFFER_TOO_SHORT - If  the  message body buffer mess is too short to hold the mes‐ sage being  received  then  this  error  is  returned  and  the endian_mismatch  field  is  set  to  the  negative value of the required buffer length.
-                    msg = "replication: spread error BUFFER_TOO_SHORT, stopping";
-                    this->listener_thread_go = false;
-                    break;
-            }
-            LOG4CXX_ERROR (logger, msg);
+            ThrudocException e;
+            this->listener_thread_go = false;
+            if (ret == ILLEGAL_SESSION)
+                e.what = "spread error: ILLEGAL_SESSION, stopping";
+            else
+                e.what = "spread error: unknown, stopping";
+            LOG4CXX_ERROR (logger, "listener_thread_run: " + e.what);
+            throw e;
         }
     }
+}
+
+class SpreadReplicationMessage
+{
+    public:
+        void receive (mailbox spread_mailbox)
+        {
+            max_groups = 5;
+            buf_size = SPREAD_BACKEND_MAX_MESSAGE_SIZE;
+
+            buf_len = SP_receive (spread_mailbox, &service_type, sender,
+                                  max_groups, &num_groups, groups, &type,
+                                  &endian_mismatch, buf_size, buf);
+            if (buf_len > 0)
+            {
+                // null terminate the message
+                buf[buf_len] = '\0';
+                LOG4CXX_DEBUG (logger, string ("receive: buf=") + buf);
+            }
+            else
+            {
+                ThrudocException e;
+                switch (buf_len)
+                {
+                    case ILLEGAL_SESSION:
+                        // ILLEGAL_SESSION - The mbox given to receive on was illegal.
+                        e.what = "replication: spread error ILLEGAL_SESSION, stopping";
+                        break;
+                    case ILLEGAL_MESSAGE:
+                        // ILLEGAL_MESSAGE - The message had an illegal structure, like a scatter not filled out correctly.
+                        e.what = "replication: spread error ILLEGAL_MESSAGE, ignoring";
+                        break;
+                    case CONNECTION_CLOSED:
+                        // CONNECTION_CLOSED - During  communication  to  receive  the  message  communication errors occured and the receive could not be completed.
+                        e.what = "replication: spread error CONNECTION_CLOSED";
+                        // TODO: try and reconnect
+                        break;
+                    case GROUPS_TOO_SHORT:
+                        // GROUPS_TOO_SHORT - If the groups array is too short to hold  the  entire  list  of groups this message was sent to then this error is returned and the num_groups field will be set to the negative of the  number of groups needed.
+                        e.what = "replication: spread error GROUPS_TOO_SHORT, stopping";
+                        break;
+                    case BUFFER_TOO_SHORT:
+                        // BUFFER_TOO_SHORT - If  the  message body buffer mess is too short to hold the mes‐ sage being  received  then  this  error  is  returned  and  the endian_mismatch  field  is  set  to  the  negative value of the required buffer length.
+                        e.what = "replication: spread error BUFFER_TOO_SHORT, stopping";
+                        break;
+                }
+                throw e;
+            }
+        }
+
+        int parse (const string & spread_private_group)
+        {
+            command = 0;
+            if (type == ORIG_MESSAGE_TYPE)
+            {
+                LOG4CXX_DEBUG (logger, "parse: orig");
+                if (sscanf (buf, "%s %c %s %s %s", uuid, &command, bucket, key,
+                            value))
+                    return type;
+            }
+            else if (type == REPLAY_MESSAGE_TYPE &&
+                     spread_private_group == groups[0])
+            {
+                LOG4CXX_DEBUG (logger, "parse: replay");
+                char orig_sender[MAX_GROUP_NAME];
+                int16_t orig_type;
+                // TODO: handle the none case
+                if (sscanf (buf, "%s;%hu;%s %c %s %s %s", orig_sender,
+                            &orig_type, uuid, &command, bucket, key, value))
+                    return type;
+            }
+            return 0;
+        }
+
+        const char * get_uuid ()
+        {
+            return this->uuid;
+        }
+
+        char get_command ()
+        {
+            return this->command;
+        }
+
+        const char * get_bucket ()
+        {
+            return this->bucket;
+        }
+
+        const char * get_key ()
+        {
+            return this->key;
+        }
+
+        const char * get_value ()
+        {
+            return this->value;
+        }
+
+        const char * get_op ()
+        {
+            return this->bucket;
+        }
+
+        const char * get_data ()
+        {
+            return this->key;
+        }
+
+    private:
+        static log4cxx::LoggerPtr logger;
+
+        // spread message stuff
+        service service_type;
+        char sender[MAX_GROUP_NAME];
+        char max_groups;
+        int num_groups;
+        char groups[5][MAX_GROUP_NAME];
+        int16_t type;
+        int endian_mismatch;
+        int buf_size;
+        int buf_len;
+        char buf[SPREAD_BACKEND_MAX_MESSAGE_SIZE];
+
+        // repli command stuff
+        char uuid[UUID_LEN];
+        char command;
+        char bucket[MAX_BUCKET_SIZE];
+        char key[MAX_KEY_SIZE];
+        char value[MAX_VALUE_SIZE];
+};
+
+LoggerPtr SpreadReplicationMessage::logger (Logger::getLogger ("SpreadReplicationMessage"));
+
+void SpreadReplicationBackend::handle_message ()
+{
+    SpreadReplicationMessage * message = new SpreadReplicationMessage ();
+    message->receive (this->spread_mailbox);
+    int type = message->parse (this->spread_private_group);
+    if (type == ORIG_MESSAGE_TYPE)
+    {
+        if (this->listener_live)
+        {
+            // do any/all queued messages, normally when we're coming off of
+            // a catch up and have been queueing up new message in the meantime
+            while (!pending_messages.empty ())
+            {
+                SpreadReplicationMessage * drain = pending_messages.front ();
+                pending_messages.pop ();
+                LOG4CXX_DEBUG (logger, string ("handle_message: drain.uuid=") +
+                               drain->get_uuid ());
+                do_message (drain);
+                delete drain;
+            }
+            LOG4CXX_DEBUG (logger, string ("handle_message: message.uuid=") +
+                           message->get_uuid ());
+            // then do this one
+            do_message (message);
+            delete message;
+        }
+        else
+        {
+            LOG4CXX_DEBUG (logger, string ("handle_message: push.uuid=") +
+                           message->get_uuid ());
+            pending_messages.push (message);
+        }
+    }
+    else if (type == REPLAY_MESSAGE_TYPE)
+    {
+        SpreadReplicationMessage * first_queued = pending_messages.front ();
+        if (first_queued == NULL ||
+            strncmp (first_queued->get_uuid (), message->get_uuid (),
+                     UUID_LEN) != 0)
+        {
+            // we haven't caught up yet
+            request_next (message);
+            LOG4CXX_DEBUG (logger, string ("handle_message: catchup.uuid=") +
+                           message->get_uuid ());
+            do_message (message);
+        }
+        else
+        {
+            LOG4CXX_DEBUG (logger, string ("handle_message: caughtup.uuid=") +
+                           message->get_uuid ());
+            // we've caught up, skip this one and go back to live
+            this->listener_live = true;
+        }
+        delete message;
+    }
+    else
+    {
+        // it's not a message we're interested in
+    }
+}
+
+void SpreadReplicationBackend::do_message (SpreadReplicationMessage * message)
+{
+    switch (message->get_command ())
+    {
+        case 'p':
+            LOG4CXX_DEBUG (logger, string ("replication: put: bucket=") +
+                           message->get_bucket () + ", key=" +
+                           message->get_key () + ", value=" +
+                           message->get_value ());
+            this->get_backend ()->put (message->get_bucket (),
+                                       message->get_key (),
+                                       message->get_value ());
+            break;
+        case 'r':
+            LOG4CXX_DEBUG (logger, string ("replication remove: bucket=") +
+                           message->get_bucket () + ", key=" +
+                           message->get_key ());
+            this->get_backend ()->remove (message->get_bucket (),
+                                          message->get_key ());
+            break;
+        case 'a':
+            LOG4CXX_DEBUG (logger, string ("replication admin: op=") +
+                           message->get_op () + ", data=" +
+                           message->get_data ());
+            this->get_backend ()->admin (message->get_op (),
+                                         message->get_data ());
+            break;
+        case 0:
+        default:
+            LOG4CXX_DEBUG (logger, string ("replication admin: unknown command"));
+            break;
+    }
+}
+
+void SpreadReplicationBackend::request_next (SpreadReplicationMessage * message)
+{
+    const char * uuid = message->get_uuid ();
+    // we don't want our own message back here...
+    SP_multicast (this->spread_mailbox, RELIABLE_MESS | SELF_DISCARD,
+                  this->spread_group.c_str (),
+                  REPLAY_MESSAGE_TYPE, strlen (uuid), uuid);
 }
 
 #endif /* HAVE_LIBSPREAD && HAVE_LIBUUID */
