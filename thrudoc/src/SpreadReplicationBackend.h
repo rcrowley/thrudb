@@ -11,11 +11,13 @@
 #include <queue>
 #include <sp.h>
 #include <string>
+#include <thrift/concurrency/Mutex.h>
 #include <uuid/uuid.h>
 
 #include "Thrudoc.h"
 #include "ThrudocPassthruBackend.h"
 
+class SpreadReplicationWait;
 class SpreadReplicationMessage;
 
 /* NOTE: this is not exactly a normal passthrough backend even tho it kinda
@@ -54,7 +56,11 @@ class SpreadReplicationBackend : public ThrudocPassthruBackend
         bool listener_thread_go;
         bool listener_live;
         std::queue<SpreadReplicationMessage *> pending_messages;
+        std::map<std::string, boost::shared_ptr<SpreadReplicationWait> > 
+            pending_waits;
+        facebook::thrift::concurrency::Mutex pending_waits_mutex;
 
+        std::string wait_for_resp (std::string uuid);
         void listener_thread_run ();
         void handle_message ();
         void do_message (SpreadReplicationMessage * message);
