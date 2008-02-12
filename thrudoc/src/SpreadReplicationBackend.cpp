@@ -32,13 +32,22 @@ string SP_error_to_string (int error);
 class SpreadReplicationWait 
 {
     public:
+        // uuid is just for logging/debugging purposes
         SpreadReplicationWait (string uuid, uint32_t max_wait)
         {
-            LOG4CXX_DEBUG (logger, "SpreadReplicationWait: uuid=" + uuid);
+            char buf[128];
+            sprintf (buf, "SpreadReplicationWait: uuid=%s, max_wait=%d", 
+                     uuid.c_str (), max_wait);
+            LOG4CXX_DEBUG (logger, buf);
+
             this->uuid = uuid;
             this->max_wait = max_wait;
+
             pthread_mutex_init (&this->mutex, NULL);
             pthread_cond_init (&this->condition, NULL);
+            // take the mutex now, so that release can't happen before
+            // we're waiting on it
+            pthread_mutex_lock (&this->mutex);
         }
 
         ~SpreadReplicationWait ()
@@ -49,44 +58,59 @@ class SpreadReplicationWait
             pthread_mutex_destroy (&this->mutex);
         }
 
-        string wait ()
+        void wait ()
         {
             LOG4CXX_DEBUG (logger, "wait: uuid=" + this->uuid);
-            pthread_mutex_lock (&this->mutex);
 #if defined (HAVE_CLOCK_GETTIME)
             int err;
             err = clock_gettime(CLOCK_REALTIME, &this->abstime);
             if (!err)
             {
                 this->abstime.tv_sec += this->max_wait;
+                // cond_timedwait will unlock mutex so release can happen
                 err = pthread_cond_timedwait (&this->condition, &this->mutex, 
                                               &this->abstime);
+                // we need to free the mutex back up, cond_timedwait will lock 
+                // it before it comes out
+                pthread_mutex_unlock (&this->mutex);
                 if (err == ETIMEDOUT)
                 {
-                    ThrudocException e;
-                    e.what = "replication timeout exceeded";
-                    throw e;
+                    this->exception.what = "replication timeout exceeded";
+                    LOG4CXX_WARN (logger, "wait: " + this->exception.what);
+                    return;
                 }
             }
             else
                 pthread_cond_wait (&this->condition, &this->mutex);
 #else
             pthread_cond_wait (&this->condition, &this->mutex);
-#endif
             pthread_mutex_unlock (&this->mutex);
-            if (!exception.what.empty ())
-                throw exception;
-            return ret;
+#endif
         }
 
         void release (string ret, ThrudocException exception)
         {
+            // we'll wait on the mutex to free up so that we don't send a
+            // release before someone else is waiting on it
+            pthread_mutex_lock (&this->mutex);
             LOG4CXX_DEBUG (logger, "release: ret=" + ret + 
                            ", exception.what=" + exception.what +
                            ", uuid=" + this->uuid);
             this->ret = ret;
             this->exception = exception;
             pthread_cond_signal (&this->condition);
+            // we've sent the signnal unlock our mutex
+            pthread_mutex_unlock (&this->mutex);
+        }
+
+        string get_ret ()
+        {
+            return this->ret;
+        }
+
+        ThrudocException get_exception ()
+        {
+            return this->exception;
         }
 
     private:
@@ -309,17 +333,11 @@ SpreadReplicationBackend::~SpreadReplicationBackend ()
     // TODO: clean up our waits and mutexes and stuff
 }
 
-// TODO: these 3 modify functions need to wait for their uuid to be processed
-// on the local host, and return the result of that processing. that's going to
-// be pretty freaking complicated to do well. worse than that we somehow have
-// to differentiate between errors/exceptions that should stop replciation b/c
-// we're in or going in to an invalid state and normal user caused
-// errors/exceptions.... :(
+// TODO: there are potential issues here if the local host successfully applies
+// an operation that no one else can. i can't currently think of a way that can
+// happen so i'm not too worried about it. but it is (in theory) a possiblity.
 
 // TODO: implement circuit breaker pattern around spread...
-
-// TODO: implement a get that will (optionally) reflect things that we've sent
-// out via spread, but haven't heard back about yet.
 
 void SpreadReplicationBackend::put (const string & bucket, const string & key,
                                     const string & value)
@@ -328,12 +346,8 @@ void SpreadReplicationBackend::put (const string & bucket, const string & key,
     string uuid = generate_uuid ();
     snprintf (msg, SPREAD_BACKEND_MAX_MESSAGE_SIZE, "%s p %s %s %s",
               uuid.c_str (), bucket.c_str (), key.c_str (), value.c_str ());
-    SP_multicast (this->spread_mailbox, SAFE_MESS, this->spread_group.c_str (),
-                  ORIG_MESSAGE_TYPE, strlen (msg), msg);
 
-    // wait here until we have the result will throw an exception on error,
-    // ignoring return value, not used.
-    this->wait_for_resp (uuid);
+    this->send_and_wait_for_resp (msg, uuid);
 }
 
 void SpreadReplicationBackend::remove (const string & bucket,
@@ -343,12 +357,8 @@ void SpreadReplicationBackend::remove (const string & bucket,
     string uuid = generate_uuid ();
     snprintf (msg, SPREAD_BACKEND_MAX_MESSAGE_SIZE, "%s r %s %s",
               uuid.c_str (), bucket.c_str (), key.c_str ());
-    SP_multicast (this->spread_mailbox, SAFE_MESS, this->spread_group.c_str (),
-                  ORIG_MESSAGE_TYPE, strlen (msg), msg);
     
-    // wait here until we have the result will throw an exception on error,
-    // ignoring return value, not used.
-    this->wait_for_resp (uuid);
+    this->send_and_wait_for_resp (msg, uuid);
 }
 
 string SpreadReplicationBackend::admin (const string & op, const string & data)
@@ -357,38 +367,53 @@ string SpreadReplicationBackend::admin (const string & op, const string & data)
     string uuid = generate_uuid ();
     snprintf (msg, SPREAD_BACKEND_MAX_MESSAGE_SIZE, "%s a %s %s",
               uuid.c_str (), op.c_str (), data.c_str ());
-    SP_multicast (this->spread_mailbox, SAFE_MESS, this->spread_group.c_str (),
-                  ORIG_MESSAGE_TYPE, strlen (msg), msg);
     
-    string ret = this->wait_for_resp (uuid);
-    return ret;
+    return this->send_and_wait_for_resp (msg, uuid);
 }
 
-string SpreadReplicationBackend::wait_for_resp (string uuid)
+string SpreadReplicationBackend::send_and_wait_for_resp (const char * msg,
+                                                         string uuid)
 {
     LOG4CXX_DEBUG (logger, "wait_for_resp: begin uuid=" + uuid);
     string ret;
     shared_ptr<SpreadReplicationWait> wait (new SpreadReplicationWait (uuid, 
                                                                        2));
+    // install wait
     {
-        Guard g (this->pending_waits_mutex);
+        RWGuard g (this->pending_waits_mutex, true);
         pending_waits[uuid] = wait;
     }
-    // wait here until we have the result will throw an exception on error,
-    // ignoring return value, not used.
-    ret = wait->wait ();
+    // send out multi-cast message
+    SP_multicast (this->spread_mailbox, SAFE_MESS, this->spread_group.c_str (),
+                  ORIG_MESSAGE_TYPE, strlen (msg), msg);
+    // wait here until we have the result
+    wait->wait ();
+    // uninstall wait
     {
-        Guard g (this->pending_waits_mutex);
+        RWGuard g (this->pending_waits_mutex, true);
         pending_waits.erase (uuid);
     }
     LOG4CXX_DEBUG (logger, "wait_for_resp: done uuid=" + uuid);
-    return ret;
+    // throw exception if we have one
+    ThrudocException e = wait->get_exception ();
+    if (!e.what.empty ())
+    {
+        throw wait->get_exception ();
+    }
+    // otherwise return the result
+    return wait->get_ret ();
 }
 
 void SpreadReplicationBackend::validate (const std::string & bucket,
                                          const std::string * key,
                                          const std::string * value)
 {
+    if (!this->listener_live)
+    {
+        ThrudocException e;
+        e.what = "not up to date, try again later";
+        throw e;
+    }
     this->get_backend ()->validate (bucket, key, value);
     if (bucket.length () > MAX_BUCKET_SIZE)
     {
@@ -432,35 +457,16 @@ void SpreadReplicationBackend::listener_thread_run ()
 {
     while (this->listener_thread_go)
     {
-        int ret = SP_poll (this->spread_mailbox);
-        if (ret > 0)
+        try
         {
-            try
-            {
-                handle_message ();
-            }
-            catch (ThrudocException & e)
-            {
-                LOG4CXX_ERROR (logger, "listener_thread_run: exception e.what=" +
-                               e.what);
-                // stop the replication thread
-                this->listener_thread_go = false;
-            }
+            handle_message ();
         }
-        else if (ret == 0)
+        catch (ThrudocException & e)
         {
-            usleep (250000);
-        }
-        else
-        {
-            ThrudocException e;
+            LOG4CXX_ERROR (logger, "listener_thread_run: exception e.what=" +
+                           e.what);
+            // stop the replication thread
             this->listener_thread_go = false;
-            if (ret == ILLEGAL_SESSION)
-                e.what = "spread error: ILLEGAL_SESSION, stopping";
-            else
-                e.what = "spread error: unknown, stopping";
-            LOG4CXX_ERROR (logger, "listener_thread_run: " + e.what);
-            throw e;
         }
     }
 }
@@ -523,6 +529,7 @@ void SpreadReplicationBackend::handle_message ()
     else
     {
         // it's not a message we're interested in
+        delete message;
     }
 }
 
@@ -574,6 +581,7 @@ void SpreadReplicationBackend::do_message (SpreadReplicationMessage * message)
     // if we sent this message signal to the waiting thread that it's complete
     if (this->spread_private_group == message->get_sender ())
     {
+        RWGuard g (this->pending_waits_mutex, false);
         std::map<std::string, boost::shared_ptr<SpreadReplicationWait> >::iterator
             i = pending_waits.find (message->get_uuid ());
         if (i != pending_waits.end ())

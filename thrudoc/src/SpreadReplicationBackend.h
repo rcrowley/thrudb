@@ -58,9 +58,9 @@ class SpreadReplicationBackend : public ThrudocPassthruBackend
         std::queue<SpreadReplicationMessage *> pending_messages;
         std::map<std::string, boost::shared_ptr<SpreadReplicationWait> > 
             pending_waits;
-        facebook::thrift::concurrency::Mutex pending_waits_mutex;
+        facebook::thrift::concurrency::ReadWriteMutex pending_waits_mutex;
 
-        std::string wait_for_resp (std::string uuid);
+        std::string send_and_wait_for_resp (const char * msg, std::string uuid);
         void listener_thread_run ();
         void handle_message ();
         void do_message (SpreadReplicationMessage * message);
