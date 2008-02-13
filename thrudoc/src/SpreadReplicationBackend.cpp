@@ -136,7 +136,6 @@ class SpreadReplicationMessage
             max_groups = 5;
             buf_size = SPREAD_BACKEND_MAX_MESSAGE_SIZE;
 
-            // TODO: change to an event driven model
             buf_len = SP_receive (spread_mailbox, &service_type, sender,
                                   max_groups, &num_groups, groups, &type,
                                   &endian_mismatch, buf_size, buf);
@@ -622,6 +621,11 @@ void SpreadReplicationBackend::do_message (SpreadReplicationMessage * message)
         // but we don't (yet) know when to stop replication when things are in
         // or will be in a broken state.
         exception = e;
+    }
+    catch (...)
+    {
+        exception.what = "unknown exception, that's not good...";
+        LOG4CXX_WARN (logger, exception.what);
     }
 
     // if we sent this message signal to the waiting thread that it's complete
