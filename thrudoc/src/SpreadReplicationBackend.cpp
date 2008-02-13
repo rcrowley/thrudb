@@ -8,11 +8,13 @@
 
 #include "SpreadReplicationBackend.h"
 
+#include <poll.h>
+
 // should be max expected key + value + uuid size + ~4. truncation occur
 // otherwise
 #define MAX_BUCKET_SIZE 64
 #define MAX_KEY_SIZE 64
-#define MAX_VALUE_SIZE 128
+#define MAX_VALUE_SIZE 2048
 #define UUID_LEN 37
 #define MESSAGE_OVERHEAD 4
 #define SPREAD_BACKEND_MAX_MESSAGE_SIZE MAX_BUCKET_SIZE + MAX_KEY_SIZE + MAX_VALUE_SIZE + UUID_LEN + MESSAGE_OVERHEAD
@@ -63,6 +65,7 @@ class SpreadReplicationWait
             LOG4CXX_DEBUG (logger, "wait: uuid=" + this->uuid);
 #if defined (HAVE_CLOCK_GETTIME)
             int err;
+            struct timespec abstime;
             err = clock_gettime(CLOCK_REALTIME, &this->abstime);
             if (!err)
             {
@@ -120,9 +123,6 @@ class SpreadReplicationWait
         uint32_t max_wait;
         pthread_mutex_t mutex;
         pthread_cond_t condition;
-#if defined (HAVE_CLOCK_GETTIME)
-        struct timespec abstime;
-#endif
         ThrudocException exception;
         string ret;
 
@@ -136,6 +136,7 @@ class SpreadReplicationMessage
             max_groups = 5;
             buf_size = SPREAD_BACKEND_MAX_MESSAGE_SIZE;
 
+            // TODO: change to an event driven model
             buf_len = SP_receive (spread_mailbox, &service_type, sender,
                                   max_groups, &num_groups, groups, &type,
                                   &endian_mismatch, buf_size, buf);
@@ -192,10 +193,21 @@ class SpreadReplicationMessage
                 LOG4CXX_DEBUG (logger, "parse: replay");
                 char orig_sender[MAX_GROUP_NAME];
                 int16_t orig_type;
-                // TODO: handle the none case
-                if (sscanf (buf, "%s;%hu;%s %c %s %s %s", orig_sender,
-                            &orig_type, uuid, &command, bucket, key, value))
+                if (strncmp (buf, ";;none", strlen (";;none")))
+                {
+                    // TODO: the recorder is out of data, we should do
+                    // something more with that info here as well as blow the
+                    // things up above here and say that we aren't able to 
+                    // catch up... do take in to consideration catch-up on an
+                    // inactive system
+                    return 0;
+                }
+                else if (sscanf (buf, "%s;%hu;%s %c %s %s %s", orig_sender,
+                                 &orig_type, uuid, &command, bucket, key, 
+                                 value))
+                {
                     return type;
+                }
             }
             return 0;
         }
@@ -326,11 +338,32 @@ SpreadReplicationBackend::SpreadReplicationBackend (shared_ptr<ThrudocBackend> b
 SpreadReplicationBackend::~SpreadReplicationBackend ()
 {
     LOG4CXX_INFO (logger, "~SpreadReplicationBackend");
+    // we're no longer live, don't accept connections
+    this->listener_live = false;
+    // tell the listener to exit
     this->listener_thread_go = false;
-    // TODO: make sure there's a thread to join
-    pthread_join(listener_thread, NULL);
+    // wait on the listner to exit
+    if (listener_thread != 0)
+        pthread_join(listener_thread, NULL);
+
+    // rest of this needs to happen after we've joined the reader thread
+    // and stopped taking new requests
+
+    // don't disconnect from spread until the reader thread has been joined
+    // so that it can finish doing whatever it has going on.
     SP_disconnect (this->spread_mailbox);
-    // TODO: clean up our waits and mutexes and stuff
+
+    // it's string and shared_ptr so removing them from the map should make 
+    // them go away
+    pending_waits.clear ();
+
+    // need to do this after we stop the listener thread else we may never 
+    // empty it
+    while (!pending_messages.empty ())
+    {
+        delete pending_messages.front ();
+        pending_messages.pop ();
+    }
 }
 
 // TODO: there are potential issues here if the local host successfully applies
@@ -455,19 +488,32 @@ void * SpreadReplicationBackend::start_listener_thread (void * ptr)
 
 void SpreadReplicationBackend::listener_thread_run ()
 {
+    struct pollfd fds[] = { {this->spread_mailbox, POLLIN, 0} };
+
     while (this->listener_thread_go)
     {
-        try
+        int ret = poll (fds, 1, 1000);
+        if (ret > 0)
         {
-            handle_message ();
+            try
+            {
+                handle_message ();
+            }
+            catch (ThrudocException & e)
+            {
+                LOG4CXX_ERROR (logger, "listener_thread_run: exception e.what=" +
+                               e.what);
+                // stop the replication thread
+                this->listener_thread_go = false;
+            }
         }
-        catch (ThrudocException & e)
+        else if (ret < 0)
         {
-            LOG4CXX_ERROR (logger, "listener_thread_run: exception e.what=" +
-                           e.what);
-            // stop the replication thread
-            this->listener_thread_go = false;
+            char buf[64];
+            sprintf (buf, "listener_thread_run: poll ret=%d", ret);
+            LOG4CXX_WARN (logger, buf);
         }
+        /* else 0, just means timeout */
     }
 }
 

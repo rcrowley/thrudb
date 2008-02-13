@@ -125,6 +125,10 @@ if test "$with_disk" != "no" -o "$with_s3" != "no"; then
     AC_CHECK_HEADERS([openssl/hmac.h])
 fi
 
+# poll.h, for poll function
+AC_CHECK_HEADERS([poll.h],,
+                 AC_MSG_ERROR([poll.h missing; please can not continue]))
+
 # log4cxx
 AC_CHECK_LIB(log4cxx, [open], [],
              AC_MSG_ERROR([You must install log4cxx; please install libraries and development files]))
@@ -133,7 +137,7 @@ AC_CHECK_HEADERS([log4cxx/logger.h],,
 
 # misc
 AC_C_CONST
-AC_CHECK_FUNCS([clock_gettime gettimeofday memset socket strcasecmp strchr strdup])
+AC_CHECK_FUNCS([clock_gettime gettimeofday memset poll socket strcasecmp strchr strdup])
 AC_CHECK_HEADERS([netinet/in.h stdlib.h string.h sys/param.h])
 AC_C_INLINE
 AC_FUNC_ALLOCA
