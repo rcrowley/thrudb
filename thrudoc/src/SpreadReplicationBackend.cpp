@@ -178,6 +178,7 @@ class SpreadReplicationMessage
 
         int parse (const string & spread_private_group)
         {
+            // TODO: need better/safer parsing than scanf... maybe thrift ser.
             command = 0;
             if (type == ORIG_MESSAGE_TYPE)
             {
@@ -190,9 +191,8 @@ class SpreadReplicationMessage
                      spread_private_group == groups[0])
             {
                 LOG4CXX_DEBUG (logger, "parse: replay");
-                char orig_sender[MAX_GROUP_NAME];
-                int16_t orig_type;
-                if (strncmp (buf, ";;none", strlen (";;none")))
+                const char * offset;
+                if (strncmp (buf, ";;none", strlen (";;none")) == 0)
                 {
                     // TODO: the recorder is out of data, we should do
                     // something more with that info here as well as blow the
@@ -201,9 +201,10 @@ class SpreadReplicationMessage
                     // inactive system
                     return 0;
                 }
-                else if (sscanf (buf, "%s;%hu;%s %c %s %s %s", orig_sender,
-                                 &orig_type, uuid, &command, bucket, key, 
-                                 value))
+
+                offset = strrchr (buf, ';') + 1;
+                if (sscanf (offset, "%s %c %s %s %s", uuid, &command, bucket, 
+                            key, value))
                 {
                     return type;
                 }
@@ -395,6 +396,12 @@ void SpreadReplicationBackend::remove (const string & bucket,
 
 string SpreadReplicationBackend::admin (const string & op, const string & data)
 {
+    if (op == "replay_from")
+    {
+        this->listener_live = false;
+        request_next (data.c_str ());
+        return "done";
+    }
     char msg[SPREAD_BACKEND_MAX_MESSAGE_SIZE];
     string uuid = generate_uuid ();
     snprintf (msg, SPREAD_BACKEND_MAX_MESSAGE_SIZE, "%s a %s %s",
@@ -557,7 +564,7 @@ void SpreadReplicationBackend::handle_message ()
                      UUID_LEN) != 0)
         {
             // we haven't caught up yet
-            request_next (message);
+            request_next (message->get_uuid ());
             LOG4CXX_DEBUG (logger, string ("handle_message: catchup.uuid=") +
                            message->get_uuid ());
             do_message (message);
@@ -639,9 +646,8 @@ void SpreadReplicationBackend::do_message (SpreadReplicationMessage * message)
     }
 }
 
-void SpreadReplicationBackend::request_next (SpreadReplicationMessage * message)
+void SpreadReplicationBackend::request_next (const char * uuid)
 {
-    const char * uuid = message->get_uuid ();
     // we don't want our own message back here...
     SP_multicast (this->spread_mailbox, RELIABLE_MESS | SELF_DISCARD,
                   this->spread_group.c_str (),

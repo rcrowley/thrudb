@@ -64,7 +64,7 @@ class SpreadReplicationBackend : public ThrudocPassthruBackend
         void listener_thread_run ();
         void handle_message ();
         void do_message (SpreadReplicationMessage * message);
-        void request_next (SpreadReplicationMessage * message);
+        void request_next (const char * message);
 };
 
 #endif /* HAVE_LIBMEMCACHED */
