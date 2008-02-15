@@ -10,6 +10,7 @@ include_thrucommon_HEADERS = \
 			     gen-cpp/Redo_types.h	\
 			     gen-cpp/EventLog.h		\
 			     gen-cpp/EventLog_types.h	\
+			     CircuitBreaker.h		\
 			     ConfigFile.h		\
 			     memcache++.h		\
 			     MemcacheHandle.h		\
@@ -29,6 +30,7 @@ libthrucommon_la_SOURCES = \
 			   gen-cpp/EventLog.cpp			\
 			   gen-cpp/EventLog_types.cpp		\
 			   gen-cpp/EventLog_constants.cpp	\
+			   CircuitBreaker.cpp			\
 			   ConfigFile.cpp			\
 			   ThruFileTransport.cpp		\
 			   RecoveryManager.cpp			\
