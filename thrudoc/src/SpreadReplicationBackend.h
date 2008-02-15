@@ -55,6 +55,7 @@ class SpreadReplicationBackend : public ThrudocPassthruBackend
         pthread_t listener_thread;
         bool listener_thread_go;
         bool listener_live;
+        std::string last_uuid;
         std::queue<SpreadReplicationMessage *> pending_messages;
         std::map<std::string, boost::shared_ptr<SpreadReplicationWait> > 
             pending_waits;
@@ -64,7 +65,7 @@ class SpreadReplicationBackend : public ThrudocPassthruBackend
         void listener_thread_run ();
         void handle_message ();
         void do_message (SpreadReplicationMessage * message);
-        void request_next (const char * message);
+        void request_next (std::string message);
 };
 
 #endif /* HAVE_LIBMEMCACHED */

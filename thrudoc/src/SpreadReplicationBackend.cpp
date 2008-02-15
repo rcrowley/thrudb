@@ -8,6 +8,9 @@
 
 #include "SpreadReplicationBackend.h"
 
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <sys/fcntl.h>
 #include <poll.h>
 
 // should be max expected key + value + uuid size + ~4. truncation occur
@@ -183,9 +186,13 @@ class SpreadReplicationMessage
             if (type == ORIG_MESSAGE_TYPE)
             {
                 LOG4CXX_DEBUG (logger, "parse: orig");
-                if (sscanf (buf, "%s %c %s %s %s", uuid, &command, bucket, key,
-                            value))
+                char uuid_buf[UUID_LEN];
+                if (sscanf (buf, "%s %c %s %s %s", uuid_buf, &command, bucket, 
+                            key, value))
+                {
+                    uuid = uuid_buf;
                     return type;
+                }
             }
             else if (type == REPLAY_MESSAGE_TYPE &&
                      spread_private_group == groups[0])
@@ -199,20 +206,23 @@ class SpreadReplicationMessage
                     // things up above here and say that we aren't able to 
                     // catch up... do take in to consideration catch-up on an
                     // inactive system
-                    return 0;
+                    uuid = "";
+                    return type;
                 }
 
                 offset = strrchr (buf, ';') + 1;
-                if (sscanf (offset, "%s %c %s %s %s", uuid, &command, bucket, 
-                            key, value))
+                char uuid_buf[UUID_LEN];
+                if (sscanf (offset, "%s %c %s %s %s", uuid_buf, &command,
+                            bucket, key, value))
                 {
+                    uuid = uuid_buf;
                     return type;
                 }
             }
             return 0;
         }
 
-        const char * get_uuid ()
+        string get_uuid ()
         {
             return this->uuid;
         }
@@ -268,7 +278,7 @@ class SpreadReplicationMessage
         char buf[SPREAD_BACKEND_MAX_MESSAGE_SIZE];
 
         // repli command stuff
-        char uuid[UUID_LEN];
+        string uuid;
         char command;
         char bucket[MAX_BUCKET_SIZE];
         char key[MAX_KEY_SIZE];
@@ -321,7 +331,26 @@ SpreadReplicationBackend::SpreadReplicationBackend (shared_ptr<ThrudocBackend> b
         throw e;
     }
 
+    int fd;
+    fd = ::open ("last_uuid", 0x0, S_IRUSR | S_IWUSR| S_IRGRP | S_IROTH);
+    listener_live = true; // we're live unless we load a last_uuid in a sec
+    if (fd)
+    {
+        char buf[64] = "";
+        ::read (fd, buf, 64);
+        last_uuid = buf;
+        ::close (fd);
+        if (!last_uuid.empty ())
+        {
+            listener_live = false;
+            request_next (last_uuid);
+            LOG4CXX_INFO (logger, "SpreadReplicationBackend: loaded last_uuid=" +
+                          last_uuid);
+        }
+    }
+
     // create the listener thread
+    listener_thread_go = true;
     if (pthread_create(&listener_thread, NULL, start_listener_thread,
                        (void *)this) != 0)
     {
@@ -331,8 +360,6 @@ SpreadReplicationBackend::SpreadReplicationBackend (shared_ptr<ThrudocBackend> b
         e.what = error;
         throw e;
     }
-    listener_thread_go = true;
-    listener_live = true;
 }
 
 SpreadReplicationBackend::~SpreadReplicationBackend ()
@@ -390,7 +417,7 @@ void SpreadReplicationBackend::remove (const string & bucket,
     string uuid = generate_uuid ();
     snprintf (msg, SPREAD_BACKEND_MAX_MESSAGE_SIZE, "%s r %s %s",
               uuid.c_str (), bucket.c_str (), key.c_str ());
-    
+
     this->send_and_wait_for_resp (msg, uuid);
 }
 
@@ -399,14 +426,14 @@ string SpreadReplicationBackend::admin (const string & op, const string & data)
     if (op == "replay_from")
     {
         this->listener_live = false;
-        request_next (data.c_str ());
+        request_next (data);
         return "done";
     }
     char msg[SPREAD_BACKEND_MAX_MESSAGE_SIZE];
     string uuid = generate_uuid ();
     snprintf (msg, SPREAD_BACKEND_MAX_MESSAGE_SIZE, "%s a %s %s",
               uuid.c_str (), op.c_str (), data.c_str ());
-    
+
     return this->send_and_wait_for_resp (msg, uuid);
 }
 
@@ -495,6 +522,7 @@ void * SpreadReplicationBackend::start_listener_thread (void * ptr)
 void SpreadReplicationBackend::listener_thread_run ()
 {
     struct pollfd fds[] = { {this->spread_mailbox, POLLIN, 0} };
+    time_t last_flush = time (0);
 
     while (this->listener_thread_go)
     {
@@ -511,6 +539,18 @@ void SpreadReplicationBackend::listener_thread_run ()
                                e.what);
                 // stop the replication thread
                 this->listener_thread_go = false;
+            }
+            if (last_flush + 30 < time (0))
+            {
+                LOG4CXX_DEBUG (logger, "flushing last_uuid=" + last_uuid);
+                int fd;
+                fd = ::open ("last_uuid", O_RDWR | O_TRUNC | O_CREAT, 
+                             S_IRUSR | S_IWUSR| S_IRGRP | S_IROTH);
+                ::write (fd, this->last_uuid.c_str (), 
+                         this->last_uuid.length ());
+                fsync (fd);
+                ::close (fd);
+                last_flush = time (0);
             }
         }
         else if (ret < 0)
@@ -534,6 +574,12 @@ void SpreadReplicationBackend::handle_message ()
         {
             // do any/all queued messages, normally when we're coming off of
             // a catch up and have been queueing up new message in the meantime
+            if (logger->isDebugEnabled ())
+            {
+                char buf[64];
+                sprintf (buf, "handle_message: pending_messages.size=%d", pending_messages.size ());
+                LOG4CXX_DEBUG (logger, buf);
+            }
             while (!pending_messages.empty ())
             {
                 SpreadReplicationMessage * drain = pending_messages.front ();
@@ -558,22 +604,35 @@ void SpreadReplicationBackend::handle_message ()
     }
     else if (type == REPLAY_MESSAGE_TYPE)
     {
-        SpreadReplicationMessage * first_queued = pending_messages.front ();
-        if (first_queued == NULL ||
-            strncmp (first_queued->get_uuid (), message->get_uuid (),
-                     UUID_LEN) != 0)
+        if (!message->get_uuid ().empty ())
         {
-            // we haven't caught up yet
-            request_next (message->get_uuid ());
-            LOG4CXX_DEBUG (logger, string ("handle_message: catchup.uuid=") +
-                           message->get_uuid ());
-            do_message (message);
+            // it's a message
+            SpreadReplicationMessage * first_queued = pending_messages.front ();
+            if (first_queued == NULL ||
+                first_queued->get_uuid () != message->get_uuid ())
+            {
+                // we haven't caught up yet
+                request_next (message->get_uuid ());
+                LOG4CXX_DEBUG (logger, 
+                               string ("handle_message: catchup.uuid=") +
+                               message->get_uuid ());
+                do_message (message);
+            }
+            else
+            {
+                LOG4CXX_DEBUG (logger, 
+                               string ("handle_message: caughtup.uuid=") +
+                               message->get_uuid ());
+                // we've caught back up
+                this->listener_live = true;
+            }
         }
         else
         {
-            LOG4CXX_DEBUG (logger, string ("handle_message: caughtup.uuid=") +
-                           message->get_uuid ());
-            // we've caught up, skip this one and go back to live
+            LOG4CXX_DEBUG (logger, 
+                           string ("handle_message: caughtup.uuid=none"));
+            // we're out of stuff to replay, go back to live, hopefully nothing
+            // actually happened since the last message we recorded
             this->listener_live = true;
         }
         delete message;
@@ -644,14 +703,16 @@ void SpreadReplicationBackend::do_message (SpreadReplicationMessage * message)
         if (i != pending_waits.end ())
             (*i).second->release (ret, exception);
     }
+    this->last_uuid = message->get_uuid ();
+    LOG4CXX_DEBUG (logger, "setting last_uuid=" + last_uuid);
 }
 
-void SpreadReplicationBackend::request_next (const char * uuid)
+void SpreadReplicationBackend::request_next (string uuid)
 {
     // we don't want our own message back here...
     SP_multicast (this->spread_mailbox, RELIABLE_MESS | SELF_DISCARD,
                   this->spread_group.c_str (),
-                  REPLAY_MESSAGE_TYPE, strlen (uuid), uuid);
+                  REPLAY_MESSAGE_TYPE, uuid.length (), uuid.c_str ());
 }
 
 #endif /* HAVE_LIBSPREAD && HAVE_LIBUUID */
