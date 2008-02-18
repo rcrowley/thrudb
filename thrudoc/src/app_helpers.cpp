@@ -17,6 +17,7 @@
 #include "NullBackend.h"
 #include "S3Backend.h"
 #include "SpreadBackend.h"
+#include "ReplicationBackend.h"
 #include "StatsBackend.h"
 #include "ThrudocBackend.h"
 
@@ -173,6 +174,9 @@ shared_ptr<ThrudocBackend> create_backend (string which, int thread_count)
     // Spread passthrough
     string spread_private_name =
         ConfigManager->read<string>("SPREAD_PRIVATE_NAME", "");
+    // Spread replication (sorta) passthrough
+    string replication_private_name =
+        ConfigManager->read<string>("REPLICATION_PRIVATE_NAME", "");
 #if HAVE_LIBSPREAD
     string spread_name =
         ConfigManager->read<string>("SPREAD_NAME", "4803");
@@ -183,11 +187,35 @@ shared_ptr<ThrudocBackend> create_backend (string which, int thread_count)
         backend = shared_ptr<ThrudocBackend>
             (new SpreadBackend (backend, spread_name, spread_private_name,
                                 spread_group));
+
+    string replication_name =
+        ConfigManager->read<string>("REPLICATION_NAME", "4803");
+    string replication_group =
+        ConfigManager->read<string>("REPLICATION_GROUP", "thrudoc");
+    string replication_status_file =
+        ConfigManager->read<string>("REPLICATION_STATUS_FILE", 
+                                    "replication_status");
+    int replication_status_flush_frequency =
+        ConfigManager->read<int>("REPLICATION_STATUS_FLUSH_FREQUENCY", 30);
+
+    if (!replication_private_name.empty ())
+        backend = shared_ptr<ThrudocBackend>
+            (new ReplicationBackend (backend, replication_name, 
+                                     replication_private_name,
+                                     replication_group, 
+                                     replication_status_file,
+                                     replication_status_flush_frequency));
 #else
     if (!spread_private_name.empty ())
     {
         LOG4CXX_ERROR (logger, "SPREAD_PRIVATE_NAME supplied, but spread support not complied in");
         fprintf (stderr, "SPREAD_PRIVATE_NAME supplied, but spread support not complied in\n");
+        exit (1);
+    }
+    if (!replication_private_name.empty ())
+    {
+        LOG4CXX_ERROR (logger, "REPLICATION_PRIVATE_NAME supplied, but spread support not complied in");
+        fprintf (stderr, "REPLCATION_PRIVATE_NAME supplied, but spread support not complied in\n");
         exit (1);
     }
 #endif /* HAVE_LIBSPREAD */

@@ -2,8 +2,8 @@
  *
  **/
 
-#ifndef __SPREAD_REPLICIATION_BACKEND_H_
-#define __SPREAD_REPLICIATION_BACKEND_H_
+#ifndef _REPLICIATION_BACKEND_H_
+#define _REPLICIATION_BACKEND_H_
 
 #if HAVE_LIBMEMCACHED && HAVE_LIBUUID
 
@@ -17,20 +17,22 @@
 #include "Thrudoc.h"
 #include "ThrudocPassthruBackend.h"
 
-class SpreadReplicationWait;
-class SpreadReplicationMessage;
+class ReplicationWait;
+class ReplicationMessage;
 
 /* NOTE: this is not exactly a normal passthrough backend even tho it kinda
  * looks like one. we use the passthrough, but there's spread in between
  * passing things down */
-class SpreadReplicationBackend : public ThrudocPassthruBackend
+class ReplicationBackend : public ThrudocPassthruBackend
 {
     public:
-        SpreadReplicationBackend (boost::shared_ptr<ThrudocBackend> backend,
-                                  const std::string & spread_name, 
-                                  const std::string & spread_private_name,
-                                  const std::string & spread_group);
-        ~SpreadReplicationBackend ();
+        ReplicationBackend (boost::shared_ptr<ThrudocBackend> backend,
+                            const std::string & replication_name, 
+                            const std::string & replication_private_name,
+                            const std::string & replication_group,
+                            const std::string & replication_status_file,
+                            const int replication_status_flush_frequency);
+        ~ReplicationBackend ();
 
         void put (const std::string & bucket, const std::string & key,
                   const std::string & value);
@@ -47,27 +49,29 @@ class SpreadReplicationBackend : public ThrudocPassthruBackend
         static log4cxx::LoggerPtr logger;
         static void * start_listener_thread (void * ptr);
 
-        std::string spread_name;
-        std::string spread_private_name;
-        std::string spread_group;
-        std::string spread_private_group;
+        std::string replication_name;
+        std::string replication_private_name;
+        std::string replication_group;
+        std::string replication_private_group;
+        std::string replication_status_file;
+        int replication_status_flush_frequency;
         mailbox spread_mailbox;
         pthread_t listener_thread;
         bool listener_thread_go;
         bool listener_live;
         std::string last_uuid;
-        std::queue<SpreadReplicationMessage *> pending_messages;
-        std::map<std::string, boost::shared_ptr<SpreadReplicationWait> > 
+        std::queue<ReplicationMessage *> pending_messages;
+        std::map<std::string, boost::shared_ptr<ReplicationWait> > 
             pending_waits;
         facebook::thrift::concurrency::ReadWriteMutex pending_waits_mutex;
 
         std::string send_and_wait_for_resp (const char * msg, std::string uuid);
         void listener_thread_run ();
         void handle_message ();
-        void do_message (SpreadReplicationMessage * message);
+        void do_message (ReplicationMessage * message);
         void request_next (std::string message);
 };
 
 #endif /* HAVE_LIBMEMCACHED */
 
-#endif
+#endif /* _REPLICIATION_BACKEND_H_ */

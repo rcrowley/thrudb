@@ -6,7 +6,7 @@
 
 #if HAVE_LIBSPREAD && HAVE_LIBUUID
 
-#include "SpreadReplicationBackend.h"
+#include "ReplicationBackend.h"
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -20,7 +20,7 @@
 #define MAX_VALUE_SIZE 2048
 #define UUID_LEN 37
 #define MESSAGE_OVERHEAD 4
-#define SPREAD_BACKEND_MAX_MESSAGE_SIZE MAX_BUCKET_SIZE + MAX_KEY_SIZE + MAX_VALUE_SIZE + UUID_LEN + MESSAGE_OVERHEAD
+#define REPLICATION_BACKEND_MAX_MESSAGE_SIZE MAX_BUCKET_SIZE + MAX_KEY_SIZE + MAX_VALUE_SIZE + UUID_LEN + MESSAGE_OVERHEAD
 
 #define ORIG_MESSAGE_TYPE 1
 #define REPLY_MESSAGE_TYPE 2
@@ -34,14 +34,14 @@ using namespace thrudoc;
 
 string SP_error_to_string (int error);
 
-class SpreadReplicationWait 
+class ReplicationWait 
 {
     public:
         // uuid is just for logging/debugging purposes
-        SpreadReplicationWait (string uuid, uint32_t max_wait)
+        ReplicationWait (string uuid, uint32_t max_wait)
         {
             char buf[128];
-            sprintf (buf, "SpreadReplicationWait: uuid=%s, max_wait=%d", 
+            sprintf (buf, "ReplicationWait: uuid=%s, max_wait=%d", 
                      uuid.c_str (), max_wait);
             LOG4CXX_DEBUG (logger, buf);
 
@@ -55,9 +55,9 @@ class SpreadReplicationWait
             pthread_mutex_lock (&this->mutex);
         }
 
-        ~SpreadReplicationWait ()
+        ~ReplicationWait ()
         {
-            LOG4CXX_DEBUG (logger, "~SpreadReplicationWait: uuid=" + 
+            LOG4CXX_DEBUG (logger, "~ReplicationWait: uuid=" + 
                            this->uuid);
             pthread_cond_destroy (&this->condition);
             pthread_mutex_destroy (&this->mutex);
@@ -131,13 +131,13 @@ class SpreadReplicationWait
 
 };
 
-class SpreadReplicationMessage
+class ReplicationMessage
 {
     public:
         void receive (mailbox spread_mailbox)
         {
             max_groups = 5;
-            buf_size = SPREAD_BACKEND_MAX_MESSAGE_SIZE;
+            buf_size = REPLICATION_BACKEND_MAX_MESSAGE_SIZE;
 
             buf_len = SP_receive (spread_mailbox, &service_type, sender,
                                   max_groups, &num_groups, groups, &type,
@@ -179,7 +179,7 @@ class SpreadReplicationMessage
             }
         }
 
-        int parse (const string & spread_private_group)
+        int parse (const string & replication_private_group)
         {
             // TODO: need better/safer parsing than scanf... maybe thrift ser.
             command = 0;
@@ -195,7 +195,7 @@ class SpreadReplicationMessage
                 }
             }
             else if (type == REPLAY_MESSAGE_TYPE &&
-                     spread_private_group == groups[0])
+                     replication_private_group == groups[0])
             {
                 LOG4CXX_DEBUG (logger, "parse: replay");
                 const char * offset;
@@ -275,7 +275,7 @@ class SpreadReplicationMessage
         int endian_mismatch;
         int buf_size;
         int buf_len;
-        char buf[SPREAD_BACKEND_MAX_MESSAGE_SIZE];
+        char buf[REPLICATION_BACKEND_MAX_MESSAGE_SIZE];
 
         // repli command stuff
         string uuid;
@@ -286,27 +286,34 @@ class SpreadReplicationMessage
 };
 
 // private
-LoggerPtr SpreadReplicationWait::logger (Logger::getLogger ("SpreadReplicationWait"));
-LoggerPtr SpreadReplicationMessage::logger (Logger::getLogger ("SpreadReplicationMessage"));
-LoggerPtr SpreadReplicationBackend::logger (Logger::getLogger ("SpreadReplicationBackend"));
+LoggerPtr ReplicationWait::logger (Logger::getLogger ("ReplicationWait"));
+LoggerPtr ReplicationMessage::logger (Logger::getLogger ("ReplicationMessage"));
+LoggerPtr ReplicationBackend::logger (Logger::getLogger ("ReplicationBackend"));
 
-SpreadReplicationBackend::SpreadReplicationBackend (shared_ptr<ThrudocBackend> backend,
-                                                    const string & spread_name,
-                                                    const string & spread_private_name,
-                                                    const string & spread_group)
+ReplicationBackend::ReplicationBackend (shared_ptr<ThrudocBackend> backend,
+                                        const string & replication_name,
+                                        const string & replication_private_name,
+                                        const string & replication_group,
+                                        const string & replication_status_file,
+                                        const int replication_status_flush_frequency)
 {
-    LOG4CXX_INFO (logger, string ("SpreadReplicationBackend: spread_name=") +
-                  spread_name + ", spread_private_name=" +
-                  spread_private_name + ", spread_group=" + spread_group);
+    char buf[1024];
+    sprintf (buf, "ReplicationBackend: replication_name=%s, replication_private_name=%s, replication_group=%s, replication_status_file=%s, replication_status_flush_frequency=%d",
+             replication_name.c_str (), replication_private_name.c_str (),
+             replication_group.c_str (), replication_status_file.c_str (),
+             replication_status_flush_frequency);
+    LOG4CXX_INFO (logger, buf);
 
     this->set_backend (backend);
-    this->spread_name = spread_name;
-    this->spread_private_name = spread_private_name;
-    this->spread_group = spread_group;
+    this->replication_name = replication_name;
+    this->replication_private_name = replication_private_name;
+    this->replication_group = replication_group;
+    this->replication_status_file = replication_status_file;
+    this->replication_status_flush_frequency = replication_status_flush_frequency;
 
     char private_group[MAX_GROUP_NAME];
-    int ret = SP_connect (this->spread_name.c_str (),
-                          this->spread_private_name.c_str (), 0, 1,
+    int ret = SP_connect (this->replication_name.c_str (),
+                          this->replication_private_name.c_str (), 0, 1,
                           &this->spread_mailbox, private_group);
     if (ret < 0)
     {
@@ -317,11 +324,11 @@ SpreadReplicationBackend::SpreadReplicationBackend (shared_ptr<ThrudocBackend> b
         throw e;
     }
 
-    this->spread_private_group = string (private_group);
-    LOG4CXX_INFO (logger, "SpreadBackend: private_group=" +
-                  this->spread_private_group);
+    this->replication_private_group = string (private_group);
+    LOG4CXX_INFO (logger, "ReplicationBackend: private_group=" +
+                  this->replication_private_group);
 
-    ret = SP_join (this->spread_mailbox, this->spread_group.c_str ());
+    ret = SP_join (this->spread_mailbox, this->replication_group.c_str ());
     if (ret < 0)
     {
         string error = SP_error_to_string (ret);
@@ -332,20 +339,23 @@ SpreadReplicationBackend::SpreadReplicationBackend (shared_ptr<ThrudocBackend> b
     }
 
     int fd;
-    fd = ::open ("last_uuid", 0x0, S_IRUSR | S_IWUSR| S_IRGRP | S_IROTH);
+    fd = ::open (this->replication_status_file.c_str (), 0x0, 
+                 S_IRUSR | S_IWUSR| S_IRGRP | S_IROTH);
     listener_live = true; // we're live unless we load a last_uuid in a sec
     if (fd)
     {
+        LOG4CXX_DEBUG (logger, "ReplicationBackend: opened status file=" +
+                       this->replication_status_file);
         char buf[64] = "";
         ::read (fd, buf, 64);
-        last_uuid = buf;
+        this->last_uuid = buf;
         ::close (fd);
-        if (!last_uuid.empty ())
+        if (!this->last_uuid.empty ())
         {
             listener_live = false;
-            request_next (last_uuid);
-            LOG4CXX_INFO (logger, "SpreadReplicationBackend: loaded last_uuid=" +
-                          last_uuid);
+            request_next (this->last_uuid);
+            LOG4CXX_INFO (logger, "ReplicationBackend: found last_uuid=" +
+                          this->last_uuid);
         }
     }
 
@@ -354,7 +364,7 @@ SpreadReplicationBackend::SpreadReplicationBackend (shared_ptr<ThrudocBackend> b
     if (pthread_create(&listener_thread, NULL, start_listener_thread,
                        (void *)this) != 0)
     {
-        char error[] = "SpreadReplicationBackend: start_listener_thread failed\n";
+        char error[] = "ReplicationBackend: start_listener_thread failed\n";
         LOG4CXX_ERROR (logger, error);
         ThrudocException e;
         e.what = error;
@@ -362,9 +372,9 @@ SpreadReplicationBackend::SpreadReplicationBackend (shared_ptr<ThrudocBackend> b
     }
 }
 
-SpreadReplicationBackend::~SpreadReplicationBackend ()
+ReplicationBackend::~ReplicationBackend ()
 {
-    LOG4CXX_INFO (logger, "~SpreadReplicationBackend");
+    LOG4CXX_INFO (logger, "~ReplicationBackend");
     // we're no longer live, don't accept connections
     this->listener_live = false;
     // tell the listener to exit
@@ -399,29 +409,29 @@ SpreadReplicationBackend::~SpreadReplicationBackend ()
 
 // TODO: implement circuit breaker pattern around spread...
 
-void SpreadReplicationBackend::put (const string & bucket, const string & key,
+void ReplicationBackend::put (const string & bucket, const string & key,
                                     const string & value)
 {
-    char msg[SPREAD_BACKEND_MAX_MESSAGE_SIZE];
+    char msg[REPLICATION_BACKEND_MAX_MESSAGE_SIZE];
     string uuid = generate_uuid ();
-    snprintf (msg, SPREAD_BACKEND_MAX_MESSAGE_SIZE, "%s p %s %s %s",
+    snprintf (msg, REPLICATION_BACKEND_MAX_MESSAGE_SIZE, "%s p %s %s %s",
               uuid.c_str (), bucket.c_str (), key.c_str (), value.c_str ());
 
     this->send_and_wait_for_resp (msg, uuid);
 }
 
-void SpreadReplicationBackend::remove (const string & bucket,
+void ReplicationBackend::remove (const string & bucket,
                                        const string & key )
 {
-    char msg[SPREAD_BACKEND_MAX_MESSAGE_SIZE];
+    char msg[REPLICATION_BACKEND_MAX_MESSAGE_SIZE];
     string uuid = generate_uuid ();
-    snprintf (msg, SPREAD_BACKEND_MAX_MESSAGE_SIZE, "%s r %s %s",
+    snprintf (msg, REPLICATION_BACKEND_MAX_MESSAGE_SIZE, "%s r %s %s",
               uuid.c_str (), bucket.c_str (), key.c_str ());
 
     this->send_and_wait_for_resp (msg, uuid);
 }
 
-string SpreadReplicationBackend::admin (const string & op, const string & data)
+string ReplicationBackend::admin (const string & op, const string & data)
 {
     if (op == "replay_from")
     {
@@ -429,20 +439,20 @@ string SpreadReplicationBackend::admin (const string & op, const string & data)
         request_next (data);
         return "done";
     }
-    char msg[SPREAD_BACKEND_MAX_MESSAGE_SIZE];
+    char msg[REPLICATION_BACKEND_MAX_MESSAGE_SIZE];
     string uuid = generate_uuid ();
-    snprintf (msg, SPREAD_BACKEND_MAX_MESSAGE_SIZE, "%s a %s %s",
+    snprintf (msg, REPLICATION_BACKEND_MAX_MESSAGE_SIZE, "%s a %s %s",
               uuid.c_str (), op.c_str (), data.c_str ());
 
     return this->send_and_wait_for_resp (msg, uuid);
 }
 
-string SpreadReplicationBackend::send_and_wait_for_resp (const char * msg,
+string ReplicationBackend::send_and_wait_for_resp (const char * msg,
                                                          string uuid)
 {
     LOG4CXX_DEBUG (logger, "wait_for_resp: begin uuid=" + uuid);
     string ret;
-    shared_ptr<SpreadReplicationWait> wait (new SpreadReplicationWait (uuid, 
+    shared_ptr<ReplicationWait> wait (new ReplicationWait (uuid, 
                                                                        2));
     // install wait
     {
@@ -450,7 +460,8 @@ string SpreadReplicationBackend::send_and_wait_for_resp (const char * msg,
         pending_waits[uuid] = wait;
     }
     // send out multi-cast message
-    SP_multicast (this->spread_mailbox, SAFE_MESS, this->spread_group.c_str (),
+    SP_multicast (this->spread_mailbox, SAFE_MESS, 
+                  this->replication_group.c_str (),
                   ORIG_MESSAGE_TYPE, strlen (msg), msg);
     // wait here until we have the result
     wait->wait ();
@@ -470,7 +481,7 @@ string SpreadReplicationBackend::send_and_wait_for_resp (const char * msg,
     return wait->get_ret ();
 }
 
-void SpreadReplicationBackend::validate (const std::string & bucket,
+void ReplicationBackend::validate (const std::string & bucket,
                                          const std::string * key,
                                          const std::string * value)
 {
@@ -503,7 +514,7 @@ void SpreadReplicationBackend::validate (const std::string & bucket,
     // should be ok
 }
 
-string SpreadReplicationBackend::generate_uuid ()
+string ReplicationBackend::generate_uuid ()
 {
     uuid_t uuid;
     uuid_generate(uuid);
@@ -512,14 +523,14 @@ string SpreadReplicationBackend::generate_uuid ()
     return string (uuid_str);
 }
 
-void * SpreadReplicationBackend::start_listener_thread (void * ptr)
+void * ReplicationBackend::start_listener_thread (void * ptr)
 {
     LOG4CXX_INFO (logger, "start_listener_thread: ");
-    (((SpreadReplicationBackend*)ptr)->listener_thread_run ());
+    (((ReplicationBackend*)ptr)->listener_thread_run ());
     return NULL;
 }
 
-void SpreadReplicationBackend::listener_thread_run ()
+void ReplicationBackend::listener_thread_run ()
 {
     struct pollfd fds[] = { {this->spread_mailbox, POLLIN, 0} };
     time_t last_flush = time (0);
@@ -540,11 +551,14 @@ void SpreadReplicationBackend::listener_thread_run ()
                 // stop the replication thread
                 this->listener_thread_go = false;
             }
-            if (last_flush + 30 < time (0))
+            if ((last_flush + this->replication_status_flush_frequency) < 
+                time (0))
             {
-                LOG4CXX_DEBUG (logger, "flushing last_uuid=" + last_uuid);
+                LOG4CXX_DEBUG (logger, "listener_thread_run: flushing last_uuid=" +
+                               this->last_uuid);
                 int fd;
-                fd = ::open ("last_uuid", O_RDWR | O_TRUNC | O_CREAT, 
+                fd = ::open (this->replication_status_file.c_str (),
+                             O_RDWR | O_TRUNC | O_CREAT, 
                              S_IRUSR | S_IWUSR| S_IRGRP | S_IROTH);
                 ::write (fd, this->last_uuid.c_str (), 
                          this->last_uuid.length ());
@@ -563,11 +577,11 @@ void SpreadReplicationBackend::listener_thread_run ()
     }
 }
 
-void SpreadReplicationBackend::handle_message ()
+void ReplicationBackend::handle_message ()
 {
-    SpreadReplicationMessage * message = new SpreadReplicationMessage ();
+    ReplicationMessage * message = new ReplicationMessage ();
     message->receive (this->spread_mailbox);
-    int type = message->parse (this->spread_private_group);
+    int type = message->parse (this->replication_private_group);
     if (type == ORIG_MESSAGE_TYPE)
     {
         if (this->listener_live)
@@ -582,7 +596,7 @@ void SpreadReplicationBackend::handle_message ()
             }
             while (!pending_messages.empty ())
             {
-                SpreadReplicationMessage * drain = pending_messages.front ();
+                ReplicationMessage * drain = pending_messages.front ();
                 pending_messages.pop ();
                 LOG4CXX_DEBUG (logger, string ("handle_message: drain.uuid=") +
                                drain->get_uuid ());
@@ -607,7 +621,7 @@ void SpreadReplicationBackend::handle_message ()
         if (!message->get_uuid ().empty ())
         {
             // it's a message
-            SpreadReplicationMessage * first_queued = pending_messages.front ();
+            ReplicationMessage * first_queued = pending_messages.front ();
             if (first_queued == NULL ||
                 first_queued->get_uuid () != message->get_uuid ())
             {
@@ -644,7 +658,7 @@ void SpreadReplicationBackend::handle_message ()
     }
 }
 
-void SpreadReplicationBackend::do_message (SpreadReplicationMessage * message)
+void ReplicationBackend::do_message (ReplicationMessage * message)
 {
     string ret;
     ThrudocException exception;
@@ -695,10 +709,10 @@ void SpreadReplicationBackend::do_message (SpreadReplicationMessage * message)
     }
 
     // if we sent this message signal to the waiting thread that it's complete
-    if (this->spread_private_group == message->get_sender ())
+    if (this->replication_private_group == message->get_sender ())
     {
         RWGuard g (this->pending_waits_mutex, false);
-        std::map<std::string, boost::shared_ptr<SpreadReplicationWait> >::iterator
+        std::map<std::string, boost::shared_ptr<ReplicationWait> >::iterator
             i = pending_waits.find (message->get_uuid ());
         if (i != pending_waits.end ())
             (*i).second->release (ret, exception);
@@ -707,11 +721,11 @@ void SpreadReplicationBackend::do_message (SpreadReplicationMessage * message)
     LOG4CXX_DEBUG (logger, "setting last_uuid=" + last_uuid);
 }
 
-void SpreadReplicationBackend::request_next (string uuid)
+void ReplicationBackend::request_next (string uuid)
 {
     // we don't want our own message back here...
     SP_multicast (this->spread_mailbox, RELIABLE_MESS | SELF_DISCARD,
-                  this->spread_group.c_str (),
+                  this->replication_group.c_str (),
                   REPLAY_MESSAGE_TYPE, uuid.length (), uuid.c_str ());
 }
 

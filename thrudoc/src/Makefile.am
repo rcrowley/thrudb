@@ -10,18 +10,19 @@ pkgconfig_DATA = thrudoc.pc
 
 include_thrudocdir = $(includedir)/thrudoc
 include_thrudoc_HEADERS = \
-			     app_helpers.h	\
-			     BDBBackend.h	\
-			     BloomBackend.h	\
-			     DiskBackend.h	\
-			     LogBackend.h	\
-			     MemcachedBackend.h	\
-			     MySQLBackend.h	\
-			     NBackend.h		\
-			     NullBackend.h	\
-			     S3Backend.h	\
-			     SpreadBackend.h	\
-			     StatsBackend.h	\
+			     app_helpers.h		\
+			     BDBBackend.h		\
+			     BloomBackend.h		\
+			     DiskBackend.h		\
+			     LogBackend.h		\
+			     MemcachedBackend.h		\
+			     MySQLBackend.h		\
+			     NBackend.h			\
+			     NullBackend.h		\
+			     ReplicationBackend.h	\
+			     S3Backend.h		\
+			     SpreadBackend.h		\
+			     StatsBackend.h		\
 			     ThrudocBackend.h
 
 libthrudoc_la_SOURCES = \
@@ -39,6 +40,7 @@ libthrudoc_la_SOURCES = \
 		  MemcachedBackend.cpp			\
 		  NBackend.cpp				\
 		  NullBackend.cpp			\
+		  ReplicationBackend.cpp		\
 		  S3Backend.cpp				\
 		  StatsBackend.cpp			\
 		  SpreadBackend.cpp			\
