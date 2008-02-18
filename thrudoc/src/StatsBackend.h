@@ -14,6 +14,12 @@
 #include <set>
 #include <string>
 
+// TODO: - make a non atomic_count version of this that will be useable on
+// systems without good atomic_count support
+
+/* NOTE: this uses boost's atomic_count and on some systems that makes use of
+ * mutexes's. you should be safe when compiled with gcc or on win32. otherwise
+ * you probably want to disable this backend. */
 class StatsBackend : public ThrudocPassthruBackend
 {
     public:
