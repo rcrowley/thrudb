@@ -6,6 +6,7 @@
 
 #if HAVE_LIBMYSQLCLIENT_R
 
+#include <stdlib.h>
 #include "mysql_glue.h"
 #include <mysql/errmsg.h>
 
