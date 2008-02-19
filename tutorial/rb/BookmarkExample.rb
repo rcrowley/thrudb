@@ -18,7 +18,6 @@ THRUDOC_PORT   = 11291;
 
 THRUDOC_BUCKET = "bookmarks";
 
-THRUDEX_DOMAIN = "tutorial";
 THRUDEX_INDEX  = "bookmarks";
 
 
@@ -46,6 +45,8 @@ class BookmarkManager
           @thrudex = Thrudex::Client.new(protocol)
 
           transport.open()
+
+          @thrudex.admin("create_index", THRUDEX_INDEX);
       end
 
       def serialize(b)
@@ -82,9 +83,6 @@ class BookmarkManager
                 add_bookmark(b)
           }
 
-
-          @thrudex.commitAll()
-
           t1 = Time.new()
 
           print "*Indexed file in: "+(t1-t0).to_s+"*\n\n"
@@ -120,29 +118,27 @@ class BookmarkManager
          #Indexing requires mapping the fields in our
          #bookmark object to a Thrudex Document
          #
-         doc  = DocMsg.new()
+         doc  = Document.new()
 
-         doc.docid  = id
-         doc.domain = THRUDEX_DOMAIN
+         doc.key    = id
          doc.index  = THRUDEX_INDEX
          doc.fields = []
 
          field = Field.new()
 
-
          #title
-         field.name    = "title"
+         field.key     = "title"
          field.value   = b.title
          field.sortable= true
          doc.fields << field
 
          #tags
          field = Field.new()
-         field.name    = "tags"
+         field.key     = "tags"
          field.value   = b.tags
          doc.fields << field
 
-         @thrudex.add( doc )
+         @thrudex.put( doc )
      end
 
      def remove_all
@@ -157,10 +153,9 @@ class BookmarkManager
                 response = @thrudoc.scan(THRUDOC_BUCKET,seed,limit)
 
                 response.elements.each { |r|
-                   rm = RemoveMsg.new()
-                   rm.domain = THRUDEX_DOMAIN
+                   rm = Element.new()
                    rm.index  = THRUDEX_INDEX
-                   rm.docid  = r.key
+                   rm.key    = r.key
 
                    docs << rm
                 }
@@ -169,14 +164,9 @@ class BookmarkManager
                 @thrudex.removeList(docs)
                 @thrudoc.removeList(response.elements)
 
-
-                @thrudex.commitAll()
-
-
                 seed = response.seed
 
         end while response.elements.length == limit
-
 
         t1 = Time.new
 
@@ -192,9 +182,8 @@ class BookmarkManager
 
         t0 = Time.new()
 
-        q  = QueryMsg.new();
+        q  = SearchQuery.new();
 
-        q.domain = THRUDEX_DOMAIN
         q.index  = THRUDEX_INDEX
         q.query  = terms
 
@@ -209,7 +198,7 @@ class BookmarkManager
            q.sortby = options[:sortby]
         end
 
-        ids = @thrudex.query( q )
+        ids = @thrudex.search( q )
 
         if ids == nil
            return
@@ -217,9 +206,9 @@ class BookmarkManager
 
         print "Found "+ids.total.to_s+" bookmarks\n"
 
-        if ids.ids.length > 0
+        if ids.elements.length > 0
 
-           doc_list = @thrudoc.getList( create_doc_list(ids.ids) )
+           doc_list = @thrudoc.getList( create_doc_list(ids.elements) )
            bms      = []
            doc_list.each{ |doc|
                 if doc.element.value != nil
@@ -242,7 +231,7 @@ class BookmarkManager
         ids.each{ |id|
               doc        = Element.new()
               doc.bucket = THRUDOC_BUCKET
-              doc.key    = id
+              doc.key    = id.key
 
               docs << doc
         }

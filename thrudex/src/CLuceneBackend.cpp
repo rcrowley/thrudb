@@ -26,18 +26,24 @@ CLuceneBackend::CLuceneBackend(const string &idx_root)
         throw runtime_error("Invalid index root: "+idx_root);
     }
 
-
     analyzer = boost::shared_ptr<lucene::analysis::Analyzer>(new lucene::analysis::standard::StandardAnalyzer());
 
     //grab the list of current indices
-    boost::filesystem::directory_iterator i(idx_root);
     boost::filesystem::directory_iterator end;
 
-    if (i != end && is_directory (i->status ()))
-    {
-        this->addIndex( i->path().leaf() );
-    }
+    for(boost::filesystem::directory_iterator i(idx_root); i != end; ++i){
 
+        if(is_directory (i->status ()))
+        {
+            //skip hidden dirs (.)
+            if(i->path().leaf().substr(0,1) == ".")
+                continue;
+
+            this->addIndex( i->path().leaf() );
+
+            LOG4CXX_INFO(logger, "Added "+i->path().leaf() );
+        }
+    }
 }
 
 CLuceneBackend::~CLuceneBackend()
