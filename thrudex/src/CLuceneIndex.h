@@ -91,6 +91,8 @@ class CLuceneIndex : public facebook::thrift::concurrency::Runnable
     boost::shared_ptr<lucene::search::IndexSearcher> ram_prev_searcher;
 
     boost::shared_ptr<bloom_filter>                  ram_bloom;
+
+    std::size_t random_seed;
 };
 
 #endif

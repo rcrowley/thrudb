@@ -47,6 +47,8 @@ CLuceneIndex::CLuceneIndex(const string &index_root, const string &index_name, s
     string idx_path = index_root + "/" + index_name;
     bool   new_index;
 
+    random_seed = (size_t)filter_space*rand();
+
     try {
 
         //existing index?
@@ -71,7 +73,7 @@ CLuceneIndex::CLuceneIndex(const string &index_root, const string &index_name, s
 
         //build up bloom filter
 
-        disk_bloom    = shared_ptr<bloom_filter>(new bloom_filter(filter_space,1.0/(1.0 * filter_space), ((int) filter_space*rand())));
+        disk_bloom    = shared_ptr<bloom_filter>(new bloom_filter(filter_space,1.0/(1.0 * filter_space), random_seed));
 
         if(!new_index){
 
@@ -99,7 +101,7 @@ CLuceneIndex::CLuceneIndex(const string &index_root, const string &index_name, s
         ram_prev_directory = shared_ptr<CLuceneRAMDirectory> (new CLuceneRAMDirectory());
         ram_directory->__cl_addref(); //trick clucene's lame ref counters
 
-        ram_bloom     = shared_ptr<bloom_filter> (new bloom_filter(filter_space,1.0/(1.0 * filter_space), ((int) filter_space*rand())));
+        ram_bloom     = shared_ptr<bloom_filter> (new bloom_filter(filter_space,1.0/(1.0 * filter_space), random_seed));
         ram_searcher  = shared_ptr<IndexSearcher>(new IndexSearcher(ram_directory.get()));
 
         disk_searcher = shared_ptr<IndexSearcher>(new IndexSearcher(idx_path.c_str()));
@@ -222,10 +224,13 @@ void CLuceneIndex::remove(const string &key)
     shared_ptr<IndexModifier> l_modifier     = modifier;
     shared_ptr<set<string> >  l_disk_deletes = disk_deletes;
 
+
     //Since we don't want to write to disk
     //We'll simply track the docs to remove on next merge
     if( l_disk_bloom->contains( key )){
+        LOG4CXX_INFO(logger, "Removed "+key);
         l_disk_deletes->insert( key );
+        last_modified = Util::currentTime();
     }
 
     //remove from memory if residing there
@@ -429,16 +434,16 @@ void CLuceneIndex::sync()
         l_disk_bloom   = disk_bloom;
 
         //create new handles
-        ram_directory = shared_ptr<CLuceneRAMDirectory>(new CLuceneRAMDirectory());
+        ram_directory.reset(new CLuceneRAMDirectory());
         ram_directory->__cl_addref(); //trick clucene's lame ref counters
 
-        ram_bloom     = shared_ptr<bloom_filter> (new bloom_filter(filter_space,1.0/(1.0 * filter_space), ((int) filter_space*rand())));
-        modifier      = shared_ptr<IndexModifier>(new IndexModifier(ram_directory.get(),analyzer.get(),true));
+        ram_bloom.reset(new bloom_filter(filter_space,1.0/(1.0 * filter_space), random_seed));
+        modifier.reset(new IndexModifier(ram_directory.get(),analyzer.get(),true));
 
         ram_prev_prev_directory = ram_prev_directory;
         ram_prev_directory      = l_ram_directory;
 
-        disk_deletes  = shared_ptr<set<string> >(new set<string>());
+        disk_deletes.reset(new set<string>());
     }
 
     LOG4CXX_DEBUG(logger,"Created Handles");
@@ -455,6 +460,8 @@ void CLuceneIndex::sync()
         Term      *t = new Term(DOC_KEY, wkey.c_str() );
 
         disk_reader->deleteDocuments(t);
+
+        LOG4CXX_DEBUG(logger,"Deleted"+(*it));
 
         delete t;
     }
@@ -475,9 +482,14 @@ void CLuceneIndex::sync()
         disk_writer->addIndexes(dirs);
         disk_writer->close();
 
+        //Merge in the ram bloom
+        *l_disk_bloom.get() |= *l_ram_bloom.get();
+
+
         LOG4CXX_DEBUG(logger,"Merged");
     }
-        //Search new index (big perf hit so get it over now)
+    //Search new index (big perf hit so get it over now)
+
     shared_ptr<IndexSearcher> l_disk_searcher(new IndexSearcher(idx_path.c_str()));
     wstring q = wstring(DOC_KEY)+wstring(L":1234");
 
