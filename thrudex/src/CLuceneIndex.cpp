@@ -34,7 +34,7 @@ struct null_deleter
 };
 
 CLuceneIndex::CLuceneIndex(const string &index_root, const string &index_name, shared_ptr<Analyzer> analyzer)
-    : index_root(index_root), index_name(index_name), analyzer(analyzer), filter_space(1000000000), last_synched(0), syncing(false)
+    : index_root(index_root), index_name(index_name), analyzer(analyzer), filter_space(10000000), last_synched(0), syncing(false)
 {
 
     //Verify log dir
