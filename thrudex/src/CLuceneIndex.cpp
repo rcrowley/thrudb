@@ -228,7 +228,7 @@ void CLuceneIndex::remove(const string &key)
     //Since we don't want to write to disk
     //We'll simply track the docs to remove on next merge
     if( l_disk_bloom->contains( key )){
-        LOG4CXX_INFO(logger, "Removed "+key);
+        LOG4CXX_DEBUG(logger, "Removed "+key);
         l_disk_deletes->insert( key );
         last_modified = Util::currentTime();
     }
