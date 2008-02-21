@@ -23,6 +23,9 @@ my $index  = "jddev";
 
 eval{
     $transport->open();
+
+    $client->admin("create_index",$index);
+
     query_it();
     warn "Adding data\n";
     add_some_data();
