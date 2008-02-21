@@ -193,8 +193,10 @@ void CLuceneIndex::put( const string &key, lucene::document::Document *doc )
 
 
     //always put into memory (we will merge to disk later)
-    shared_ptr<IndexModifier> l_modifier  = modifier;
-    shared_ptr<bloom_filter>  l_ram_bloom = ram_bloom;
+    shared_ptr<bloom_filter>  l_disk_bloom   = disk_bloom;
+    shared_ptr<bloom_filter>  l_ram_bloom    = ram_bloom;
+    shared_ptr<IndexModifier> l_modifier     = modifier;
+    shared_ptr<set<string> >  l_disk_deletes = disk_deletes;
 
     //if update to a doc in memory old copy first
     if( ram_bloom->contains( key ) ){
@@ -206,6 +208,13 @@ void CLuceneIndex::put( const string &key, lucene::document::Document *doc )
         LOG4CXX_DEBUG(logger,"Updating "+key);
 
         delete t;
+    }
+
+
+    //If this exists already on disk
+    //remove it
+    if( l_disk_bloom->contains( key ) ){
+        l_disk_deletes->insert( key );
     }
 
     l_modifier->addDocument(doc);
