@@ -21,15 +21,13 @@ THRUDEX_PORT   = 11299;
 THRUDOC_PORT   = 11291;
 
 THRUDOC_BUCKET = "bookmarks";
-
-THRUDEX_DOMAIN = "tutorial";
 THRUDEX_INDEX  = "bookmarks";
 
 def chunker(seed, size, func):   
     while True:
         chunk = func(THRUDOC_BUCKET, seed, size)
         yield chunk
-        if len(chunk.responses) != size:
+        if len(chunk.elements) != size:
             break
         seed = chunk.seed
 
@@ -53,6 +51,8 @@ class BookmarkManager(object):
         self.thrudex = Thrudex.Client(protocol)
 
         transport.open()
+
+        self.thrudex.admin("create_index", THRUDEX_INDEX)
 
     def serialize(self, b):
         mbuf = TMemoryBuffer()
@@ -81,8 +81,6 @@ class BookmarkManager(object):
 
             self.add_bookmark(b)
 
-        self.thrudex.commitAll()
-
         t1 = time()
         
         print "\n*Indexed file in: %.2f seconds*" % (t1-t0)
@@ -99,30 +97,26 @@ class BookmarkManager(object):
 
     def store_bookmark(self, b):
         b_str = self.serialize(b)
-        bid = self.thrudoc.putValue(b_str)
+        bid = self.thrudoc.putValue(THRUDOC_BUCKET, b_str)
         return bid
 
     def index_bookmark(self, b_id, b):
-        doc = ThrudexTypes.DocMsg()
-        doc.docid = b_id
-        doc.domain = THRUDEX_DOMAIN
+        doc = ThrudexTypes.Document()
+        doc.key = b_id
         doc.index = THRUDEX_INDEX
         doc.fields = []
 
-        field = ThrudexTypes.Field()
-        field.name = "title"
+        field       = ThrudexTypes.Field()
+        field.key   = "title"
         field.value = b.title
         field.sortable = True
-        field.stype = ThrudexTypes.StorageType.UNSTORED
         doc.fields.append(field)
-  
-        field = ThrudexTypes.Field()
-        field.name = "tags"
+            
+        field       = ThrudexTypes.Field()
+        field.key   = "tags"
         field.value = b.tags
-        field.stype = ThrudexTypes.StorageType.UNSTORED
         doc.fields.append(field)
-
-        self.thrudex.add(doc)
+        self.thrudex.put(doc)
 
     def remove_all(self):
         t0   = time()
@@ -131,32 +125,30 @@ class BookmarkManager(object):
         for ids in chunker(seed, 100, self.thrudoc.scan):
             docs = []
             for id in ids.elements:
-                rm = ThrudexTypes.RemoveMsg()
-                rm.domain = THRUDEX_DOMAIN
+                rm = ThrudexTypes.Element()            
                 rm.index = THRUDEX_INDEX
-                rm.docid = id.key
+                rm.key = id.key
                 docs.append(rm)
 
             self.thrudex.removeList(docs)
             self.thrudoc.removeList(ids.elements)
-            self.thrudex.commitAll()
+
 
         t1 = time()
         print "\n*Index cleared in: %.2f seconds*" % (t1-t0)
 
     def find(self, terms, random=False, sortby=None):
         print "\nSearching for:", terms
-#        for k,v in options.iteritems():
-#            print "\t", k, v
+        for k,v in options.iteritems():
+            print "\t", k, v
 
         t0 = time()
 
-        q = ThrudexTypes.QueryMsg()
-        q.domain = THRUDEX_DOMAIN
+        q = ThrudexTypes.SearchQuery()
         q.index = THRUDEX_INDEX
         q.query = terms
 
-        q.limit = 100
+        #q.limit = 100
         #q.offset = 10
 
         if random:
@@ -164,14 +156,14 @@ class BookmarkManager(object):
         if sortby:
             q.sortby = sortby
 
-        ids = self.thrudex.query(q)
+        ids = self.thrudex.search(q)
         if ids is None:
             return
 
         print "Found", ids.total, "bookmarks"
 
-        if len(ids.ids) > 0:
-            bm_strs = self.thrudoc.fetchList( self.create_doc_list(ids.ids))
+        if len(ids.elements) > 0:
+            bm_strs = self.thrudoc.fetchList( self.create_doc_list(ids.elements))
             bms = [self.deserialize(bs) for bs in bm_strs]
             self.print_bookmarks(bms)
 
