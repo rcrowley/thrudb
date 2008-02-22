@@ -30,6 +30,7 @@ eval{
     warn "Adding data\n";
     add_some_data();
 
+    #sleep(10);
 
     warn "Querying data\n";
     query_it();
@@ -37,15 +38,17 @@ eval{
     warn "Updating data\n";
     update_it();
 
-    warn "Querying data\n";
-    query_it();
-
-    warn "Deleting data\n";
-    delete_it();
-
+    #sleep(10);
 
     warn "Querying data\n";
     query_it();
+
+    #warn "Deleting data\n";
+    #delete_it();
+
+
+    #warn "Querying data\n";
+    #query_it();
 
     $transport->close();
 
