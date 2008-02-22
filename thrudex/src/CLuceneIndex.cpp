@@ -213,6 +213,8 @@ void CLuceneIndex::put( const string &key, lucene::document::Document *doc )
         delete t;
     }
 
+    l_modifier->addDocument(doc);
+    l_ram_bloom->insert( key );
 
     //If this exists already on disk remove it
     if( l_disk_bloom->contains( key ) ){
@@ -221,9 +223,6 @@ void CLuceneIndex::put( const string &key, lucene::document::Document *doc )
         if(!syncing)
             l_disk_filter->skip(wkey);
     }
-
-    l_modifier->addDocument(doc);
-    l_ram_bloom->insert( key );
 
     last_modified = Util::currentTime();
 }
