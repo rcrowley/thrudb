@@ -1,6 +1,9 @@
 #ifndef __UPDATE_FILTER_H__
 #define __UPDATE_FILTER_H__
 
+/* hack to work around thrift and log4cxx installing config.h's */
+#undef HAVE_CONFIG_H
+
 #include <CLucene.h>
 #include <CLucene/search/Filter.h>
 #include <boost/shared_ptr.hpp>
