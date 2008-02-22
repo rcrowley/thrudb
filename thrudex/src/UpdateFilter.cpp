@@ -65,7 +65,7 @@ Filter* UpdateFilter::clone() const
 }
 
 
-bool UpdateFilter::shouldDeleteBitSet(const BitSet* bs) const
+bool UpdateFilter::shouldDeleteBitSet(const BitSet* /* bs */) const
 {
     return false;
 }
