@@ -9,6 +9,7 @@ thrudex_SOURCES = \
 		  CLuceneBackend.cpp			\
 		  CLuceneRAMDirectory.cpp               \
 		  CLuceneIndex.cpp			\
+		  StatsBackend.cpp			\
 		  UpdateFilter.cpp			\
 		  main.cpp
 

@@ -37,9 +37,9 @@
 #include "ThrudexHandler.h"
 #include "ThrudexBackend.h"
 #include "CLuceneBackend.h"
+#include "StatsBackend.h"
 #include "ConfigFile.h"
 #include "utils.h"
-
 
 using namespace log4cxx;
 using namespace log4cxx::helpers;
@@ -95,6 +95,9 @@ int main(int argc, char **argv) {
         string which      = ConfigManager->read<string>("BACKEND","CLucene");
         shared_ptr<ThrudexBackend>    backend(new CLuceneBackend(index_root));
 
+
+        if (ConfigManager->read<int>("KEEP_STATS", 0))
+          backend = shared_ptr<ThrudexBackend> (new StatsBackend (backend));
 
         shared_ptr<TProtocolFactory>  protocolFactory  (new TBinaryProtocolFactory());
 
