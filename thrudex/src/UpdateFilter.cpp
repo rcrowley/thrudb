@@ -25,10 +25,18 @@ UpdateFilter::~UpdateFilter()
 
 BitSet* UpdateFilter::bits(IndexReader* reader)
 {
-    if(reader->maxDoc() == this->reader->maxDoc())
+
+    //Disk updates are all that should be filtered
+    if(reader == this->reader.get()){
         return bitset.get();
-    else
-        return NULL;
+    } else {
+        //this is a in memory index no filter
+        BitSet *tmp_bs = new BitSet(reader->maxDoc());
+        for(int i=0; i<reader->maxDoc(); i++)
+            tmp_bs->set(i,true);
+
+        return tmp_bs;
+    }
 }
 
 void UpdateFilter::skip( wstring key )
@@ -65,9 +73,10 @@ Filter* UpdateFilter::clone() const
 }
 
 
-bool UpdateFilter::shouldDeleteBitSet(const BitSet* /* bs */) const
+bool UpdateFilter::shouldDeleteBitSet(const BitSet* bs ) const
 {
-    return false;
+    //allow caller to delete tmp bitset only
+    return bs == bitset.get() ? false : true;
 }
 
 

@@ -194,15 +194,22 @@ string CLuceneBackend::admin(const std::string &op, const std::string &data)
         string name = data;
 
         for(unsigned int i=0; i<name.size(); i++){
-            if( !isascii(name[i]) )
-                name[i] = '_';
+            if( !isascii(name[i]) ){
+                ThrudexException ex;
+                ex.what = "Index name contains non-ascii chars";
+                throw ex;
+            }
 
 
             if(name[i] == '\t' || name[i] == '|' || name[i] == '\n' || name[i] == '.' ||
-               name[i] == '\\' || name[i] == '/' )
-                name[i] = '_';
+               name[i] == '\\' || name[i] == '/' ){
 
-            name[i] = tolower(name[i]);
+                ThrudexException ex;
+                ex.what = "Index name contains illegal chars";
+                throw ex;
+            }
+
+
         }
 
         LOG4CXX_INFO(logger, "Creating index:"+name);
