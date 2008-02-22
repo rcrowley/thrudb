@@ -9,6 +9,7 @@ thrudex_SOURCES = \
 		  CLuceneBackend.cpp			\
 		  CLuceneRAMDirectory.cpp               \
 		  CLuceneIndex.cpp			\
+		  UpdateFilter.cpp			\
 		  main.cpp
 
 thrudex_CPPFLAGS = -Wall -Igen-cpp $(MEMCACHED_CFLAGS) $(CURL_CFLAGS) $(THRIFTNB_CFLAGS) $(THRUCOMMON_CFLAGS) $(SSL_CFLAGS) $(UUID_CFLAGS)

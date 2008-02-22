@@ -24,6 +24,7 @@
 #include "CLuceneRAMDirectory.h"
 
 class bloom_filter;
+class UpdateFilter;
 
 #define DOC_KEY L"_doc_key_"
 
@@ -79,6 +80,8 @@ class CLuceneIndex : public facebook::thrift::concurrency::Runnable
     int64_t                                          last_synched;
     bool                                             syncing;
 
+    boost::shared_ptr<lucene::index::IndexReader>    disk_reader;
+    boost::shared_ptr<UpdateFilter>                  disk_filter;
     boost::shared_ptr<lucene::search::IndexSearcher> disk_searcher;
     boost::shared_ptr<bloom_filter>                  disk_bloom;
     boost::shared_ptr<std::set<std::string> >        disk_deletes;
