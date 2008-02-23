@@ -70,6 +70,8 @@ sub create
 {
     my ($hostname, $heartbeat, $stats) = @_;
 
+    return if (-e "rrdtool/$hostname.rrd");
+
     my @dss = ();
     foreach my $var (sort keys %$stats)
     {
