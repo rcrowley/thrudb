@@ -139,17 +139,12 @@ class BookmarkManager(object):
 
     def find(self, terms, random=False, sortby=None):
         print "\nSearching for:", terms
-        for k,v in options.iteritems():
-            print "\t", k, v
 
         t0 = time()
 
         q = ThrudexTypes.SearchQuery()
         q.index = THRUDEX_INDEX
         q.query = terms
-
-        #q.limit = 100
-        #q.offset = 10
 
         if random:
             q.randomize = True
@@ -160,11 +155,16 @@ class BookmarkManager(object):
         if ids is None:
             return
 
-        print "Found", ids.total, "bookmarks"
+        print "Found %d bookmarks" % ids.total
 
         if len(ids.elements) > 0:
-            bm_strs = self.thrudoc.fetchList( self.create_doc_list(ids.elements))
-            bms = [self.deserialize(bs) for bs in bm_strs]
+            list_response = self.thrudoc.getList( self.create_doc_list(ids.elements))
+            bms = []
+            for ele in list_response:
+                 if ele.element.value != '':
+                   bms.append(self.deserialize(ele.element.value))
+                 else:
+                   print 'value empty for key: %s' % ele.element.key
             self.print_bookmarks(bms)
 
         t1 = time()
@@ -173,10 +173,10 @@ class BookmarkManager(object):
 
     def create_doc_list(self, ids):
         docs = []
-        for id in enumerate(ids):
+        for pointer, ele in enumerate(ids):
             doc = ThrudocTypes.Element()
             doc.bucket = THRUDOC_BUCKET
-            doc.key    = id
+            doc.key    = ele.key
             docs.append(doc)
 
         return docs
