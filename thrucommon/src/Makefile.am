@@ -16,6 +16,7 @@ include_thrucommon_HEADERS = \
 			     MemcacheHandle.h		\
 			     ThruFileTransport.h	\
 			     RecoveryManager.h		\
+			     SpreadConnection.h		\
 			     SpreadManager.h		\
 			     SpreadTaskFactory.h	\
 			     Transaction.h		\
@@ -34,6 +35,7 @@ libthrucommon_la_SOURCES = \
 			   ConfigFile.cpp			\
 			   ThruFileTransport.cpp		\
 			   RecoveryManager.cpp			\
+			   SpreadConnection.cpp			\
 			   SpreadManager.cpp			\
 			   Transaction.cpp			\
 			   TransactionManager.cpp

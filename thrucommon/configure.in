@@ -13,6 +13,19 @@ AC_PROG_INSTALL
 AC_PROG_LIBTOOL
 AC_PROG_MAKE_SET
 
+# libcppunit, optional
+AC_ARG_WITH(tests,
+    AC_HELP_STRING([--with-tests],
+                   [build test suite support, requires cppunit (default is no]),
+    [with_memcached=$withval],
+    [with_memcached=no])
+if test "x$with_tests" = "xyes"; then
+    AM_PATH_CPPUNIT(1.9.6)
+    if test "x$no_cppunit" != "xyes" ; then
+        AC_DEFINE([HAVE_CPPUNIT], [1], [Define to 1 if you have the cppunit library (-lcppunit)])
+    fi
+fi
+
 AC_LANG(C++)
 
 # thrift(nb) and related requirements
@@ -99,5 +112,6 @@ AC_TYPE_UINT8_T
 
 AC_CONFIG_FILES([Makefile
                  src/Makefile
-                 src/thrucommon.pc])
+                 src/thrucommon.pc
+                 tests/Makefile])
 AC_OUTPUT

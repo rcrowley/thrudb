@@ -1,9 +1,12 @@
 
 #include "SpreadConnection.h"
 
+using namespace log4cxx;
 using namespace std;
 
 string SP_error_to_string (int error);
+
+LoggerPtr SpreadConnection::logger (Logger::getLogger ("SpreadConnection"));
 
 SpreadConnection::SpreadConnection (const string & name,
                                     const string & private_name)
@@ -38,6 +41,7 @@ SpreadConnection::SpreadConnection (const string & name,
 
 SpreadConnection::~SpreadConnection ()
 {
+    LOG4CXX_INFO (logger, "~SpreadConnection");
     map<string, vector<string> >::iterator i;
     for (i = this->groups.begin ();
          i != this->groups.end ();
@@ -50,11 +54,12 @@ SpreadConnection::~SpreadConnection ()
 
 void SpreadConnection::join (const std::string & group)
 {
+    LOG4CXX_DEBUG (logger, "join: group=" + group);
     map<string, vector<string> >::iterator i;
     i = this->groups.find (group.c_str ());
     if (i != this->groups.end ())
     {
-        // TODO: throw an exception
+        LOG4CXX_DEBUG (logger, "    already a member");
     }
     else
     {
@@ -69,24 +74,32 @@ void SpreadConnection::join (const std::string & group)
         // for a membership message before we'll have the list of people
         // that's handled elsewhere, as are membership changes
         this->groups[group];
+        LOG4CXX_DEBUG (logger, "    joined");
     }
 }
 
 void SpreadConnection::leave (const std::string & group)
 {
+    LOG4CXX_DEBUG (logger, "leave: group=" + group);
     map<string, vector<string> >::iterator i;
     i = this->groups.find (group.c_str ());
     if (i != this->groups.end ())
     {
         SP_leave (this->mbox, group.c_str ());
+        // TODO: this will unsubscribe everyone...
         this->groups.erase (i);
+        LOG4CXX_DEBUG (logger, "    left");
     }
 }
 
 void SpreadConnection::subscribe (const string & sender, const string & group,
                                   const int message_type,
-                                  subscriber_callback callback)
+                                  SubscriberCallbackInfo * callback)
 {
+    char buf[256];
+    sprintf (buf, "subscribe: sender=%s, group=%s, message_type=%d", 
+             sender.c_str (), group.c_str (), message_type);
+    LOG4CXX_DEBUG (logger, buf);
     if (!group.empty ())
     {
         // make sure we're a member of the group in question
@@ -100,9 +113,16 @@ void SpreadConnection::subscribe (const string & sender, const string & group,
 void SpreadConnection::queue (const string & group, const int message_type,
                               const char * message, const int message_len)
 {
+    if (logger->isDebugEnabled ())
+    {
+        char buf[128];
+        sprintf (buf, "queue: group=%s, message_type=%d", group.c_str (),
+                 message_type);
+        LOG4CXX_DEBUG (logger, buf);
+    }
     QueuedMessage * queued_message =
         (QueuedMessage*)malloc (sizeof (QueuedMessage));
-    queued_message->group = group;
+    queued_message->group = strndup (group.c_str (), group.length ());
     queued_message->message_type = message_type;
     queued_message->message = strndup (message, message_len);
     queued_message->message_len = message_len;
@@ -111,6 +131,12 @@ void SpreadConnection::queue (const string & group, const int message_type,
 
 void SpreadConnection::run (int count)
 {
+    if (logger->isDebugEnabled ())
+    {
+        char buf[64];
+        sprintf (buf, "run: count=%d", count);
+        LOG4CXX_DEBUG (logger, buf);
+    }
     // send out any pending message
     this->drain_pending ();
 
@@ -128,12 +154,20 @@ void SpreadConnection::run (int count)
     // TODO: grow buffer as necessary...
     char buf[buf_size];
 
-    int i;
+    int i = 0;
     while (!count || i < count)
     {
+        LOG4CXX_DEBUG (logger, "run:    receiving");
         buf_len = SP_receive (this->mbox, &service_type, sender,
                               max_groups, &num_groups, groups, &type,
                               &endian_mismatch, buf_size, buf);
+        // TODO: tmp
+        {
+            char buf[128];
+            sprintf (buf, "recv: buf_len=%d, sender=%s, group=%s, type=%d",
+                     buf_len, sender, groups[0], type);
+            LOG4CXX_DEBUG (logger, buf);
+        }
         if (buf_len > 0)
         {
             // TODO: null terminate the message, can't hurt and we, so long as
@@ -172,21 +206,35 @@ void SpreadConnection::run (int count)
         }
         // drain any pending messages
         this->drain_pending ();
+
+        i++;
     }
+    LOG4CXX_DEBUG (logger, "run:    done");
 }
 
-void SpreadConnection::make_callbacks (vector<subscriber_callback> callbacks,
-                                       const string & sender, 
-                                       const string & group,
-                                       const int message_type, 
-                                       const char * message,
-                                       const int message_len)
+void SpreadConnection::make_callbacks
+(vector<SubscriberCallbackInfo *> callbacks, const string & sender,
+ const string & group, const int message_type, const char * message,
+ const int message_len)
 {
+    if (logger->isDebugEnabled ())
+    {
+        char buf[256];
+        sprintf (buf, "make_callbacks: callbacks.size=%d, sender=%s, group=%s, message_type=%d",
+                 (int)callbacks.size (), sender.c_str (), group.c_str (), 
+                 message_type);
+        LOG4CXX_DEBUG (logger, buf);
+    }
     bool ret;
-    vector<subscriber_callback>::iterator i;
+    vector<SubscriberCallbackInfo *>::iterator i;
     for (i = callbacks.begin (); i != callbacks.end (); i++)
     {
-        ret = (*i)(this, sender, group, message_type, message, message_len);
+        subscriber_callback call = (*i)->callback;
+        void * data = (*i)->data;
+        ret = (call)(this, sender, group, message_type, message, 
+                     message_len, data);
+        ret = ((*i)->callback)(this, sender, group, message_type, message, 
+                               message_len, (*i)->data);
         if (!ret)
             callbacks.erase (i);
     }
@@ -196,107 +244,121 @@ void SpreadConnection::dispatch (const string & sender, const string & group,
                                  const int message_type, const char * message,
                                  const int message_len)
 {
+    if (logger->isDebugEnabled ())
+    {
+        char buf[128];
+        sprintf (buf, "dispatch: sender=%s, group=%s, message_type=%d",
+                 sender.c_str (), group.c_str (), message_type);
+        LOG4CXX_DEBUG (logger, buf);
+    }
+
     // if we haven't installed any callbacks, there's no reason to continue
     if (this->subscriptions.empty ())
         return;
 
     // TODO: recieve self flag
-    if (this->private_group == sender)
+    if (this->private_group == sender && !this->receive_self)
         return;
 
     // holy fuck this is a mess, this could be used as a proof of how shitty
     // C++ is compared to perl where this is 8 lines of code :(
 
-    map<string, map<string, map<int, vector<subscriber_callback> > > >::iterator
-        s = this->subscriptions.find (sender);
+    map<string, map<string, map<int, 
+        vector<SubscriberCallbackInfo *> > > >::iterator s = 
+            this->subscriptions.find (sender);
     if (s != this->subscriptions.end ())
     {
-        map<string, map<int, vector<subscriber_callback> > >::iterator s_g =
-            (*s).second.find (group);
+        map<string, map<int, 
+            vector<SubscriberCallbackInfo *> > >::iterator s_g =
+                (*s).second.find (group);
         if (s_g != (*s).second.end ())
         {
-            map<int, vector<subscriber_callback> >::iterator s_g_t =
+            map<int, vector<SubscriberCallbackInfo *> >::iterator s_g_t =
                 (*s_g).second.find (message_type);
             if (s_g_t != (*s_g).second.end ())
             {
                 // we have a sender, group, type match
-                this->make_callbacks ((*s_g_t).second, sender, group, 
+                this->make_callbacks ((*s_g_t).second, sender, group,
                                       message_type, message, message_len);
             }
-            map<int, vector<subscriber_callback> >::iterator s_g_et = 
+            map<int, vector<SubscriberCallbackInfo *> >::iterator s_g_et =
                 (*s_g).second.find (-1);
             if (s_g_et != (*s_g).second.end ())
             {
                 // we have a sender, group, empty type match
-                this->make_callbacks ((*s_g_et).second, sender, group, 
+                this->make_callbacks ((*s_g_et).second, sender, group,
                                       message_type, message, message_len);
             }
         }
-        map<string, map<int, vector<subscriber_callback> > >::iterator s_eg =
-            (*s).second.find ("");
+        map<string, map<int, 
+            vector<SubscriberCallbackInfo *> > >::iterator s_eg =
+                (*s).second.find ("");
         if (s_eg != (*s).second.end ())
         {
-            map<int, vector<subscriber_callback> >::iterator s_eg_t = 
+            map<int, vector<SubscriberCallbackInfo *> >::iterator s_eg_t =
                 (*s_eg).second.find (message_type);
             if (s_eg_t != (*s_eg).second.end ())
             {
                 // we have a sender, empty group, type match
-                this->make_callbacks ((*s_eg_t).second, sender, group, 
+                this->make_callbacks ((*s_eg_t).second, sender, group,
                                       message_type, message, message_len);
             }
-            map<int, vector<subscriber_callback> >::iterator s_eg_et = 
+            map<int, vector<SubscriberCallbackInfo *> >::iterator s_eg_et =
                 (*s_eg).second.find (-1);
             if (s_eg_et != (*s_eg).second.end ())
             {
                 // we have a sender, empty group, empty type match
-                this->make_callbacks ((*s_eg_et).second, sender, group, 
+                this->make_callbacks ((*s_eg_et).second, sender, group,
                                       message_type, message, message_len);
             }
         }
     }
-    map<string, map<string, map<int, vector<subscriber_callback> > > >::iterator
-        es = this->subscriptions.find ("");
+    map<string, map<string, map<int, 
+        vector<SubscriberCallbackInfo *> > > >::iterator
+            es = this->subscriptions.find ("");
     if (es != this->subscriptions.end ())
     {
-        map<string, map<int, vector<subscriber_callback> > >::iterator es_g =
-            (*es).second.find (group);
+        map<string, map<int, 
+            vector<SubscriberCallbackInfo *> > >::iterator es_g =
+                (*es).second.find (group);
         if (es_g != (*es).second.end ())
         {
-            map<int, vector<subscriber_callback> >::iterator es_g_t = 
+            map<int, vector<SubscriberCallbackInfo *> >::iterator es_g_t =
                 (*es_g).second.find (message_type);
             if (es_g_t != (*es_g).second.end ())
             {
                 // we have a empty sender, group, type match
-                this->make_callbacks ((*es_g_t).second, sender, group, 
+                this->make_callbacks ((*es_g_t).second, sender, group,
                                       message_type, message, message_len);
             }
-            map<int, vector<subscriber_callback> >::iterator es_g_et = 
+            map<int, vector<SubscriberCallbackInfo *> >::iterator es_g_et =
                 (*es_g).second.find (-1);
             if (es_g_et != (*es_g).second.end ())
             {
                 // we have a empty sender, group, empty type match
-                this->make_callbacks ((*es_g_et).second, sender, group, 
+                this->make_callbacks ((*es_g_et).second, sender, group,
                                       message_type, message, message_len);
             }
         }
-        map<string, map<int, vector<subscriber_callback> > >::iterator es_eg =
+        map<string, map<int, 
+            vector<SubscriberCallbackInfo *> > >::iterator es_eg =
             (*es).second.find ("");
         if (es_eg != (*es).second.end ())
         {
-            map<int, vector<subscriber_callback> >::iterator es_eg_t = 
+            map<int, vector<SubscriberCallbackInfo *> >::iterator es_eg_t =
                 (*es_eg).second.find (message_type);
             if (es_eg_t != (*es_eg).second.end ())
             {
                 // we have a empty sender, empty group, type match
-                this->make_callbacks ((*es_eg_t).second, sender, group, 
+                this->make_callbacks ((*es_eg_t).second, sender, group,
                                       message_type, message, message_len);
             }
-            map<int, vector<subscriber_callback> >::iterator es_eg_et = 
+            map<int, vector<SubscriberCallbackInfo *> >::iterator es_eg_et =
                 (*es_eg).second.find (-1);
             if (es_eg_et != (*es_eg).second.end ())
             {
                 // we have a empty sender, empty group, empty type match
-                this->make_callbacks ((*es_eg_et).second, sender, group, 
+                this->make_callbacks ((*es_eg_et).second, sender, group,
                                       message_type, message, message_len);
             }
         }
@@ -305,19 +367,29 @@ void SpreadConnection::dispatch (const string & sender, const string & group,
 
 void SpreadConnection::drain_pending ()
 {
+    if (logger->isDebugEnabled ())
+    {
+        char buf[64];
+        sprintf (buf, "drain_pending: pending_messages.size=%d", 
+                 (int)this->pending_messages.size ());
+        LOG4CXX_DEBUG (logger, buf);
+    }
     int ret;
     QueuedMessage * qm;
     while (!this->pending_messages.empty ())
     {
+        LOG4CXX_DEBUG (logger, "drain_pending:    draining");
         qm = this->pending_messages.front ();
         this->pending_messages.pop ();
-        ret = SP_multicast (this->mbox, SAFE_MESS | SELF_DISCARD, 
-                            qm->group.c_str (), qm->message_type, 
+        ret = SP_multicast (this->mbox, SAFE_MESS | SELF_DISCARD,
+                            qm->group, qm->message_type,
                             qm->message_len, qm->message);
         // TODO: error handling
+        free (qm->group);
         free (qm->message);
         free (qm);
     }
+    LOG4CXX_DEBUG (logger, "drain_pending: done");
 }
 
 // copied from sp.c, redic that it's a function that aborts in a library rather
