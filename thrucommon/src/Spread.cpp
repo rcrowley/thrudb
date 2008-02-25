@@ -1,23 +1,23 @@
 
-#include "SpreadConnection.h"
+#include "Spread.h"
 
 using namespace log4cxx;
 using namespace std;
 
 string SP_error_to_string (int error);
 
-LoggerPtr SpreadConnection::logger (Logger::getLogger ("SpreadConnection"));
+LoggerPtr Spread::logger (Logger::getLogger ("Spread"));
 
 /* TODO:
  *  - thread safe queuing of messages
  *  - multi-send, and test multi-receive
  */
 
-SpreadConnection::SpreadConnection (const string & name,
+Spread::Spread (const string & name,
                                     const string & private_name)
 {
     char buf[1024];
-    sprintf (buf, "SpreadConnection: name=%s, private_name=%s",
+    sprintf (buf, "Spread: name=%s, private_name=%s",
              name.c_str (), private_name.c_str ());
     LOG4CXX_INFO (logger, buf);
 
@@ -38,13 +38,13 @@ SpreadConnection::SpreadConnection (const string & name,
 
     // save our private group name
     this->private_group = private_group;
-    LOG4CXX_INFO (logger, "SpreadConnection: private_group=" +
+    LOG4CXX_INFO (logger, "Spread: private_group=" +
                   this->private_group);
 }
 
-SpreadConnection::~SpreadConnection ()
+Spread::~Spread ()
 {
-    LOG4CXX_INFO (logger, "~SpreadConnection");
+    LOG4CXX_INFO (logger, "~Spread");
     map<string, vector<string> >::iterator i;
     for (i = this->groups.begin ();
          i != this->groups.end ();
@@ -55,7 +55,7 @@ SpreadConnection::~SpreadConnection ()
     SP_disconnect (this->mbox);
 }
 
-void SpreadConnection::join (const std::string & group)
+void Spread::join (const std::string & group)
 {
     LOG4CXX_DEBUG (logger, "join: group=" + group);
     map<string, vector<string> >::iterator i;
@@ -81,7 +81,7 @@ void SpreadConnection::join (const std::string & group)
     }
 }
 
-void SpreadConnection::leave (const std::string & group)
+void Spread::leave (const std::string & group)
 {
     LOG4CXX_DEBUG (logger, "leave: group=" + group);
     map<string, vector<string> >::iterator i;
@@ -94,7 +94,7 @@ void SpreadConnection::leave (const std::string & group)
     }
 }
 
-void SpreadConnection::subscribe (const string & sender, const string & group,
+void Spread::subscribe (const string & sender, const string & group,
                                   const int message_type,
                                   SubscriberCallbackInfo * callback)
 {
@@ -111,7 +111,7 @@ void SpreadConnection::subscribe (const string & sender, const string & group,
     subscriptions[group][message_type][sender].push_back (callback);
 }
 
-void SpreadConnection::send (const service service_type, const string & group,
+void Spread::send (const service service_type, const string & group,
                              const int message_type, const char * message, 
                              const int message_len)
 {
@@ -127,7 +127,7 @@ void SpreadConnection::send (const service service_type, const string & group,
 
 
 // message will be copied in to a local buffer
-void SpreadConnection::queue (const service service_type, const string & group,
+void Spread::queue (const service service_type, const string & group,
                               const int message_type, const char * message, 
                               const int message_len)
 {
@@ -148,7 +148,7 @@ void SpreadConnection::queue (const service service_type, const string & group,
     this->pending_messages.push (queued_message);
 }
 
-void SpreadConnection::run (int count)
+void Spread::run (int count)
 {
     if (logger->isDebugEnabled ())
     {
@@ -230,7 +230,7 @@ void SpreadConnection::run (int count)
     LOG4CXX_DEBUG (logger, "run:    done");
 }
 
-void SpreadConnection::make_callbacks
+void Spread::make_callbacks
 (vector<SubscriberCallbackInfo *> & callbacks, const string & sender,
  const vector<string> & groups, const int message_type, const char * message, 
  const int message_len)
@@ -268,7 +268,7 @@ void SpreadConnection::make_callbacks
     }
 }
 
-void SpreadConnection::dispatch (const string & sender, 
+void Spread::dispatch (const string & sender, 
                                  const vector<string> & groups,
                                  const int message_type, const char * message, 
                                  const int message_len)
@@ -403,7 +403,7 @@ void SpreadConnection::dispatch (const string & sender,
     }
 }
 
-void SpreadConnection::drain_pending ()
+void Spread::drain_pending ()
 {
     if (logger->isDebugEnabled ())
     {

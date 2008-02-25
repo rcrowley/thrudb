@@ -8,7 +8,7 @@
 
 #if HAVE_CPPUNIT
 
-#include "SpreadConnection.h"
+#include "Spread.h"
 
 #include <cppunit/CompilerOutputter.h>
 #include <cppunit/extensions/HelperMacros.h>
@@ -32,9 +32,8 @@ class SpreadTest : public CppUnit::TestFixture
         void testAll ()
         {
             string spread_name = "4803@localhost";
-            SpreadConnection * conn = 
-                new SpreadConnection (spread_name, "cppunit");
-            CPPUNIT_ASSERT (conn); 
+            Spread * conn = new Spread (spread_name, "cppunit");
+            CPPUNIT_ASSERT (conn);
 
             string group = "testing";
             string other_group = "testing_2";
@@ -105,8 +104,7 @@ class SpreadTest : public CppUnit::TestFixture
             CPPUNIT_ASSERT_EQUAL (1, this->once_callback_count);
 
             // other sender...
-            SpreadConnection * other_conn = 
-                new SpreadConnection (spread_name, "other_cppunit");
+            Spread * other_conn = new Spread (spread_name, "other_cppunit");
             other_conn->send (SAFE_MESS, group, 42, msg, msg_len);
             conn->run (1);
             CPPUNIT_ASSERT_EQUAL (4, this->all_callback_count);
@@ -121,7 +119,7 @@ class SpreadTest : public CppUnit::TestFixture
             // shut down spread
         };
 
-        static bool all_callback (SpreadConnection * /* spread_connection */,
+        static bool all_callback (Spread * /* spread_connection */,
                                   const string & /* sender */,
                                   const vector<string> & /* groups */,
                                   const int /* message_type */,
@@ -133,7 +131,7 @@ class SpreadTest : public CppUnit::TestFixture
             return 1;
         }
 
-        static bool sender_callback (SpreadConnection * /* spread_connection */,
+        static bool sender_callback (Spread * /* spread_connection */,
                                      const string & /* sender */,
                                      const vector<string> & /* groups */,
                                      const int /* message_type */,
@@ -145,7 +143,7 @@ class SpreadTest : public CppUnit::TestFixture
             return 1;
         }
 
-        static bool group_callback (SpreadConnection * /* spread_connection */,
+        static bool group_callback (Spread * /* spread_connection */,
                                     const string & /* sender */,
                                     const vector<string> & /* groups */,
                                     const int /* message_type */,
@@ -157,7 +155,7 @@ class SpreadTest : public CppUnit::TestFixture
             return 1;
         }
 
-        static bool type_callback (SpreadConnection * /* spread_connection */,
+        static bool type_callback (Spread * /* spread_connection */,
                                    const string & /* sender */,
                                    const vector<string> & /* groups */,
                                    const int /* message_type */,
@@ -169,7 +167,7 @@ class SpreadTest : public CppUnit::TestFixture
             return 1;
         }
 
-        static bool once_callback (SpreadConnection * /* spread_connection */,
+        static bool once_callback (Spread * /* spread_connection */,
                                    const string & /* sender */,
                                    const vector<string> & /* groups */,
                                    const int /* message_type */,

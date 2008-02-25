@@ -27,9 +27,9 @@ class SpreadException : public std::exception
 };
 
 // only so we can pass this in to callbacks
-class SpreadConnection;
+class Spread;
 /* callbacks return true to stay installed, false to be removed */
-typedef bool (*subscriber_callback) (SpreadConnection * spread_connection,
+typedef bool (*subscriber_callback) (Spread * spread_connection,
                                      const std::string & sender,
                                      const std::vector<std::string> & groups,
                                      const int message_type,
@@ -52,12 +52,12 @@ struct QueuedMessage
     int message_len;
 };
 
-class SpreadConnection
+class Spread
 {
     public:
-        SpreadConnection (const std::string & name,
+        Spread (const std::string & name,
                           const std::string & private_name);
-        ~SpreadConnection ();
+        ~Spread ();
 
         void subscribe (const std::string & sender, const std::string & group,
                         const int message_type,
