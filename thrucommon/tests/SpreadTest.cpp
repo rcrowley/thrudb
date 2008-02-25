@@ -20,6 +20,8 @@
 using namespace std;
 using namespace log4cxx;
 
+// TODO: startup and shutdown our own spread
+
 class SpreadTest : public CppUnit::TestFixture
 {
     public:
@@ -33,9 +35,9 @@ class SpreadTest : public CppUnit::TestFixture
             SpreadConnection * conn = 
                 new SpreadConnection (spread_name, "cppunit");
             CPPUNIT_ASSERT (conn); 
-            
-            // TODO: make this randomish
+
             string group = "testing";
+            string other_group = "testing_2";
 
             // start up srpead
             all_callback_count = 0;
@@ -68,15 +70,15 @@ class SpreadTest : public CppUnit::TestFixture
             once_info.data = this;
             conn->subscribe ("", "", -1, &once_info);
 
+            // join the other group, without subscribing, so we'll get it's
+            // messages through all
+            conn->join (other_group);
+
             const char msg[] = "hello world!";
             int msg_len = strlen (msg);
 
-            // TODO: tmp clean out the join message
-            // receive stuff we send out
-            conn->set_receive_self (true);
-
             // everything
-            conn->queue (group, 42, msg, strlen (msg));
+            conn->queue (SAFE_MESS, group, 42, msg, strlen (msg));
             conn->run (1);
             CPPUNIT_ASSERT_EQUAL (1, this->all_callback_count);
             CPPUNIT_ASSERT_EQUAL (1, this->sender_callback_count);
@@ -85,7 +87,7 @@ class SpreadTest : public CppUnit::TestFixture
             CPPUNIT_ASSERT_EQUAL (1, this->once_callback_count);
 
             // other type, once removed
-            conn->queue (group, 43, msg, msg_len);
+            conn->queue (SAFE_MESS, group, 43, msg, msg_len);
             conn->run (1);
             CPPUNIT_ASSERT_EQUAL (2, this->all_callback_count);
             CPPUNIT_ASSERT_EQUAL (2, this->sender_callback_count);
@@ -94,7 +96,7 @@ class SpreadTest : public CppUnit::TestFixture
             CPPUNIT_ASSERT_EQUAL (1, this->once_callback_count);
 
             // other group
-            conn->queue (group, 42, msg, msg_len);
+            conn->queue (SAFE_MESS, other_group, 42, msg, msg_len);
             conn->run (1);
             CPPUNIT_ASSERT_EQUAL (3, this->all_callback_count);
             CPPUNIT_ASSERT_EQUAL (3, this->sender_callback_count);
@@ -105,8 +107,7 @@ class SpreadTest : public CppUnit::TestFixture
             // other sender...
             SpreadConnection * other_conn = 
                 new SpreadConnection (spread_name, "other_cppunit");
-            other_conn->queue (group, 42, msg, msg_len);
-            other_conn->run (-1);
+            other_conn->send (SAFE_MESS, group, 42, msg, msg_len);
             conn->run (1);
             CPPUNIT_ASSERT_EQUAL (4, this->all_callback_count);
             CPPUNIT_ASSERT_EQUAL (3, this->sender_callback_count);
@@ -121,8 +122,8 @@ class SpreadTest : public CppUnit::TestFixture
         };
 
         static bool all_callback (SpreadConnection * /* spread_connection */,
-                                  const std::string & /* sender */,
-                                  const std::string & /* group */,
+                                  const string & /* sender */,
+                                  const vector<string> & /* groups */,
                                   const int /* message_type */,
                                   const char * /* message */,
                                   const int /* message_len */,
@@ -133,8 +134,8 @@ class SpreadTest : public CppUnit::TestFixture
         }
 
         static bool sender_callback (SpreadConnection * /* spread_connection */,
-                                     const std::string & /* sender */,
-                                     const std::string & /* group */,
+                                     const string & /* sender */,
+                                     const vector<string> & /* groups */,
                                      const int /* message_type */,
                                      const char * /* message */,
                                      const int /* message_len */,
@@ -145,8 +146,8 @@ class SpreadTest : public CppUnit::TestFixture
         }
 
         static bool group_callback (SpreadConnection * /* spread_connection */,
-                                    const std::string & /* sender */,
-                                    const std::string & /* group */,
+                                    const string & /* sender */,
+                                    const vector<string> & /* groups */,
                                     const int /* message_type */,
                                     const char * /* message */,
                                     const int /* message_len */,
@@ -157,8 +158,8 @@ class SpreadTest : public CppUnit::TestFixture
         }
 
         static bool type_callback (SpreadConnection * /* spread_connection */,
-                                   const std::string & /* sender */,
-                                   const std::string & /* group */,
+                                   const string & /* sender */,
+                                   const vector<string> & /* groups */,
                                    const int /* message_type */,
                                    const char * /* message */,
                                    const int /* message_len */,
@@ -169,8 +170,8 @@ class SpreadTest : public CppUnit::TestFixture
         }
 
         static bool once_callback (SpreadConnection * /* spread_connection */,
-                                   const std::string & /* sender */,
-                                   const std::string & /* group */,
+                                   const string & /* sender */,
+                                   const vector<string> & /* groups */,
                                    const int /* message_type */,
                                    const char * /* message */,
                                    const int /* message_len */,
@@ -219,7 +220,7 @@ int main (int /* argc */, char*[] /* argv */)
 int main (int /* argc */, char*[] /* argv */)
 {
     fprintf (stderr, "cppunit support not avaiable\n");
-    return 1;
+    return -1;
 }
 
 #endif /* HAVE_CPPUNIT */
