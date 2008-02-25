@@ -289,7 +289,7 @@ void SpreadConnection::dispatch (const string & sender,
     // holy fuck this is a mess, this could be used as a proof of how shitty
     // C++ is compared to perl where this is 8 lines of code :(
     
-    for (int i = 0; i < groups.size (); i++)
+    for (size_t i = 0; i < groups.size (); i++)
     {
         LOG4CXX_DEBUG (logger, "dispatch:    groups[i]=" + groups[i]);
         map<string, map<int, map<string, 

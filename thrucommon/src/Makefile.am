@@ -17,10 +17,6 @@ include_thrucommon_HEADERS = \
 			     ThruFileTransport.h	\
 			     RecoveryManager.h		\
 			     SpreadConnection.h		\
-			     SpreadManager.h		\
-			     SpreadTaskFactory.h	\
-			     Transaction.h		\
-			     TransactionManager.h	\
 			     bloom_filter.hpp		\
 			     utils.h
 
@@ -35,10 +31,7 @@ libthrucommon_la_SOURCES = \
 			   ConfigFile.cpp			\
 			   ThruFileTransport.cpp		\
 			   RecoveryManager.cpp			\
-			   SpreadConnection.cpp			\
-			   SpreadManager.cpp			\
-			   Transaction.cpp			\
-			   TransactionManager.cpp
+			   SpreadConnection.cpp
 
 libthrucommon_la_CPPFLAGS = -Wall -Igen-cpp $(MEMCACHED_CFLAGS) $(SPEAD_CFLAGS) $(SSL_CFLAGS) $(THRIFT_CFLAGS) $(UUID_CFLAGS)
 libthrucommon_la_LDFLAGS = -Wall $(SPEAD_LIBS) $(SSL_LIBS) $(THRIFT_LIBS) $(UUID_LIBS) $(MEMCACHED_LIBS)
