@@ -11,10 +11,11 @@ LoggerPtr Spread::logger (Logger::getLogger ("Spread"));
 /* TODO:
  *  - thread safe queuing of messages
  *  - multi-send, and test multi-receive
+ *  - poll based/timeout so that threads calling run can die
+ *  - implement circuit breaker pattern around spread...
  */
 
-Spread::Spread (const string & name,
-                                    const string & private_name)
+Spread::Spread (const string & name, const string & private_name)
 {
     char buf[1024];
     sprintf (buf, "Spread: name=%s, private_name=%s",
@@ -95,28 +96,35 @@ void Spread::leave (const std::string & group)
 }
 
 void Spread::subscribe (const string & sender, const string & group,
-                                  const int message_type,
-                                  SubscriberCallbackInfo * callback)
+                        const int message_type,
+                        SubscriberCallbackInfo * callback_info)
 {
     char buf[256];
     sprintf (buf, "subscribe: sender=%s, group=%s, message_type=%d", 
              sender.c_str (), group.c_str (), message_type);
     LOG4CXX_DEBUG (logger, buf);
-    if (!group.empty ())
+    if (!group.empty () && group.find ("#") == string::npos)
     {
         // make sure we're a member of the group in question
         this->join (group);
     }
     // and subscribe the caller up
-    subscriptions[group][message_type][sender].push_back (callback);
+    subscriptions[group][message_type][sender].push_back (callback_info);
 }
 
 void Spread::send (const service service_type, const string & group,
-                             const int message_type, const char * message, 
-                             const int message_len)
+                   const int message_type, const char * message, 
+                   const int message_len)
 {
+    if (logger->isDebugEnabled ())
+    {
+        char buf[128];
+        sprintf (buf, "send: group=%s, message_type=%d, message_len=%d",
+                 group.c_str (), message_type, message_len);
+        LOG4CXX_DEBUG (logger, buf);
+    }
     int ret = SP_multicast (this->mbox, service_type, group.c_str (),
-                  message_type, message_len, message);
+                            message_type, message_len, message);
     if (ret < 0)
     {
         string error = SP_error_to_string (ret);
@@ -128,8 +136,8 @@ void Spread::send (const service service_type, const string & group,
 
 // message will be copied in to a local buffer
 void Spread::queue (const service service_type, const string & group,
-                              const int message_type, const char * message, 
-                              const int message_len)
+                    const int message_type, const char * message, 
+                    const int message_len)
 {
     if (logger->isDebugEnabled ())
     {
@@ -143,7 +151,8 @@ void Spread::queue (const service service_type, const string & group,
     queued_message->service_type = service_type;
     queued_message->group = strndup (group.c_str (), group.length ());
     queued_message->message_type = message_type;
-    queued_message->message = strndup (message, message_len);
+    queued_message->message = (char *)malloc (sizeof (char) * message_len);
+    memcpy (queued_message->message, message, message_len);
     queued_message->message_len = message_len;
     this->pending_messages.push (queued_message);
 }
@@ -230,10 +239,11 @@ void Spread::run (int count)
     LOG4CXX_DEBUG (logger, "run:    done");
 }
 
-void Spread::make_callbacks
-(vector<SubscriberCallbackInfo *> & callbacks, const string & sender,
- const vector<string> & groups, const int message_type, const char * message, 
- const int message_len)
+void Spread::make_callbacks (vector<SubscriberCallbackInfo *> & callbacks, 
+                             const string & sender, 
+                             const vector<string> & groups,
+                             const int message_type, const char * message, 
+                             const int message_len)
 {
     if (logger->isDebugEnabled ())
     {
@@ -256,6 +266,7 @@ void Spread::make_callbacks
         if (!ret)
         {
             LOG4CXX_DEBUG (logger, "make_callbacks:    removing callback");
+            // TODO: what about freeing/deleting?
             callbacks.erase (i);
         }
     }
@@ -268,10 +279,9 @@ void Spread::make_callbacks
     }
 }
 
-void Spread::dispatch (const string & sender, 
-                                 const vector<string> & groups,
-                                 const int message_type, const char * message, 
-                                 const int message_len)
+void Spread::dispatch (const string & sender, const vector<string> & groups,
+                       const int message_type, const char * message, 
+                       const int message_len)
 {
     if (logger->isDebugEnabled ())
     {
@@ -288,7 +298,7 @@ void Spread::dispatch (const string & sender,
 
     // holy fuck this is a mess, this could be used as a proof of how shitty
     // C++ is compared to perl where this is 8 lines of code :(
-    
+
     for (size_t i = 0; i < groups.size (); i++)
     {
         LOG4CXX_DEBUG (logger, "dispatch:    groups[i]=" + groups[i]);
@@ -378,7 +388,7 @@ void Spread::dispatch (const string & sender,
         }
         map<int, map<string, 
             vector<SubscriberCallbackInfo *> > >::iterator eg_et =
-            (*eg).second.find (-1);
+                (*eg).second.find (-1);
         if (eg_et != (*eg).second.end ())
         {
             map<string, vector<SubscriberCallbackInfo *> >::iterator eg_et_s =

@@ -13,7 +13,7 @@
 #include <log4cxx/logger.h>
 #include <protocol/TBinaryProtocol.h>
 #include <set>
-#include <sp.h>
+#include <Spread.h>
 #include <string>
 #include <transport/TTransportUtils.h>
 
@@ -24,7 +24,6 @@ class SpreadBackend : public ThrudocPassthruBackend
                        const std::string & spread_name, 
                        const std::string & spread_private_name,
                        const std::string & spread_group);
-        ~SpreadBackend ();
 
         void put (const std::string & bucket, const std::string & key, 
                   const std::string & value);
@@ -34,11 +33,8 @@ class SpreadBackend : public ThrudocPassthruBackend
     private:
         static log4cxx::LoggerPtr logger;
 
-        std::string spread_name;
-        std::string spread_private_name;
+        Spread spread;
         std::string spread_group;
-        std::string spread_private_group;
-        mailbox spread_mailbox;
 
         std::string generate_uuid ();
 };

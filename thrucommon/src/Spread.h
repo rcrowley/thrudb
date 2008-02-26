@@ -22,7 +22,6 @@ class SpreadException : public std::exception
 
         ~SpreadException () throw () {}
 
-    private:
         std::string message;
 };
 
@@ -61,7 +60,7 @@ class Spread
 
         void subscribe (const std::string & sender, const std::string & group,
                         const int message_type,
-                        SubscriberCallbackInfo * callback);
+                        SubscriberCallbackInfo * callback_info);
         void send (const service service_type, const std::string & group, 
                    const int message_type, const char * message, 
                    const int message_len);

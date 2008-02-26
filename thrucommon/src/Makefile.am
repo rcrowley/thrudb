@@ -1,6 +1,7 @@
 
 pkgconfigdir = $(libdir)/pkgconfig
 
+bin_PROGRAMS = thrurecorder
 lib_LTLIBRARIES = libthrucommon.la
 pkgconfig_DATA = thrucommon.pc
 
@@ -15,7 +16,7 @@ include_thrucommon_HEADERS = \
 			     memcache++.h		\
 			     MemcacheHandle.h		\
 			     ThruFileTransport.h	\
-			     RecoveryManager.h		\
+			     ReplicationRecorder.h	\
 			     Spread.h			\
 			     bloom_filter.hpp		\
 			     utils.h
@@ -29,12 +30,20 @@ libthrucommon_la_SOURCES = \
 			   gen-cpp/EventLog_constants.cpp	\
 			   CircuitBreaker.cpp			\
 			   ConfigFile.cpp			\
-			   RecoveryManager.cpp			\
+			   ReplicationRecorder.cpp		\
 			   Spread.cpp				\
 			   ThruFileTransport.cpp
 
-libthrucommon_la_CPPFLAGS = -Wall -Igen-cpp $(MEMCACHED_CFLAGS) $(SPEAD_CFLAGS) $(SSL_CFLAGS) $(THRIFT_CFLAGS) $(UUID_CFLAGS)
-libthrucommon_la_LDFLAGS = -Wall $(SPEAD_LIBS) $(SSL_LIBS) $(THRIFT_LIBS) $(UUID_LIBS) $(MEMCACHED_LIBS)
+libthrucommon_la_CPPFLAGS = -Wall -Igen-cpp $(MEMCACHED_CFLAGS) $(SPEAD_CFLAGS) $(SSL_CFLAGS) $(THRIFT_CFLAGS) $(UUID_CFLAGS) $(SPEAD_CFLAGS)
+libthrucommon_la_LDFLAGS = -Wall $(SPEAD_LIBS) $(SSL_LIBS) $(THRIFT_LIBS) $(UUID_LIBS) $(MEMCACHED_LIBS) $(SPEAD_LIBS)
+
+LDADD = $(top_builddir)/src/libthrucommon.la
+
+thrurecorder_CPPFLAGS = -Wall -Igen-cpp $(SPEAD_CFLAGS) $(THRIFT_CFLAGS)
+thrurecorder_LDADD = $(LDADD)
+thrurecorder_LDFLAGS = -Wall -rpath $(pkglibdir) $(SPEAD_LIBS) $(THRIFTNB_LIBS)
+thrurecorder_SOURCES = \
+		       thrurecorder.cpp
 
 gen-cpp/Redo.cpp: Redo.thrift
 	${THRIFT} -cpp $<

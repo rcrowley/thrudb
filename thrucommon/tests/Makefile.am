@@ -1,7 +1,7 @@
 # TODO: make sure we link against our thrucommon and not an installed one
 
 INCLUDES = -I$(top_builddir)/src
-LDADDS = ../src/libthrucommon.la
+LDADDS = $(top_builddir)/src/libthrucommon.la
 
 TESTS = SpreadTest CircuitBreakerTest
 
