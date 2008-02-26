@@ -367,7 +367,8 @@ void DiskBackend::validate (const string & bucket, const string * key,
             e.what = "key too long";
             throw e;
         }
-        else if (key->find (";") != string::npos)
+        // anything that's not legal in a file should be found and err'd on here
+        else if (key->find_first_of (";:/\\/~$") != string::npos)
         {
             ThrudocException e;
             e.what = "invalid key";
