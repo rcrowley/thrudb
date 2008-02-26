@@ -10,6 +10,7 @@
 #include <sp.h>
 #include <string>
 #include <queue>
+#include <set>
 #include <vector>
 
 class SpreadException : public std::exception
@@ -85,7 +86,7 @@ class Spread
         std::string private_name;
         std::string private_group;
         mailbox mbox;
-        std::map<std::string, std::vector<std::string> > groups;
+        std::map<std::string, std::set<std::string> > groups;
         std::map<std::string, std::map<int, std::map<std::string,
             std::vector<SubscriberCallbackInfo *> > > > subscriptions;
         std::queue<QueuedMessage *> pending_messages;

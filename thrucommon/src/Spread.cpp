@@ -46,7 +46,7 @@ Spread::Spread (const string & name, const string & private_name)
 Spread::~Spread ()
 {
     LOG4CXX_INFO (logger, "~Spread");
-    map<string, vector<string> >::iterator i;
+    map<string, set<string> >::iterator i;
     for (i = this->groups.begin ();
          i != this->groups.end ();
          i++)
@@ -59,7 +59,7 @@ Spread::~Spread ()
 void Spread::join (const std::string & group)
 {
     LOG4CXX_DEBUG (logger, "join: group=" + group);
-    map<string, vector<string> >::iterator i;
+    map<string, set<string> >::iterator i;
     i = this->groups.find (group.c_str ());
     if (i != this->groups.end ())
     {
@@ -85,7 +85,7 @@ void Spread::join (const std::string & group)
 void Spread::leave (const std::string & group)
 {
     LOG4CXX_DEBUG (logger, "leave: group=" + group);
-    map<string, vector<string> >::iterator i;
+    map<string, set<string> >::iterator i;
     i = this->groups.find (group.c_str ());
     if (i != this->groups.end ())
     {
@@ -194,17 +194,55 @@ void Spread::run (int count)
         {
             if (Is_regular_mess (service_type))
             {
-                // TODO: null terminate the message, can't hurt and we, so 
-                // long as it's not size - 1 in length...
-                buf[buf_len] = '\0';
-                LOG4CXX_DEBUG (logger, string ("receive: buf=") + buf);
+                // can't really hurt since we don't change the size, only
+                // useful when plain text is being sent
+                if (buf_len < buf_size)
+                    buf[buf_len] = '\0';
+                // convert groups array to a vector
                 vector<string> group_strs;
                 for (int n = 0; n < num_groups; n++)
                     group_strs.push_back (groups[n]);
+                // and dispatch
                 this->dispatch (sender, group_strs, type, buf, buf_len);
+                // count it as handled
                 i++;
             }
-            // TODO: handle membership messages here
+            else if (Is_reg_memb_mess (service_type))
+            {
+                membership_info  memb_info;
+                int ret = SP_get_memb_info (buf, service_type, &memb_info);
+                if (ret < 0)
+                {
+                    string error = SP_error_to_string (ret);
+                    LOG4CXX_ERROR (logger, error);
+                    throw new SpreadException (error);
+                }
+                else if (Is_caused_join_mess (service_type))
+                {
+                    LOG4CXX_INFO (logger, string ("run: new member=") + 
+                                  memb_info.changed_member);
+                }
+                else if (Is_caused_leave_mess (service_type) ||
+                         Is_caused_disconnect_mess (service_type))
+                {
+                    LOG4CXX_INFO (logger, string ("run: leaving member=") + 
+                                  memb_info.changed_member);
+                }
+                else if (Is_caused_network_mess (service_type))
+                {
+                    LOG4CXX_INFO (logger, "run: network change...");
+                }
+
+                this->groups[sender].clear ();
+                LOG4CXX_DEBUG (logger, string ("run: membership group=") +
+                               sender);
+                for (int j = 0; j < num_groups; j++)
+                {
+                    this->groups[sender].insert (groups[j]);
+                    LOG4CXX_DEBUG (logger, string ("run:    member=") +
+                                   groups[j]);
+                }
+            }
         }
         else
         {
