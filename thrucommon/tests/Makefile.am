@@ -3,7 +3,7 @@
 INCLUDES = -I$(top_builddir)/src
 LDADDS = $(top_builddir)/src/libthrucommon.la
 
-TESTS = SpreadTest CircuitBreakerTest
+TESTS = SpreadTest CircuitBreakerTest BloomTests
 
 check_PROGRAMS=$(TESTS)
 
@@ -16,3 +16,8 @@ CircuitBreakerTest_SOURCES = CircuitBreakerTest.cpp
 CircuitBreakerTest_LDADD = $(LDADDS)
 CircuitBreakerTest_CXXFLAGS =  $(CPPUNIT_CFLAGS) -I../src
 CircuitBreakerTest_LDFLAGS = $(CPPUNIT_LIBS)
+
+BloomTests_SOURCES = BloomTests.cpp
+BloomTests_LDADD   = $(LDADDS)
+BloomTests_CXXFLAGS= $(CPPUNIT_CFLAGS) -I../src
+BloomTests_LDFLAGS = $(CPPUNIT_LIBS)
