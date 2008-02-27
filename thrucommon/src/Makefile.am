@@ -13,6 +13,7 @@ include_thrucommon_HEADERS = \
 			     gen-cpp/EventLog_types.h	\
 			     CircuitBreaker.h		\
 			     ConfigFile.h		\
+			     Hashing.h			\
 			     memcache++.h		\
 			     MemcacheHandle.h		\
 			     ThruFileTransport.h	\
@@ -30,6 +31,7 @@ libthrucommon_la_SOURCES = \
 			   gen-cpp/EventLog_constants.cpp	\
 			   CircuitBreaker.cpp			\
 			   ConfigFile.cpp			\
+			   Hashing.cpp				\
 			   ReplicationRecorder.cpp		\
 			   Spread.cpp				\
 			   ThruFileTransport.cpp
