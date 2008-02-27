@@ -7,12 +7,14 @@
 
 #if HAVE_LIBMYSQLCLIENT_R
 
-#include <string>
-#include <set>
-#include <log4cxx/logger.h>
 #include "Thrudoc.h"
 #include "ThrudocBackend.h"
 #include "mysql_glue.h"
+
+#include <Hashing.h>
+#include <log4cxx/logger.h>
+#include <set>
+#include <string>
 
 struct FindReturn
 {
@@ -70,6 +72,8 @@ class MySQLBackend : public ThrudocBackend
         std::string username;
         std::string password;
         int max_value_size;
+
+        FNV32Hashing hashing;
 
         std::set<Partition*, bool(*)(Partition*, Partition*)> *
             load_partitions (const std::string & bucket);
