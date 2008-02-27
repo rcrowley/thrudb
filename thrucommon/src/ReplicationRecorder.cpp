@@ -46,13 +46,15 @@ ReplicationRecorder::ReplicationRecorder (const string & replication_name,
     this->spread.subscribe ("", this->replication_group, ORIG_MESSAGE_TYPE,
                             live_callback_info);
 
-    // subscribe to "replay" messages
+    // subscribe to "replay" messages, both broadcast and direct
     SubscriberCallbackInfo * replay_callback_info = 
         new SubscriberCallbackInfo ();
     replay_callback_info->callback = &replay_message_callback;
     replay_callback_info->data = this;
     this->spread.subscribe ("", this->replication_group, REPLAY_MESSAGE_TYPE,
                             replay_callback_info);
+    this->spread.subscribe ("", this->spread.get_private_group (),
+                            REPLAY_MESSAGE_TYPE, replay_callback_info);
 }
 
 void ReplicationRecorder::record ()

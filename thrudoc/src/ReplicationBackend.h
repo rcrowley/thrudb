@@ -72,6 +72,7 @@ class ReplicationBackend : public ThrudocPassthruBackend
 
         Spread spread;
         std::string replication_group;
+        std::string current_replay_name;
         std::string replication_status_file;
         int replication_status_flush_frequency;
         pthread_t listener_thread;

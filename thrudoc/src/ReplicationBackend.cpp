@@ -408,12 +408,24 @@ bool ReplicationBackend::handle_orig_message
     return true;
 }
 
+// TODO: handle when we don't hear from our replay host for a while...
 bool ReplicationBackend::handle_replay_message 
-(const std::string & /* sender */,
+(const std::string & sender,
  const std::vector<std::string> & /* groups */,
  const int /* message_type */, const char * message, const int message_len)
 {
     LOG4CXX_DEBUG (logger, "handle_replay_message:");
+
+    // first one to answer becomes the person we'll ask in the future
+    if (this->current_replay_name.empty ())
+    {
+        this->current_replay_name = sender;
+    }
+    else if (this->current_replay_name != sender)
+    {
+        // this isn't from our offical replay host, skip it
+        return true;
+    }
 
     // TODO: don't recreate these every time...
     shared_ptr<TMemoryBuffer> mbuf (new TMemoryBuffer ());
@@ -453,6 +465,8 @@ bool ReplicationBackend::handle_replay_message
         // we're out of stuff to replay, go back to live, hopefully nothing
         // actually happened since the last message we recorded
         this->listener_live = true;
+        // unset our current_replay_name, so we'll get one again next time
+        this->current_replay_name = "";
     }
 
     return true;
@@ -578,8 +592,17 @@ void ReplicationBackend::do_message (Message * message)
 
 void ReplicationBackend::request_next (string uuid)
 {
+    string who_to_ask = this->current_replay_name;
+    if (who_to_ask.empty ())
+    {
+        // we don't have a current replay from, so ask them all, first one to
+        // respond will be the the new replay host
+        who_to_ask = this->replication_group;
+    }
+    LOG4CXX_DEBUG (logger, "request_next: who_to_ask=" + who_to_ask);
+
     // we don't want our own message back here...
-    this->spread.send (RELIABLE_MESS | SELF_DISCARD, this->replication_group,
+    this->spread.send (RELIABLE_MESS | SELF_DISCARD, who_to_ask,
                        REPLAY_MESSAGE_TYPE, uuid.c_str (), uuid.length ());
 }
 

@@ -166,9 +166,6 @@ void Spread::run (int count)
         LOG4CXX_DEBUG (logger, buf);
     }
 
-    // send out any pending message
-    this->drain_pending ();
-
     service service_type = 0;
     char sender[MAX_GROUP_NAME];
     char max_groups = 2;
@@ -181,6 +178,9 @@ void Spread::run (int count)
     int i = 0;
     while (!count || i < count)
     {
+        // drain any pending messages
+        this->drain_pending ();
+
         // created here so that if we have to grow them they'll be recreated
         // larger, see errorhandling below
         char groups[max_groups][MAX_GROUP_NAME];
@@ -271,8 +271,6 @@ void Spread::run (int count)
                     break;
             }
         }
-        // drain any pending messages
-        this->drain_pending ();
     }
     LOG4CXX_DEBUG (logger, "run:    done");
 }

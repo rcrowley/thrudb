@@ -79,6 +79,11 @@ class Spread
             return this->private_group;
         }
 
+        const std::set<std::string> get_group_members (std::string group)
+        {
+            return this->groups[group];
+        }
+
     private:
         static log4cxx::LoggerPtr logger;
 
