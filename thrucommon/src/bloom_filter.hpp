@@ -27,17 +27,17 @@
 #include <limits>
 
 
-const std::size_t bits_per_char   = 0x08;    // 8 bits in 1 char(unsigned)
-const unsigned char bit_mask[bits_per_char] = {
-                                                0x01,  //00000001
-                                                0x02,  //00000010
-                                                0x04,  //00000100
-                                                0x08,  //00001000
-                                                0x10,  //00010000
-                                                0x20,  //00100000
-                                                0x40,  //01000000
-                                                0x80   //10000000
-                                              };
+//used by default bloom impl only
+const unsigned char bit_mask[8] = {
+    0x01,  //00000001
+    0x02,  //00000010
+    0x04,  //00000100
+    0x08,  //00001000
+    0x10,  //00010000
+    0x20,  //00100000
+    0x40,  //01000000
+    0x80   //10000000
+};
 
 
 class bloom_filter
@@ -48,11 +48,13 @@ public:
 
    bloom_filter(const std::size_t& element_count,
                 const double& false_positive_probability,
-                const std::size_t& random_seed)
+                const std::size_t& random_seed,
+                std::size_t bits_per_char = 0x08 )    // 8 bits in 1 char(unsigned))
    : hash_table_(0),
      element_count_(element_count),
      random_seed_(random_seed),
-     false_positive_probability_(false_positive_probability)
+     false_positive_probability_(false_positive_probability),
+     bits_per_char(bits_per_char)
    {
       find_optimal_parameters();
       hash_table_ = new unsigned char[table_size_ / bits_per_char];
@@ -83,12 +85,12 @@ public:
       return *this;
    }
 
-  ~bloom_filter()
+   virtual ~bloom_filter()
    {
       delete[] hash_table_;
    }
 
-   void insert(const std::string key)
+   virtual void insert(const std::string key)
    {
       for(std::vector<bloom_type>::iterator it = salt_.begin(); it != salt_.end(); ++it)
       {
@@ -97,7 +99,7 @@ public:
       }
    }
 
-   bool contains(const std::string key) const
+   virtual bool contains(const std::string key) const
    {
       for(std::vector<bloom_type>::const_iterator it = salt_.begin(); it != salt_.end(); ++it)
       {
@@ -164,7 +166,7 @@ public:
       return *this;
    }
 
-private:
+protected:
 
    void generate_unique_salt()
    {
@@ -244,6 +246,7 @@ private:
    std::size_t             element_count_;
    std::size_t             random_seed_;
    double                  false_positive_probability_;
+   std::size_t             bits_per_char;
 };
 
 
