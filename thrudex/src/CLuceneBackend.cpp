@@ -102,7 +102,13 @@ void CLuceneBackend::put(const thrudex::Document &d)
     try{
 
         wstring doc_key     = build_wstring( d.key );
-        assert( !doc_key.empty() );
+
+        if( doc_key.empty() ){
+            ThrudexException ex;
+            ex.what = "Missing key";
+
+            throw ex;
+        }
 
 
         lucene::document::Field *f;

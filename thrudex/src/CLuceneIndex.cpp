@@ -271,6 +271,13 @@ void CLuceneIndex::search(const thrudex::SearchQuery &q, thrudex::SearchResponse
 
     LOG4CXX_DEBUG(logger,"Searching in: ("+q.index+")");
 
+
+    if( q.query.empty() ){
+        ThrudexException ex;
+        ex.what = "Query is empty";
+        throw ex;
+    }
+
     shared_ptr<CLuceneRAMDirectory> l_ram_prev_directory = ram_prev_directory;
 
     shared_ptr<MultiSearcher> l_searcher    = this->getSearcher();
@@ -279,8 +286,6 @@ void CLuceneIndex::search(const thrudex::SearchQuery &q, thrudex::SearchResponse
     Query *query;
 
     try{
-
-        assert( !q.query.empty() );
 
         LOG4CXX_DEBUG(logger,q.query);
 
@@ -354,7 +359,7 @@ void CLuceneIndex::search(const thrudex::SearchQuery &q, thrudex::SearchResponse
                 const wchar_t *id   = doc->get(DOC_KEY);
 
                 if(id == NULL){
-                    assert(id != NULL);
+                    //assert(id != NULL);
                     continue;
                 } else {
 
@@ -382,7 +387,7 @@ void CLuceneIndex::search(const thrudex::SearchQuery &q, thrudex::SearchResponse
                 const wchar_t *id   = doc->get(DOC_KEY);
 
                 if(id == NULL) {
-                    assert(id != NULL);
+                    //assert(id != NULL);
                     continue;
                 } else {
                     STRCPY_TtoA(buf,id,1024);
