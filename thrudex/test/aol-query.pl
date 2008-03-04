@@ -36,12 +36,12 @@ eval{
         my $r = $client->search( $q );
         $i++;
 
+
         if( $i % 100 == 0 ){
             print "Found ".$r->total."\n";
         }
 
     }
-
 
     $transport->close();
 

@@ -1,5 +1,6 @@
 cpp_namespace thrudex
 php_namespace Thrudex
+ruby_namespace Thrudex
 perl_package  Thrudex
 java_package  thrudex
 

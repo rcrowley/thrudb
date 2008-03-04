@@ -155,7 +155,7 @@ shared_ptr<MultiSearcher> CLuceneIndex::getSearcher()
 
         modifier->flush();
 
-        ram_searcher  = shared_ptr<IndexSearcher>(new IndexSearcher( ram_directory.get() ));
+        ram_searcher.reset(new IndexSearcher( ram_directory.get() ));
 
         //since clucene doesn't use shared_ptr we need to get the
         //underlying ptr
@@ -164,14 +164,14 @@ shared_ptr<MultiSearcher> CLuceneIndex::getSearcher()
         searchers[1] = disk_searcher.get();
 
         if(syncing){
-            ram_prev_searcher  = shared_ptr<IndexSearcher>(new IndexSearcher( ram_prev_directory.get() ));
+            ram_prev_searcher.reset(new IndexSearcher( ram_prev_directory.get() ));
             searchers[2] = ram_prev_searcher.get();
             searchers[3] = NULL;
         }else{
             searchers[2] = NULL;
         }
 
-        searcher  = shared_ptr<MultiSearcher>( new MultiSearcher( searchers ) );
+        searcher.reset( new MultiSearcher( searchers ) );
 
         last_refresh = Util::currentTime();
 
@@ -278,7 +278,15 @@ void CLuceneIndex::search(const thrudex::SearchQuery &q, thrudex::SearchResponse
         throw ex;
     }
 
+
+    //making sure references to underlying objects stay above 0
+    //for the duration of this function
+    shared_ptr<CLuceneRAMDirectory> l_ram_directory      = ram_directory;
     shared_ptr<CLuceneRAMDirectory> l_ram_prev_directory = ram_prev_directory;
+    shared_ptr<IndexSearcher>       l_ram_searcher       = ram_searcher;
+    shared_ptr<IndexSearcher>       l_ram_prev_searcher  = ram_prev_searcher;
+    shared_ptr<IndexSearcher>       l_disk_searcher      = disk_searcher;
+
 
     shared_ptr<MultiSearcher> l_searcher    = this->getSearcher();
     shared_ptr<UpdateFilter>  l_disk_filter = disk_filter;

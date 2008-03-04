@@ -10,7 +10,7 @@ target: all
 THRIFT = `which thrift`
 
 all: ../src/Thrudex.thrift
-	$(THRIFT) -perl ../src/Thrudex.thrift
+	$(THRIFT) -perl -rb ../src/Thrudex.thrift
 
 clean:
-	rm -fr gen-perl
+	rm -fr gen-perl gen-rb
