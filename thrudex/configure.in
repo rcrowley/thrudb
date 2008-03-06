@@ -2,6 +2,7 @@ AC_PREREQ(2.61)
 
 AC_INIT([thrudex], [0.1], [bugs@thrudb.org])
 AC_CONFIG_AUX_DIR(config)
+AC_PROG_LIBTOOL
 AM_INIT_AUTOMAKE
 AC_CONFIG_SRCDIR([thrudex_config.h.in])
 AC_CONFIG_HEADER(thrudex_config.h)

@@ -149,7 +149,8 @@ CLuceneIndex::~CLuceneIndex()
 shared_ptr<MultiSearcher> CLuceneIndex::getSearcher()
 {
 
-    Guard g( mutex );
+    //RWGuard g( mutex, true );
+    //Guard g( mutex);
 
     if(last_refresh < last_modified || last_refresh < last_synched){
 
@@ -191,6 +192,7 @@ void CLuceneIndex::put( const string &key, lucene::document::Document *doc )
         throw ex;
     }
 
+    //RWGuard g( mutex, true );
     Guard g( mutex );
 
     //always put into memory (we will merge to disk later)
@@ -229,6 +231,7 @@ void CLuceneIndex::put( const string &key, lucene::document::Document *doc )
 
 void CLuceneIndex::remove(const string &key)
 {
+    //RWGuard g(mutex, true);
     Guard g(mutex);
 
     shared_ptr<bloom_filter>  l_disk_bloom   = disk_bloom;
@@ -279,6 +282,10 @@ void CLuceneIndex::search(const thrudex::SearchQuery &q, thrudex::SearchResponse
     }
 
 
+    //RWGuard g(mutex);
+    Guard g(mutex);
+
+
     //making sure references to underlying objects stay above 0
     //for the duration of this function
     shared_ptr<CLuceneRAMDirectory> l_ram_directory      = ram_directory;
@@ -301,14 +308,14 @@ void CLuceneIndex::search(const thrudex::SearchQuery &q, thrudex::SearchResponse
 
         query = QueryParser::parse( wquery.c_str(),DOC_KEY,analyzer.get());
 
-    } catch(CLuceneError &e) {
+    } catch(CLuceneError e) {
 
         ThrudexException ex;
         ex.what  = "Invalid query: '"+string(e.what())+"'";
 
         throw ex;
 
-    } catch(runtime_error &e) {
+    } catch(runtime_error e) {
 
         ThrudexException ex;
         ex.what  = "Invalid query: '"+string(e.what())+"'";
@@ -395,7 +402,7 @@ void CLuceneIndex::search(const thrudex::SearchQuery &q, thrudex::SearchResponse
                 const wchar_t *id   = doc->get(DOC_KEY);
 
                 if(id == NULL) {
-                    //assert(id != NULL);
+                    assert(id != NULL);
                     continue;
                 } else {
                     STRCPY_TtoA(buf,id,1024);
@@ -411,6 +418,7 @@ void CLuceneIndex::search(const thrudex::SearchQuery &q, thrudex::SearchResponse
             }
         }
     }
+
 
     _CLDELETE(h);
     _CLDELETE(lsort);
@@ -434,6 +442,7 @@ void CLuceneIndex::sync()
 {
     //Any updates
     {
+        //RWGuard g(mutex);
         Guard g(mutex);
         if(last_modified <= last_synched)
             return;
@@ -452,6 +461,7 @@ void CLuceneIndex::sync()
 
     //replace index handles
     {
+        //RWGuard g(mutex,true);
         Guard g(mutex);
 
         syncing = true; //this flag alters the search code to include prev searcher
@@ -504,6 +514,7 @@ void CLuceneIndex::sync()
     {
         //Now merge in the ram
         shared_ptr<IndexWriter> disk_writer(new IndexWriter(idx_path.c_str(),analyzer.get(),false,false));
+        disk_writer->setUseCompoundFile(false);
 
         Directory *dirs[2];
 
@@ -537,6 +548,7 @@ void CLuceneIndex::sync()
 
     //replace index handles
     {
+        //RWGuard g(mutex,true);
         Guard g(mutex);
 
         //Add any new deletes to the filter
