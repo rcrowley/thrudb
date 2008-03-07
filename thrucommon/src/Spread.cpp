@@ -1,3 +1,10 @@
+#ifdef HAVE_CONFIG_H
+#include "thrucommon_config.h"
+#endif
+/* hack to work around thrift and log4cxx installing config.h's */
+#undef HAVE_CONFIG_H 
+
+#if HAVE_LIBSPREAD
 
 #include "Spread.h"
 
@@ -523,3 +530,5 @@ string SP_error_to_string (int error)
             return "SP_error: (" + error_str + ") unrecognized error";
     }
 }
+
+#endif /* HAVE_LIBSPREAD */

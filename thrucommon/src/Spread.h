@@ -5,6 +5,8 @@
 #ifndef _SPREAD_CONNECTION_H_
 #define _SPREAD_CONNECTION_H_
 
+#if HAVE_LIBSPREAD
+
 #include <log4cxx/logger.h>
 #include <map>
 #include <sp.h>
@@ -107,5 +109,7 @@ class Spread
                              const int message_len);
         void drain_pending ();
 };
+
+#endif /* HAVE_LIBSPREAD */
 
 #endif /* _SPREAD_CONNECTION_H_ */
