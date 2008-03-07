@@ -102,12 +102,15 @@ void CLuceneRAMDirectory::_copyFromDir(Directory* dir, bool closeDir)
             readCount += toRead;
         }
 
+
+
         // graceful cleanup
         is->close();
         _CLDELETE(is);
         os->close();
         _CLDELETE(os);
     }
+
     if (closeDir)
         dir->close();
 }

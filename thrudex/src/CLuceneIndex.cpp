@@ -154,9 +154,18 @@ shared_ptr<MultiSearcher> CLuceneIndex::getSearcher()
 
     if(last_refresh < last_modified || last_refresh < last_synched){
 
+
         modifier->flush();
 
-        ram_searcher.reset(new IndexSearcher( ram_directory.get() ));
+
+        ram_searcher.reset();
+
+        //make a copy of the ram dir since its not thread safe
+        ram_readonly_directory = shared_ptr<CLuceneRAMDirectory>(new CLuceneRAMDirectory( ram_directory.get() ));
+        ram_readonly_directory->__cl_addref(); //trick clucene's lame ref counters
+
+        ram_searcher.reset(new IndexSearcher( ram_readonly_directory.get() ));
+
 
         //since clucene doesn't use shared_ptr we need to get the
         //underlying ptr
@@ -281,22 +290,32 @@ void CLuceneIndex::search(const thrudex::SearchQuery &q, thrudex::SearchResponse
         throw ex;
     }
 
-
+    shared_ptr<CLuceneRAMDirectory> l_ram_readonly_directory;
+    shared_ptr<CLuceneRAMDirectory> l_ram_directory;
+    shared_ptr<CLuceneRAMDirectory> l_ram_prev_directory;
+    shared_ptr<IndexSearcher>       l_ram_searcher;
+    shared_ptr<IndexSearcher>       l_ram_prev_searcher;
+    shared_ptr<IndexSearcher>       l_disk_searcher;
+    shared_ptr<UpdateFilter>        l_disk_filter;
+    shared_ptr<MultiSearcher>       l_searcher;
     //RWGuard g(mutex);
-    Guard g(mutex);
+    {
+        Guard g(mutex);
 
+        l_searcher    = this->getSearcher();
 
-    //making sure references to underlying objects stay above 0
-    //for the duration of this function
-    shared_ptr<CLuceneRAMDirectory> l_ram_directory      = ram_directory;
-    shared_ptr<CLuceneRAMDirectory> l_ram_prev_directory = ram_prev_directory;
-    shared_ptr<IndexSearcher>       l_ram_searcher       = ram_searcher;
-    shared_ptr<IndexSearcher>       l_ram_prev_searcher  = ram_prev_searcher;
-    shared_ptr<IndexSearcher>       l_disk_searcher      = disk_searcher;
+        //making sure references to underlying objects stay above 0
+        //for the duration of this function
+        l_ram_readonly_directory  = ram_readonly_directory;
+        l_ram_directory      = ram_directory;
+        l_ram_prev_directory = ram_prev_directory;
+        l_ram_searcher       = ram_searcher;
+        l_ram_prev_searcher  = ram_prev_searcher;
+        l_disk_searcher      = disk_searcher;
 
+        l_disk_filter = disk_filter;
 
-    shared_ptr<MultiSearcher> l_searcher    = this->getSearcher();
-    shared_ptr<UpdateFilter>  l_disk_filter = disk_filter;
+    }
 
     Query *query;
 
