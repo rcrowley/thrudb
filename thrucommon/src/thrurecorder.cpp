@@ -13,6 +13,8 @@
 /* hack to work around thrift and log4cxx installing config.h's */
 #undef HAVE_CONFIG_H
 
+#if HAVE_LIBSPREAD
+
 #include "ConfigFile.h"
 #include "ReplicationRecorder.h"
 
@@ -101,3 +103,15 @@ int main (int argc, char **argv)
     return 0;
 }
 
+#else
+
+#include <stdio.h>
+#include <stdlib.h>
+
+int main (int argc, char * argv[])
+{
+    fprintf (stderr, "spread support not compiled in\n");
+    exit (-1);
+}
+
+#endif /* HAVE_LIBSPREAD */
