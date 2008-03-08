@@ -40,6 +40,102 @@ using namespace std;
 
 LoggerPtr DiskBackend::logger (Logger::getLogger ("DiskBackend"));
 
+
+static const std::string base64_chars =
+             "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+             "abcdefghijklmnopqrstuvwxyz"
+             "0123456789+_";
+
+
+static inline bool is_base64(unsigned char c) {
+  return (isalnum(c) || (c == '+') || (c == '_'));
+}
+
+std::string base64_encode(unsigned char const* bytes_to_encode, unsigned int in_len) {
+  std::string ret;
+  int i = 0;
+  int j = 0;
+  unsigned char char_array_3[3];
+  unsigned char char_array_4[4];
+
+  while (in_len--) {
+    char_array_3[i++] = *(bytes_to_encode++);
+    if (i == 3) {
+      char_array_4[0] = (char_array_3[0] & 0xfc) >> 2;
+      char_array_4[1] = ((char_array_3[0] & 0x03) << 4) + ((char_array_3[1] & 0xf0) >> 4);
+      char_array_4[2] = ((char_array_3[1] & 0x0f) << 2) + ((char_array_3[2] & 0xc0) >> 6);
+      char_array_4[3] = char_array_3[2] & 0x3f;
+
+      for(i = 0; (i <4) ; i++)
+        ret += base64_chars[char_array_4[i]];
+      i = 0;
+    }
+  }
+
+  if (i)
+  {
+    for(j = i; j < 3; j++)
+      char_array_3[j] = '\0';
+
+    char_array_4[0] = (char_array_3[0] & 0xfc) >> 2;
+    char_array_4[1] = ((char_array_3[0] & 0x03) << 4) + ((char_array_3[1] & 0xf0) >> 4);
+    char_array_4[2] = ((char_array_3[1] & 0x0f) << 2) + ((char_array_3[2] & 0xc0) >> 6);
+    char_array_4[3] = char_array_3[2] & 0x3f;
+
+    for (j = 0; (j < i + 1); j++)
+      ret += base64_chars[char_array_4[j]];
+
+    while((i++ < 3))
+      ret += '=';
+
+  }
+
+  return ret;
+
+}
+
+std::string base64_decode(std::string const& encoded_string) {
+  int in_len = encoded_string.size();
+  int i = 0;
+  int j = 0;
+  int in_ = 0;
+  unsigned char char_array_4[4], char_array_3[3];
+  std::string ret;
+
+  while (in_len-- && ( encoded_string[in_] != '=') && is_base64(encoded_string[in_])) {
+    char_array_4[i++] = encoded_string[in_]; in_++;
+    if (i ==4) {
+      for (i = 0; i <4; i++)
+        char_array_4[i] = base64_chars.find(char_array_4[i]);
+
+      char_array_3[0] = (char_array_4[0] << 2) + ((char_array_4[1] & 0x30) >> 4);
+      char_array_3[1] = ((char_array_4[1] & 0xf) << 4) + ((char_array_4[2] & 0x3c) >> 2);
+      char_array_3[2] = ((char_array_4[2] & 0x3) << 6) + char_array_4[3];
+
+      for (i = 0; (i < 3); i++)
+        ret += char_array_3[i];
+      i = 0;
+    }
+  }
+
+  if (i) {
+    for (j = i; j <4; j++)
+      char_array_4[j] = 0;
+
+    for (j = 0; j <4; j++)
+      char_array_4[j] = base64_chars.find(char_array_4[j]);
+
+    char_array_3[0] = (char_array_4[0] << 2) + ((char_array_4[1] & 0x30) >> 4);
+    char_array_3[1] = ((char_array_4[1] & 0xf) << 4) + ((char_array_4[2] & 0x3c) >> 2);
+    char_array_3[2] = ((char_array_4[2] & 0x3) << 6) + char_array_4[3];
+
+    for (j = 0; (j < i - 1); j++) ret += char_array_3[j];
+  }
+
+  return ret;
+}
+
+
 DiskBackend::DiskBackend (const string & doc_root)
 {
     LOG4CXX_INFO (logger, "DiskBackend: doc_root=" + doc_root);
@@ -263,7 +359,7 @@ ScanResponse DiskBackend::scan (const string & bucket, const string & seed,
         {
             string ret = (*i)->path ().leaf ();
             Element e;
-            e.key    = ret;
+            e.key    = base64_decode(ret);
             e.value  = get (bucket, ret);
             e.bucket = bucket;
             scan_response.elements.push_back (e);
@@ -359,6 +455,7 @@ void DiskBackend::validate (const string & bucket, const string * key,
         e.what = "bucket too long";
         throw e;
     }
+
     if (key)
     {
         if ((*key).length () > DISK_BACKEND_MAX_KEY_SIZE)
@@ -367,14 +464,8 @@ void DiskBackend::validate (const string & bucket, const string * key,
             e.what = "key too long";
             throw e;
         }
-        // anything that's not legal in a file should be found and err'd on here
-        else if (key->find_first_of (";:/\\/~$") != string::npos)
-        {
-            ThrudocException e;
-            e.what = "invalid key";
-            throw e;
-        }
     }
+
     /* values can be whatever they want to be */
 }
 
@@ -411,13 +502,16 @@ string DiskBackend::build_filename(const string & bucket, const string & d1,
                                    const string & d2, const string & d3,
                                    const string & key)
 {
+
+
+
     return
         doc_root + "/" +
         bucket + "/" +
         d1 + "/" +
         d2 + "/" +
         d3 + "/" +
-        key;
+        base64_encode(reinterpret_cast<const unsigned char*>(key.c_str()), key.length());
 }
 
 #endif /* HAVE_LIBBOOST_FILESYSTEM && HAVE_LIBCRYPTO */
