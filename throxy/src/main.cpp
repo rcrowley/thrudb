@@ -1,9 +1,10 @@
-#include <concurrency/ThreadManager.h>
-#include <concurrency/PosixThreadFactory.h>
-#include <protocol/TBinaryProtocol.h>
-#include <server/TNonblockingServer.h>
-#include <transport/TServerSocket.h>
-#include <transport/TTransportUtils.h>
+#include <thrift/TProcessor.h>
+#include <thrift/concurrency/ThreadManager.h>
+#include <thrift/concurrency/PosixThreadFactory.h>
+#include <thrift/protocol/TBinaryProtocol.h>
+#include <thrift/server/TNonblockingServer.h>
+#include <thrift/transport/TServerSocket.h>
+#include <thrift/transport/TTransportUtils.h>
 
 
 #include <iostream>
@@ -15,7 +16,8 @@
 #include "ConfigFile.h"
 #include "utils.h"
 
-#include "Thrudoc.h"
+#include "ThrudocHandler.h"
+#include "StaticServiceMonitor.h"
 #include "Thrudex.h"
 
 #include "log4cxx/logger.h"
@@ -89,19 +91,20 @@ int main(int argc, char **argv) {
 
         shared_ptr<PosixThreadFactory> thread_factory(new PosixThreadFactory());
         shared_ptr<TProtocolFactory> protocol_factory(new TBinaryProtocolFactory());
+        thread_factory->setDetached(false);
 
         //collection of server to throxy
         vector< shared_ptr<Thread> > server_threads;
 
 
         //Thrudoc enabled
-        if( ConfigManager->read<int>("THRUDOC_PORT",-1) == -1 ) {
+        if( ConfigManager->read<int>("THRUDOC_PORT",-1) != -1 ) {
 
             int    thrudoc_port  = ConfigManager->read<int>("THRUDOC_PORT");
-            int    thread_count  = 30;
+            int    thread_count  = 3;
 
-            shared_ptr<ThrudocHandler>  handler          getThrudocHandler();
-            shared_ptr<TProcessor>      processor        (new ThrudocProcessor(handler));
+            shared_ptr<ThrudocHandler>  handler = getThrudocHandler();
+            shared_ptr<TProcessor>      processor(new thrudoc::ThrudocProcessor(handler));
 
             shared_ptr<ThreadManager> thread_manager =
                 ThreadManager::newSimpleThreadManager(thread_count);
@@ -113,11 +116,12 @@ int main(int argc, char **argv) {
             thread_manager->start();
 
 
+
             shared_ptr<Thread> t =
                 thread_factory->newThread(shared_ptr<TServer>(new TNonblockingServer(processor, protocol_factory,
                                                                                      thrudoc_port,thread_manager)));
 
-            server_thread.push_back(t);
+            server_threads.push_back(t);
         }
 
 
@@ -138,15 +142,14 @@ int main(int argc, char **argv) {
 
 
         //Start servers
-        for(int i=0; i<server_threads.size(); i++){
+        for(size_t i=0; i<server_threads.size(); i++){
             server_threads[i]->start();
         }
 
         //wait for server threads
-        for(int i=0; i<server_threads.size(); i++){
+        for(size_t i=0; i<server_threads.size(); i++){
             server_threads[i]->join();
         }
-
 
 
     }catch(std::runtime_error e){

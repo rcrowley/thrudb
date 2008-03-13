@@ -47,7 +47,6 @@ StaticServiceMonitor::StaticServiceMonitor(const string conf_file)
             if( !config.keyExists(string(n_name)+"_NAME") )
                 break;
 
-
             LOG4CXX_INFO(logger, string("Partition node added: ")+n_name);
 
             string name   = config.read<string>(string(n_name)+"_NAME");
@@ -62,7 +61,14 @@ StaticServiceMonitor::StaticServiceMonitor(const string conf_file)
 
         this->addServicePartition(part);
     }
+
+    cerr<<"Done"<<endl;
 }
 
+
+StaticServiceMonitor::~StaticServiceMonitor()
+{
+
+}
 
 
