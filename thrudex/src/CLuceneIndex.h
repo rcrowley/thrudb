@@ -73,13 +73,13 @@ class CLuceneIndex : public facebook::thrift::concurrency::Runnable
     int filter_space;
 
     boost::shared_ptr<lucene::index::IndexModifier>  modifier;
-    int64_t                                          last_modified;
+    volatile int64_t                                 last_modified;
 
     boost::shared_ptr<lucene::search::MultiSearcher> searcher;
     int64_t                                          last_refresh;
 
     int64_t                                          last_synched;
-    bool                                             syncing;
+    volatile bool                                    syncing;
 
     boost::shared_ptr<lucene::index::IndexReader>    disk_reader;
     boost::shared_ptr<UpdateFilter>                  disk_filter;

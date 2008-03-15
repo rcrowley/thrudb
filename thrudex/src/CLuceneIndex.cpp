@@ -34,6 +34,17 @@ struct null_deleter
     void operator()(void const *) const {}
 };
 
+//Used to clean up
+struct reader_deleter
+{
+    void operator()(void const *o) const {
+        IndexReader *r = (IndexReader *)o;
+
+        r->close();
+        delete r;
+    }
+};
+
 CLuceneIndex::CLuceneIndex(const string &index_root, const string &index_name, shared_ptr<Analyzer> analyzer)
     : index_root(index_root), index_name(index_name), analyzer(analyzer), filter_space(10000000), last_synched(0), syncing(false)
 {
@@ -74,7 +85,7 @@ CLuceneIndex::CLuceneIndex(const string &index_root, const string &index_name, s
 
         //build up bloom filter
         disk_bloom    = shared_ptr<bloom_filter>(new bloom_filter(filter_space,1.0/(1.0 * filter_space), random_seed));
-        disk_reader   = shared_ptr<IndexReader>(IndexReader::open(idx_path.c_str()));
+        disk_reader   = shared_ptr<IndexReader>(IndexReader::open(idx_path.c_str()), reader_deleter() );
         disk_filter   = shared_ptr<UpdateFilter>(new UpdateFilter(disk_reader));
 
         if(!new_index){
@@ -210,6 +221,7 @@ void CLuceneIndex::put( const string &key, lucene::document::Document *doc )
     shared_ptr<IndexModifier> l_modifier     = modifier;
     shared_ptr<set<string> >  l_disk_deletes = disk_deletes;
     shared_ptr<UpdateFilter>  l_disk_filter  = disk_filter;
+    shared_ptr<IndexReader>   l_disk_reader  = disk_reader;
 
     wstring wkey = build_wstring(key);
 
@@ -248,13 +260,14 @@ void CLuceneIndex::remove(const string &key)
     shared_ptr<IndexModifier> l_modifier     = modifier;
     shared_ptr<set<string> >  l_disk_deletes = disk_deletes;
     shared_ptr<UpdateFilter>  l_disk_filter  = disk_filter;
+    shared_ptr<IndexReader>   l_disk_reader  = disk_reader;
 
     wstring wkey = build_wstring(key);
 
     //Since we don't want to write to disk
     //We'll simply track the docs to remove on next merge
     if( l_disk_bloom->contains( key )){
-        LOG4CXX_DEBUG(logger, "Removed "+key);
+        LOG4CXX_DEBUG(logger, "Removed disk"+key);
         l_disk_deletes->insert( key );
 
         if(!syncing)
@@ -266,6 +279,8 @@ void CLuceneIndex::remove(const string &key)
     //remove from memory if residing there
     if(l_ram_bloom->contains( key )){
 
+        LOG4CXX_DEBUG(logger, "Removed ram"+key);
+
         Term      *t = new Term(DOC_KEY, wkey.c_str() );
 
         l_modifier->deleteDocuments(t);
@@ -275,6 +290,7 @@ void CLuceneIndex::remove(const string &key)
 
         delete t;
     }
+
 }
 
 
@@ -297,6 +313,7 @@ void CLuceneIndex::search(const thrudex::SearchQuery &q, thrudex::SearchResponse
     shared_ptr<IndexSearcher>       l_ram_prev_searcher;
     shared_ptr<IndexSearcher>       l_disk_searcher;
     shared_ptr<UpdateFilter>        l_disk_filter;
+    shared_ptr<IndexReader>         l_disk_reader;
     shared_ptr<MultiSearcher>       l_searcher;
     //RWGuard g(mutex);
     {
@@ -314,6 +331,7 @@ void CLuceneIndex::search(const thrudex::SearchQuery &q, thrudex::SearchResponse
         l_disk_searcher      = disk_searcher;
 
         l_disk_filter = disk_filter;
+        l_disk_reader = disk_reader;
 
     }
 
@@ -463,7 +481,7 @@ void CLuceneIndex::sync()
     {
         //RWGuard g(mutex);
         Guard g(mutex);
-        if(last_modified <= last_synched)
+        if(last_modified <= last_synched && disk_deletes->empty())
             return;
     }
 
@@ -509,26 +527,30 @@ void CLuceneIndex::sync()
 
     LOG4CXX_DEBUG(logger,"Created Handles");
 
-    //Now we start by deleting any updated docs from disk
+    {
+        //Now we start by deleting any updated docs from disk
+        shared_ptr<IndexReader> tmp_disk_reader(IndexReader::open(idx_path.c_str()));
 
-    shared_ptr<IndexReader> disk_reader(IndexReader::open(idx_path.c_str()));
+        int i=0;
+        set<string>::iterator it;
+        for( it=l_disk_deletes->begin(); it!=l_disk_deletes->end(); ++it){
 
-    set<string>::iterator it;
-    for( it=l_disk_deletes->begin(); it!=l_disk_deletes->end(); ++it){
+            wstring wkey = build_wstring(*it);
+            Term      *t = new Term(DOC_KEY, wkey.c_str() );
 
-        wstring wkey = build_wstring(*it);
-        Term      *t = new Term(DOC_KEY, wkey.c_str() );
+            tmp_disk_reader->deleteDocuments(t);
 
-        disk_reader->deleteDocuments(t);
+            LOG4CXX_DEBUG(logger,"Deleted"+(*it));
 
-        LOG4CXX_DEBUG(logger,"Deleted"+(*it));
+            delete t;
+            i++;
+        }
 
-        delete t;
+        tmp_disk_reader->close();
+
+        LOG4CXX_DEBUG(logger,"Deleted old ids");
     }
 
-    disk_reader->close();
-
-    LOG4CXX_DEBUG(logger,"Deleted old ids");
 
     {
         //Now merge in the ram
@@ -551,15 +573,14 @@ void CLuceneIndex::sync()
     }
 
     //Search new index (big perf hit so get it over now)
-    shared_ptr<IndexReader>   l_disk_reader(IndexReader::open(idx_path.c_str()));
-    shared_ptr<IndexSearcher> l_disk_searcher(new IndexSearcher(l_disk_reader.get()));
-    shared_ptr<UpdateFilter>  l_disk_filter(new UpdateFilter(l_disk_reader));
+    shared_ptr<IndexReader>   l_disk_reader( IndexReader::open(idx_path.c_str()), reader_deleter() );
+    shared_ptr<IndexSearcher> l_disk_searcher( new IndexSearcher(l_disk_reader.get()) );
 
 
     wstring q = wstring(DOC_KEY)+wstring(L":1234");
 
     Query *query = QueryParser::parse( q.c_str(),DOC_KEY,analyzer.get());
-    Hits *h = l_disk_searcher->search(query);
+    Hits  *h     = l_disk_searcher->search(query);
     _CLDELETE(h);
     _CLDELETE(query);
 
@@ -570,25 +591,27 @@ void CLuceneIndex::sync()
         //RWGuard g(mutex,true);
         Guard g(mutex);
 
+        //the order of these things really matters
+        disk_searcher = l_disk_searcher;
+        disk_reader   = l_disk_reader;
+        disk_filter.reset( new UpdateFilter(disk_reader) );
+
+
         //Add any new deletes to the filter
         set<string>::iterator it;
         for( it=disk_deletes->begin(); it!=disk_deletes->end(); ++it){
             wstring wkey = build_wstring(*it);
-            l_disk_filter->skip(wkey);
-        }
 
-        disk_reader   = l_disk_reader;
-        disk_filter   = l_disk_filter;
-        disk_searcher = l_disk_searcher;
+            LOG4CXX_DEBUG(logger,"Skipping sync:"+*it);
+            disk_filter->skip(wkey);
+        }
 
 
         last_synched = Util::currentTime();
 
         syncing = false; //this flag alters the search code to include prev searcher
+
     }
 
-
-
     LOG4CXX_DEBUG(logger,"Set new search");
-
 }

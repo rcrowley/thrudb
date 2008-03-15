@@ -41,12 +41,19 @@ BitSet* UpdateFilter::bits(IndexReader* reader)
 
 void UpdateFilter::skip( wstring key )
 {
-    Term              *t = new Term(DOC_KEY, key.c_str() );
-    TermEnum *enumerator = reader->terms(t);
+
+    TermEnum *enumerator;
+    Term              *t;
+    try{
+    t = new Term(DOC_KEY, key.c_str() );
+    enumerator = reader->terms(t);
     if (enumerator->term(false) == NULL){
         _CLDELETE(enumerator);
         delete t;
         return;
+    }
+    }catch(CLuceneError e){
+        cerr<<"!!!Caught Fatal CLucene Exception: "<<e.what()<<endl;
     }
 
     TermDocs* termDocs = reader->termDocs();

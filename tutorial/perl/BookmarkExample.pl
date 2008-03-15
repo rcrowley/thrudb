@@ -98,6 +98,8 @@ sub connect_to_thrudoc
        $self->{thrudoc}  = new ThrudocClient($protocol);
 
        $transport->open();
+
+        $self->{thrudoc}->admin("create_bucket", THRUDOC_BUCKET());
     }; if($@) {
         die $@->{message} if UNIVERSAL::isa($@,"Thrift::TException");
         die $@;
@@ -241,6 +243,7 @@ sub remove_all
 
     #chunks of 100
     my $limit  = 100;
+    my $i = 0;
     my $r;
     my $seed;
     do{
@@ -266,12 +269,14 @@ sub remove_all
 
         $seed = $r->{seed};
 
+        $i += @{$r->elements};
+
     }while(@{$r->elements} == $limit);
 
 
     my $t1 = gettimeofday();
 
-    print "\n*Index cleared in: ".($t1-$t0)."*\n";
+    print "\n*Index cleared($i) in: ".($t1-$t0)."*\n";
 
 }
 
@@ -321,7 +326,7 @@ sub find
                 push(@bookmarks, $bm);
             }else{
 
-                warn($r->ex->what);
+                warn($r->{ex}->{what});
             }
 
         }
@@ -374,6 +379,8 @@ sub print_bookmarks
 my $bm = new BookmarkManager();
 
 my ($t0,$t1);
+
+
 eval{
 
     $bm->load_tsv_file("../bookmarks.tsv");
@@ -385,6 +392,9 @@ eval{
     $bm->remove_all();
 
 };if($@){
+
+    warn(Dumper($@));
     die $@->{message} if UNIVERSAL::isa($@,"Thrift::TException");
     die $@;
 }
+
