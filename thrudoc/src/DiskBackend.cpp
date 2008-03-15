@@ -180,7 +180,7 @@ string DiskBackend::get (const string & bucket, const string & key)
     if (!infile.is_open ())
     {
         ThrudocException e;
-        e.what = "Error: can't read " + bucket + "/" + key;
+        e.what = "Error: can't read " + file;
         throw e;
     }
 
@@ -360,7 +360,7 @@ ScanResponse DiskBackend::scan (const string & bucket, const string & seed,
             string ret = (*i)->path ().leaf ();
             Element e;
             e.key    = base64_decode(ret);
-            e.value  = get (bucket, ret);
+            e.value  = get (bucket, base64_decode(ret));
             e.bucket = bucket;
             scan_response.elements.push_back (e);
             ++(*i);
