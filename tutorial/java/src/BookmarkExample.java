@@ -16,6 +16,7 @@ import java.util.AbstractMap;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.ArrayList;
+import java.util.List;
 
 import java.io.*;
 
@@ -26,7 +27,6 @@ public class BookmarkExample {
 
     static final String THRUDOC_BUCKET = "bookmarks";    
 
-    static final String THRUDEX_DOMAIN = "tutorial";
     static final String THRUDEX_INDEX  = "bookmarks";
     
     private Thrudoc.Client   thrudoc;
@@ -113,7 +113,7 @@ public class BookmarkExample {
             this.addBookmark(b);           
         }
 
-        thrudex.commitAll();
+        // thrudex.commitAll();
         
         input.close();
 
@@ -148,30 +148,27 @@ public class BookmarkExample {
     
     private void indexBookmark( String id, Bookmark b ) throws TException, ThrudexException{
          
-        DocMsg doc = new DocMsg();
+        Document doc = new Document();
         
-        doc.docid  = id;
-        doc.domain = THRUDEX_DOMAIN;
+        doc.key  = id;
         doc.index  = THRUDEX_INDEX;
         doc.fields = new ArrayList<Field>();
 
         Field field = new Field();
 
         //title
-        field.name     = "title";
+        field.key     = "title";
         field.value    = b.title;
         field.sortable = true;
-        field.stype    = StorageType.UNSTORED;
         doc.fields.add(field);
     
         //tags
         field = new Field();
-        field.name  = "tags";
+        field.key  = "tags";
         field.value = b.tags;
-        field.stype = StorageType.UNSTORED;
         doc.fields.add(field);
 
-        thrudex.add( doc );
+        thrudex.put( doc );
     }
      
     public void removeAll() throws TException, ThrudocException, ThrudexException {
@@ -190,13 +187,12 @@ public class BookmarkExample {
             if(r.elements.size() == 0)
                 break;
 
-            ArrayList<RemoveMsg> docs = new ArrayList<RemoveMsg>();
+            ArrayList<thrudex.Element> docs = new ArrayList<thrudex.Element>();
 
-            for( Element e : r.elements ){
-                RemoveMsg rm = new RemoveMsg();
-                rm.domain = THRUDEX_DOMAIN;
+            for( thrudoc.Element e : r.elements ){
+                thrudex.Element rm = new thrudex.Element();
                 rm.index  = THRUDEX_INDEX;
-                rm.docid  = e.key;
+                rm.key  = e.key;
                 
                 docs.add(rm);
             }
@@ -206,7 +202,6 @@ public class BookmarkExample {
 
             seed = r.seed;
 
-            thrudex.commitAll();
 
         }while(r.elements.size() == limit);
 
@@ -226,9 +221,8 @@ public class BookmarkExample {
 
         long t0 = System.currentTimeMillis();
         
-        QueryMsg query  = new QueryMsg();
+        SearchQuery query  = new SearchQuery();
          
-        query.domain    = THRUDEX_DOMAIN;
         query.index     = THRUDEX_INDEX;
         query.query     = terms;
 
@@ -241,13 +235,13 @@ public class BookmarkExample {
         if( options.get("sortby") != null )            
             query.sortby = options.get("sortby");
 
-        QueryResponse r = thrudex.query( query );
+        SearchResponse ids = thrudex.search( query );
 
-        System.out.println("Found "+r.total+" bookmarks");
+        System.out.println("Found "+ids.total+" bookmarks");
         
-        if( r.ids.size() > 0 ) {
+        if( ids.elements.size() > 0 ) {
 
-            ArrayList<ListResponse> response = thrudoc.getList( createDocList(r.ids) );
+            List<ListResponse> response = thrudoc.getList( createDocList(ids.elements) );            
 
             ArrayList<Bookmark> bookmarks = new ArrayList<Bookmark>();
             
@@ -265,13 +259,13 @@ public class BookmarkExample {
         System.out.println("Took: "+(t1-t0)+"ms\n");  
     }
 
-    private ArrayList<Element> createDocList( ArrayList<String> ids ) throws ThrudocException {
+    private List<thrudoc.Element> createDocList( List<thrudex.Element> ids ) throws ThrudocException {
         
-        ArrayList<Element> docs = new ArrayList<Element>();
+        ArrayList<thrudoc.Element> docs = new ArrayList<thrudoc.Element>();
 
-        for( String id : ids ){
-            Element el = new Element();
-            el.key    = id;
+        for( thrudex.Element element : ids ){
+            thrudoc.Element el = new thrudoc.Element();
+            el.key    = element.key;
             el.bucket = THRUDOC_BUCKET;
 
             docs.add(el);

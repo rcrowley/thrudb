@@ -118,13 +118,13 @@ class BookmarkManager
          #Indexing requires mapping the fields in our
          #bookmark object to a Thrudex Document
          #
-         doc  = Document.new()
+         doc  = Thrudex::Document.new()
 
          doc.key    = id
          doc.index  = THRUDEX_INDEX
          doc.fields = []
 
-         field = Field.new()
+         field = Thrudex::Field.new()
 
          #title
          field.key     = "title"
@@ -133,7 +133,7 @@ class BookmarkManager
          doc.fields << field
 
          #tags
-         field = Field.new()
+         field = Thrudex::Field.new()
          field.key     = "tags"
          field.value   = b.tags
          doc.fields << field
@@ -153,7 +153,7 @@ class BookmarkManager
                 response = @thrudoc.scan(THRUDOC_BUCKET,seed,limit)
 
                 response.elements.each { |r|
-                   rm = Element.new()
+                   rm = Thrudex::Element.new()
                    rm.index  = THRUDEX_INDEX
                    rm.key    = r.key
 
@@ -182,7 +182,7 @@ class BookmarkManager
 
         t0 = Time.new()
 
-        q  = SearchQuery.new();
+        q  = Thrudex::SearchQuery.new();
 
         q.index  = THRUDEX_INDEX
         q.query  = terms
@@ -207,7 +207,7 @@ class BookmarkManager
         print "Found "+ids.total.to_s+" bookmarks\n"
 
         if ids.elements.length > 0
-
+           
            doc_list = @thrudoc.getList( create_doc_list(ids.elements) )
            bms      = []
            doc_list.each{ |doc|
