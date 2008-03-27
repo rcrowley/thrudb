@@ -10,6 +10,7 @@
 
 #include <protocol/TBinaryProtocol.h>
 #include <transport/TTransportUtils.h>
+#include <stdlib.h>
 
 #define ORIG_MESSAGE_TYPE 1
 #define REPLAY_MESSAGE_TYPE 101

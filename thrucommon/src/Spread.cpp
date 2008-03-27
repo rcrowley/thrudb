@@ -7,6 +7,7 @@
 #if HAVE_LIBSPREAD
 
 #include "Spread.h"
+#include <stdlib.h>
 
 using namespace log4cxx;
 using namespace std;
