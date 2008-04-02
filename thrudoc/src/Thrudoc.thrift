@@ -1,11 +1,18 @@
-cpp_namespace thrudoc
+namespace cpp thrudoc
 php_namespace Thrudoc
 perl_package  Thrudoc
-java_package  thrudoc
+namespace java thrudoc
+ruby_namespace Thrudoc
+
+enum ExceptionType {
+     UNKNOWN     = 1,
+     NO_SUCH_KEY = 2
+}
 
 exception ThrudocException
 {
-    1: string what
+    1: string        what
+    2: ExceptionType type = UNKNOWN
 }
 
 struct Element
@@ -29,7 +36,7 @@ struct ListResponse
 
 service Thrudoc
 {
-    list<string> getBuckets ()                                                              throws(ThrudocException e),
+    list<string> getBuckets ()                                        throws(ThrudocException e),
 
     void         put(1:string bucket, 2:string key, 3:string value)   throws(ThrudocException e),
     string       get(1:string bucket, 2:string key)                   throws(ThrudocException e),

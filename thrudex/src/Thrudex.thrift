@@ -1,8 +1,9 @@
-cpp_namespace thrudex
+namespace cpp thrudex
+namespace java thrudex
 php_namespace Thrudex
 ruby_namespace Thrudex
 perl_package  Thrudex
-java_package  thrudex
+
 
 
 exception ThrudexException
