@@ -16,6 +16,7 @@
 #include <concurrency/ThreadManager.h>
 #include <concurrency/PosixThreadFactory.h>
 #include <protocol/TBinaryProtocol.h>
+#include <protocol/TCountingProtocol.h>
 #include <server/TSimpleServer.h>
 #include <server/TThreadPoolServer.h>
 #include <server/TNonblockingServer.h>
@@ -92,7 +93,9 @@ int main (int argc, char **argv)
 
         //Startup Services
         shared_ptr<TProtocolFactory>
-            protocolFactory (new TBinaryProtocolFactory ());
+            protF (new TBinaryProtocolFactory ());
+        shared_ptr<TProtocolFactory>
+            protocolFactory (new TCountingProtocolFactory (protF));
 
         string which = ConfigManager->read<string> ("BACKEND", "mysql");
 

@@ -57,6 +57,14 @@ if test "$with_spread" != "no"; then
                      AC_MSG_ERROR([sp.h missing; please add spread development files]))
 fi
 
+# boost filesystem
+if test "$with_disk" != "no" -o "$with_bdb" != "no"; then
+    AC_CHECK_LIB(boost_filesystem, [open], [],
+                 AC_MSG_ERROR([You must install boost_filesystem; please install libraries and development files]))
+    AC_CHECK_HEADERS([boost/filesystem/path.hpp],,
+                     AC_MSG_ERROR([boost/filesystem/path.hpp missing; please add db_cxx development files]))
+fi
+
 # log4cxx
 AC_CHECK_LIB(log4cxx, [open], [],
              AC_MSG_ERROR([You must install log4cxx; please install libraries and development files]))

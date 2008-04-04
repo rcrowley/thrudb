@@ -14,6 +14,7 @@ include_thrucommon_HEADERS = \
 			     CircuitBreaker.h		\
 			     ConfigFile.h		\
 			     Hashing.h			\
+			     FileLogger.h		\
 			     memcache++.h		\
 			     MemcacheHandle.h		\
 			     ThruFileTransport.h	\
@@ -32,6 +33,7 @@ libthrucommon_la_SOURCES = \
 			   CircuitBreaker.cpp			\
 			   ConfigFile.cpp			\
 			   Hashing.cpp				\
+			   FileLogger.cpp			\
 			   ReplicationRecorder.cpp		\
 			   Spread.cpp				\
 			   ThruFileTransport.cpp

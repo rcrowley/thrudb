@@ -82,6 +82,14 @@ if test "$with_disk" != "no" -o "$with_s3" != "no"; then
     AC_CHECK_HEADERS([openssl/hmac.h])
 fi
 
+# boost filesystem
+if test "$with_disk" != "no" -o "$with_bdb" != "no"; then
+    AC_CHECK_LIB(boost_filesystem, [open], [],
+                 AC_MSG_ERROR([You must install boost_filesystem; please install libraries and development files]))
+    AC_CHECK_HEADERS([boost/filesystem/path.hpp],,
+                     AC_MSG_ERROR([boost/filesystem/path.hpp missing; please add db_cxx development files]))
+fi
+
 # log4cxx
 AC_CHECK_LIB(log4cxx, [open], [],
              AC_MSG_ERROR([You must install log4cxx; please install libraries and development files]))
@@ -91,7 +99,7 @@ AC_CHECK_HEADERS([log4cxx/logger.h],,
 # misc
 AC_C_CONST
 AC_CHECK_FUNCS([clock_gettime fdatasync fsync gettimeofday memset socket strcasecmp strchr strdup])
-AC_CHECK_HEADERS([netinet/in.h stdlib.h string.h sys/param.h])
+AC_CHECK_HEADERS([netinet/in.h stdlib.h string.h sys/param.h cstdlib])
 AC_C_INLINE
 AC_FUNC_ALLOCA
 AC_FUNC_MALLOC

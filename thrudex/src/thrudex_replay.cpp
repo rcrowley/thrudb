@@ -8,7 +8,7 @@
  **/
 
 #ifdef HAVE_CONFIG_H
-#include "thrudoc_config.h"
+#include "thrudex_config.h"
 #endif
 /* hack to work around thrift and log4cxx installing config.h's */
 #undef HAVE_CONFIG_H
@@ -40,13 +40,13 @@
 #include "app_helpers.h"
 #include "ConfigFile.h"
 #include "LogBackend.h"
-#include "ThrudocBackend.h"
-#include "ThrudocHandler.h"
-#include "ThrudocHandler.h"
+#include "ThrudexBackend.h"
+#include "ThrudexHandler.h"
+#include "ThrudexHandler.h"
 #include "ThruFileTransport.h"
 
 using namespace boost;
-using namespace thrudoc;
+using namespace thrudex;
 using namespace facebook::thrift;
 using namespace facebook::thrift::concurrency;
 using namespace facebook::thrift::protocol;
@@ -56,13 +56,13 @@ using namespace log4cxx;
 using namespace log4cxx::helpers;
 using namespace std;
 
-LoggerPtr logger (Logger::getLogger ("thrudoc_replay"));
+LoggerPtr logger (Logger::getLogger ("thrudex_replay"));
 
 //print usage and die
 inline void usage ()
 {
-    cerr<<"thrudoc -f /path/to/thrudoc.conf"<<endl;
-    cerr<<"\tor create ~/.thrudoc"<<endl;
+    cerr<<"thrudex -f /path/to/thrudex.conf"<<endl;
+    cerr<<"\tor create ~/.thrudex"<<endl;
     cerr<<"\t-nb creates non-blocking server"<<endl;
     exit (-1);
 }
@@ -70,7 +70,7 @@ inline void usage ()
 class Replayer : public EventLogIf
 {
     public:
-        Replayer (shared_ptr<ThrudocBackend> backend, string current_filename,
+        Replayer (shared_ptr<ThrudexBackend> backend, string current_filename,
                   uint32_t delay_seconds) 
         {
             char buf[128];
@@ -82,10 +82,10 @@ class Replayer : public EventLogIf
             this->current_filename = current_filename;
             this->delay_seconds = delay_seconds;
 
-            shared_ptr<ThrudocHandler> handler = shared_ptr<ThrudocHandler>
-                (new ThrudocHandler (this->backend));
-            this->processor = shared_ptr<ThrudocProcessor>
-                (new ThrudocProcessor (handler));
+            shared_ptr<ThrudexHandler> handler = shared_ptr<ThrudexHandler>
+                (new ThrudexHandler (this->backend));
+            this->processor = shared_ptr<ThrudexProcessor>
+                (new ThrudexProcessor (handler));
 
             this->last_position_flush = 0;
             this->current_position = 0;
@@ -104,7 +104,7 @@ class Replayer : public EventLogIf
                     // we have a last position
                 }
             }
-            catch (ThrudocException e)
+            catch (ThrudexException e)
             {
                 LOG4CXX_WARN (logger, "last_position unknown, assuming epoch");
             }
@@ -211,8 +211,8 @@ class Replayer : public EventLogIf
         static log4cxx::LoggerPtr logger;
 
         TBinaryProtocolFactory protocol_factory;
-        shared_ptr<ThrudocBackend> backend;
-        shared_ptr<ThrudocProcessor> processor;
+        shared_ptr<ThrudexBackend> backend;
+        shared_ptr<ThrudexProcessor> processor;
         string current_filename;
         int64_t current_position;
         time_t last_position_flush;
@@ -224,7 +224,7 @@ LoggerPtr Replayer::logger (Logger::getLogger ("Replayer"));
 int main (int argc, char **argv)
 {
 
-    string conf_file = string (getenv ("HOME"))+"/.thrudoc";
+    string conf_file = string (getenv ("HOME"))+"/.thrudex";
     bool nonblocking = true;
 
     //Parse args
@@ -261,7 +261,7 @@ int main (int argc, char **argv)
         }
         else 
         {
-            ThrudocException e;
+            ThrudexException e;
             e.what = "error opening log index file";
             LOG4CXX_ERROR (logger, e.what);
             throw e;
@@ -269,7 +269,7 @@ int main (int argc, char **argv)
 
         if (log_filename.empty ())
         {
-            ThrudocException e;
+            ThrudexException e;
             e.what = "error log index file empty";
             LOG4CXX_ERROR (logger, e.what);
             throw e;
@@ -280,7 +280,7 @@ int main (int argc, char **argv)
 
         // create our backend
         string which = ConfigManager->read<string> ("BACKEND", "mysql");
-        shared_ptr<ThrudocBackend> backend = create_backend (which, 1);
+        shared_ptr<ThrudexBackend> backend = create_backend (which, 1);
 
         int32_t delay_seconds = 
             ConfigManager->read<int32_t> ("REPLAY_DELAY_SECONDS", 0);

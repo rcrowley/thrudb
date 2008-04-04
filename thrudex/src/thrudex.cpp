@@ -34,6 +34,7 @@
 #include "log4cxx/propertyconfigurator.h"
 #include "log4cxx/helpers/exception.h"
 
+#include "app_helpers.h"
 #include "ThrudexHandler.h"
 #include "ThrudexBackend.h"
 #include "CLuceneBackend.h"
@@ -82,19 +83,14 @@ int main(int argc, char **argv) {
         //Read da config
         ConfigManager->readFile( conf_file );
 
-        string index_root   = ConfigManager->read<string>("INDEX_ROOT");
-
-        int    thread_count = ConfigManager->read<int>("THREAD_COUNT",3);
-        int    server_port  = ConfigManager->read<int>("SERVER_PORT",9099);
-
         PropertyConfigurator::configure(conf_file);
-        setlocale(LC_CTYPE, "en_US.utf8");  //unicode support
 
-        LOG4CXX_INFO(logger, "Starting up");
+        int thread_count = ConfigManager->read<int>("THREAD_COUNT",3);
+        int server_port  = ConfigManager->read<int>("SERVER_PORT",9099);
+        string which = ConfigManager->read<string>("BACKEND","CLucene");
 
-        string which      = ConfigManager->read<string>("BACKEND","CLucene");
-        shared_ptr<ThrudexBackend>    backend(new CLuceneBackend(index_root));
-
+        shared_ptr<ThrudexBackend> backend = create_backend (which, 
+                                                             thread_count);
 
         if (ConfigManager->read<int>("KEEP_STATS", 0))
           backend = shared_ptr<ThrudexBackend> (new StatsBackend (backend));

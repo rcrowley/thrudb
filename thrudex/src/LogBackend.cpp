@@ -8,7 +8,7 @@
  **/
 
 #ifdef HAVE_CONFIG_H
-#include "thrudoc_config.h"
+#include "thrudex_config.h"
 #endif
 /* hack to work around thrift and log4cxx installing config.h's */
 #undef HAVE_CONFIG_H
@@ -28,11 +28,11 @@ using namespace facebook::thrift::protocol;
 using namespace facebook::thrift::transport;
 using namespace log4cxx;
 using namespace std;
-using namespace thrudoc;
+using namespace thrudex;
 
 LoggerPtr LogBackend::logger (Logger::getLogger ("LogBackend"));
 
-LogBackend::LogBackend (shared_ptr<ThrudocBackend> backend,
+LogBackend::LogBackend (shared_ptr<ThrudexBackend> backend,
                         const string & log_directory, unsigned int max_ops,
                         unsigned int sync_wait)
 {
@@ -48,21 +48,19 @@ LogBackend::LogBackend (shared_ptr<ThrudocBackend> backend,
     // create our serializer
     msg_transport = shared_ptr<TMemoryBuffer>(new TMemoryBuffer ());
     shared_ptr<TProtocol>  msg_protocol (new TBinaryProtocol (msg_transport));
-    msg_client = shared_ptr<ThrudocClient>(new ThrudocClient (msg_protocol));
+    msg_client = shared_ptr<ThrudexClient>(new ThrudexClient (msg_protocol));
 
-    file_logger = new FileLogger(log_directory, LOG_FILE_PREFIX, max_ops, 
-                                 sync_wait);
+    file_logger = new FileLogger(log_directory, LOG_FILE_PREFIX, max_ops, sync_wait);
 }
 
-void LogBackend::put (const string & bucket, const string & key,
-                      const string & value)
+void LogBackend::put (const Document & d)
 {
-    this->get_backend ()->put (bucket, key, value);
+    this->get_backend ()->put (d);
 
     try
     {
         //Create raw message 
-        msg_client->send_put (bucket, key, value);
+        msg_client->send_put (d);
         string raw_msg = msg_transport->getBufferAsString ();
         msg_transport->resetBuffer ();
 
@@ -72,20 +70,20 @@ void LogBackend::put (const string & bucket, const string & key,
     {
         LOG4CXX_ERROR (logger, string ("put: client succeeded, log failed. partial success, what=") +
                        e.what ());
-        ThrudocException te;
+        ThrudexException te;
         te.what = "partial success";
         throw te;
     }
 }
 
-void LogBackend::remove (const std::string & bucket, const std::string & key)
+void LogBackend::remove (const Element & e)
 {
-    this->get_backend ()->remove (bucket, key);
+    this->get_backend ()->remove (e);
 
     try
     {
         //Create raw message
-        msg_client->send_remove (bucket, key);
+        msg_client->send_remove (e);
         string raw_msg = msg_transport->getBufferAsString ();
         msg_transport->resetBuffer ();
 
@@ -95,7 +93,7 @@ void LogBackend::remove (const std::string & bucket, const std::string & key)
     {
         LOG4CXX_ERROR (logger, string ("remove: client succeeded, log failed. partial success, what=") +
                        e.what ());
-        ThrudocException te;
+        ThrudexException te;
         te.what = "partial success";
         throw te;
     }
@@ -125,7 +123,7 @@ string LogBackend::admin (const std::string & op, const std::string & data)
         {
             LOG4CXX_ERROR (logger, string ("admin: client succeeded, log failed. partial success, what=") +
                            e.what ());
-            ThrudocException te;
+            ThrudexException te;
             te.what = "partial success";
             throw te;
         }
@@ -134,14 +132,14 @@ string LogBackend::admin (const std::string & op, const std::string & data)
     }
 }
 
-vector<ThrudocException> LogBackend::putList (const vector<Element> & elements)
+vector<ThrudexException> LogBackend::putList (const vector<Document> & documents)
 {
-    vector<ThrudocException> ret = this->get_backend ()->putList (elements);
+    vector<ThrudexException> ret = this->get_backend ()->putList (documents);
 
     try
     {
         //Create raw message 
-        msg_client->send_putList (elements);
+        msg_client->send_putList (documents);
         string raw_msg = msg_transport->getBufferAsString ();
         msg_transport->resetBuffer ();
 
@@ -151,7 +149,7 @@ vector<ThrudocException> LogBackend::putList (const vector<Element> & elements)
     {
         LOG4CXX_ERROR (logger, string ("putList: client succeeded, log failed. partial success, what=") +
                        e.what ());
-        ThrudocException te;
+        ThrudexException te;
         te.what = "partial success";
         throw te;
     }
@@ -159,9 +157,9 @@ vector<ThrudocException> LogBackend::putList (const vector<Element> & elements)
     return ret;
 }
 
-vector<ThrudocException> LogBackend::removeList(const vector<Element> & elements)
+vector<ThrudexException> LogBackend::removeList(const vector<Element> & elements)
 {
-    vector<ThrudocException> ret = this->get_backend ()->removeList (elements);
+    vector<ThrudexException> ret = this->get_backend ()->removeList (elements);
 
     try
     {
@@ -176,7 +174,7 @@ vector<ThrudocException> LogBackend::removeList(const vector<Element> & elements
     {
         LOG4CXX_ERROR (logger, string ("removeList: client succeeded, log failed. partial success, what=") +
                        e.what ());
-        ThrudocException te;
+        ThrudexException te;
         te.what = "partial success";
         throw te;
     }

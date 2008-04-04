@@ -6,8 +6,8 @@
  * http://thrudb.googlecode.com
  *
  **/
-#ifndef _THRUDOC_LOG_BACKEND_H_
-#define _THRUDOC_LOG_BACKEND_H_
+#ifndef _THRUDEX_LOG_BACKEND_H_
+#define _THRUDEX_LOG_BACKEND_H_
 
 #include <boost/filesystem/fstream.hpp>
 #include <boost/filesystem.hpp>
@@ -20,38 +20,36 @@
 #include <thrift/transport/TFileTransport.h>
 #include <thrift/transport/TTransportUtils.h>
 
-#include "ThrudocPassthruBackend.h"
+#include "ThrudexPassthruBackend.h"
 
 #include <EventLog.h>
 #include <FileLogger.h>
 
-#define LOG_FILE_PREFIX "thrudoc-log."
+#define LOG_FILE_PREFIX "thrudex-log."
 
-class LogBackend : public ThrudocPassthruBackend
+class LogBackend : public ThrudexPassthruBackend
 {
     public:
-        LogBackend (boost::shared_ptr<ThrudocBackend> backend,
+        LogBackend (boost::shared_ptr<ThrudexBackend> backend,
                     const std::string &log_directory, unsigned int max_ops,
                     unsigned int sync_wait);
 
-        void put (const std::string & bucket, const std::string & key,
-                  const std::string & value);
+        void put(const thrudex::Document &d);
+        void remove(const thrudex::Element &e);
 
-        void remove (const std::string & bucket, const std::string & key);
+        std::vector<thrudex::ThrudexException> putList
+            (const std::vector<thrudex::Document> &documents);
+        std::vector<thrudex::ThrudexException> removeList
+            (const std::vector<thrudex::Element> &elements);
 
-        std::string admin (const std::string & op, const std::string & data);
-
-        std::vector<thrudoc::ThrudocException> putList
-            (const std::vector<thrudoc::Element> & elements);
-        std::vector<thrudoc::ThrudocException> removeList
-            (const std::vector<thrudoc::Element> & elements);
+        std::string admin(const std::string &op, const std::string &data);
 
     private:
         static log4cxx::LoggerPtr logger;
 
         // this will be used to create the event message
         boost::shared_ptr<facebook::thrift::transport::TMemoryBuffer> msg_transport;
-        boost::shared_ptr<thrudoc::ThrudocClient> msg_client;
+        boost::shared_ptr<thrudex::ThrudexClient> msg_client;
         Event create_event (const std::string &msg);
 
         FileLogger * file_logger;
