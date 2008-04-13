@@ -345,6 +345,13 @@ void CLuceneIndex::search(const thrudex::SearchQuery &q, thrudex::SearchResponse
 
         query = QueryParser::parse( wquery.c_str(),DOC_KEY,analyzer.get());
 
+        if( query == NULL ){
+            ThrudexException ex;
+            ex.what  = "Invalid query: '"+q.query+"'";
+
+            throw ex;
+        }
+
     } catch(CLuceneError e) {
 
         ThrudexException ex;
