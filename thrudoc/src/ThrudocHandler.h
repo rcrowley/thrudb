@@ -10,7 +10,6 @@
 
 #include <string>
 #include <log4cxx/logger.h>
-#include <memcached.h>
 
 class ThrudocHandler : virtual public thrudoc::ThrudocIf {
     public:
