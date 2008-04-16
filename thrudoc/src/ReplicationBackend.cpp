@@ -8,6 +8,7 @@
 
 #include "ReplicationBackend.h"
 
+#include <errno.h>
 #include <poll.h>
 #include <protocol/TBinaryProtocol.h>
 #include <sys/fcntl.h>
@@ -67,13 +68,13 @@ class ReplicationWait
 #if defined (HAVE_CLOCK_GETTIME)
             int err;
             struct timespec abstime;
-            err = clock_gettime(CLOCK_REALTIME, &this->abstime);
+            err = clock_gettime(CLOCK_REALTIME, &abstime);
             if (!err)
             {
-                this->abstime.tv_sec += this->max_wait;
+                abstime.tv_sec += this->max_wait;
                 // cond_timedwait will unlock mutex so release can happen
                 err = pthread_cond_timedwait (&this->condition, &this->mutex, 
-                                              &this->abstime);
+                                              &abstime);
                 // we need to free the mutex back up, cond_timedwait will lock 
                 // it before it comes out
                 pthread_mutex_unlock (&this->mutex);
