@@ -1,0 +1,60 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta http-equiv="Content-Language" content="en-us" />
+    <meta http-equiv="imagetoolbar" content="no">
+    <meta name="viewport" content="width=780" />
+  </head>
+<body>
+
+<div style="margin-left:15%;width:650px">
+
+<div style="text-align:center">
+<h2>TweetSearch - Realtime Twitter Search</h2>
+<form action="" method="get">
+    <input type="text" name="terms" value="<tmpl_var terms>"/>
+    <input type="submit"/ value="search">
+    <br/>
+</form>
+</div>
+<br/>
+<tmpl_if terms>
+    <tmpl_var total> results for: <b>&quot;<tmpl_var terms>&quot;</b> showing (<tmpl_var current> - <tmpl_var next>)
+    <br/>
+
+<div style="float:right">
+<tmpl_if prev>
+  <a href="?terms=<tmpl_var terms>&offset=<tmpl_var prev>"> &lt;prev </a>
+</tmpl_if>
+<tmpl_if next>
+  <a href="?terms=<tmpl_var terms>&offset=<tmpl_var next>"> next &gt; </a>
+</tmpl_if>
+</div>
+
+    <tmpl_loop tweets>
+      <br/><img src="<tmpl_var profile_image_url>"/><a href="http://twitter.com/<tmpl_var user_name>/statuses/<tmpl_var id>"><tmpl_var user_name></a> : <tmpl_var text> <i><tmpl_var created_at></i></li>
+    </tmpl_loop>
+</tmpl_if>
+
+<br/><br/>
+
+<div style="float:right">
+<tmpl_if prev>
+  <a href="?terms=<tmpl_var terms>&offset=<tmpl_var prev>"> &lt;prev </a>
+</tmpl_if>
+<tmpl_if next>
+  <a href="?terms=<tmpl_var terms>&offset=<tmpl_var next>"> next &gt; </a>
+</tmpl_if>
+</div>
+
+
+<tmpl_if rendertime>
+  took <tmpl_var rendertime>
+</tmpl_if>
+
+</div>
+
+
+</body>
+</html>
