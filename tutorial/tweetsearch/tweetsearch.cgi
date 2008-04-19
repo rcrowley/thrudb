@@ -27,6 +27,7 @@ use LWP::UserAgent;
 
 package TweetScan;
 use Time::HiRes qw(gettimeofday);
+use Data::Dumper;
 
 #Config
 use constant THRUDEX_PORT    => 11299;
@@ -174,25 +175,30 @@ sub handle
     
     my $terms = $q->param("terms");
     my $offset= $q->param("offset") || 0;
-    
-    if( defined $terms && $terms ne ""){
+    eval{
 	
-	my $t0      = gettimeofday();
-	
-	my ($total,$tweets) = $self->search( $terms, $offset );
-	
-	my $t1      = gettimeofday();
-	
-	$template->param( 
-	    terms      => $terms, 
-	    offset     => $offset, 
-	    total      => $total, 
-	    tweets     => $tweets,
-	    current    => $offset,
-	    next       => ( $total > ($offset + @$tweets) ? ($offset + @$tweets) : undef),
-	    prev       => ( $offset > 0  ? ($offset - 10)." " : undef),
- 
-	    rendertime => sprintf("%0.2f", ($t1 - $t0) ));
+	if( defined $terms && $terms ne ""){
+	    
+	    my $t0      = gettimeofday();
+	    
+	    my ($total,$tweets) = $self->search( $terms, $offset );
+	    
+	    my $t1      = gettimeofday();
+	    
+	    $template->param( 
+		terms      => $terms, 
+		offset     => $offset, 
+		total      => $total, 
+		tweets     => $tweets,
+		current    => $offset,
+		next       => ( $total > ($offset + @$tweets) ? ($offset + @$tweets) : undef),
+		prev       => ( $offset > 0  ? ($offset - 10)." " : undef),
+		
+		rendertime => sprintf("%0.2f", ($t1 - $t0) ));
+	}
+
+    }; if($@){
+	warn(Dumper($@));
     }
 
     print "content-type: text/html\n\n";
