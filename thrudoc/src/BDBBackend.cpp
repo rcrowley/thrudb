@@ -6,7 +6,7 @@
 #include "thrudoc_config.h"
 #endif
 /* hack to work around thrift and log4cxx installing config.h's */
-#undef HAVE_CONFIG_H 
+#undef HAVE_CONFIG_H
 
 #if HAVE_LIBDB_CXX && HAVE_LIBBOOST_FILESYSTEM
 
@@ -24,7 +24,7 @@ using namespace std;
 
 #define BDB_BACKEND_MAX_BUCKET_SIZE 32
 #define BDB_BACKEND_MAX_KEY_SIZE 64
-#define BDB_BACKEND_MAX_VALUE_SIZE 4096
+#define BDB_BACKEND_MAX_VALUE_SIZE 104096
 
 LoggerPtr BDBBackend::logger (Logger::getLogger ("BDBBackend"));
 
@@ -39,10 +39,10 @@ BDBBackend::BDBBackend (const string & bdb_home, const int & thread_count)
         fs::create_directories (bdb_home);
     }
 
-    try 
+    try
     {
         this->db_env = new DbEnv (0);
-        u_int32_t env_flags = 
+        u_int32_t env_flags =
             DB_CREATE     |   // If the environment does not exist, create it.
             DB_RECOVER    |   // run normal recovery
             DB_INIT_LOCK  |   // Initialize locking
@@ -58,7 +58,7 @@ BDBBackend::BDBBackend (const string & bdb_home, const int & thread_count)
         this->db_env->set_tx_max (thread_count);
         this->db_env->set_lk_detect (DB_LOCK_MINWRITE);
         this->db_env->open (this->bdb_home.c_str (), env_flags, 0);
-    } 
+    }
     catch (DbException & e)
     {
         LOG4CXX_ERROR (logger, string ("bdb error: ") + e.what ());
@@ -69,7 +69,7 @@ BDBBackend::BDBBackend (const string & bdb_home, const int & thread_count)
 
 BDBBackend::~BDBBackend ()
 {
-    try 
+    try
     {
         map<string, Db *>::iterator i;
         for (i = this->dbs.begin (); i != this->dbs.end (); i++)
@@ -78,8 +78,8 @@ BDBBackend::~BDBBackend ()
         }
         this->db_env->close (0);
         delete db_env;
-    } 
-    catch (DbException & e) 
+    }
+    catch (DbException & e)
     {
         LOG4CXX_ERROR (logger, string ("bdb error: ") + e.what ());
         throw e;
@@ -93,7 +93,7 @@ vector<string> BDBBackend::getBuckets ()
     for (fs::directory_iterator dir_itr (this->bdb_home); dir_itr != end_iter;
          ++dir_itr)
     {
-        if ((fs::is_regular (dir_itr->status ())) && 
+        if ((fs::is_regular (dir_itr->status ())) &&
             (dir_itr->path ().leaf ().find ("log.") == string::npos))
         {
             buckets.push_back (dir_itr->path ().leaf ());
@@ -221,7 +221,7 @@ ScanResponse BDBBackend::scan (const string & bucket, const string & seed,
                             db_key.get_size ());
             if (seed != key_tmp)
             {
-                // we got the one after it, it must be gone now, so return 
+                // we got the one after it, it must be gone now, so return
                 // this one
                 Element e;
                 e.key = key_tmp;
@@ -285,9 +285,9 @@ string BDBBackend::admin (const string & op, const string & data)
         {
             LOG4CXX_INFO (logger, "admin: creating db=" + data);
 
-            u_int32_t db_flags = 
+            u_int32_t db_flags =
                 DB_CREATE       |   // allow creating db
-                DB_AUTO_COMMIT;     // allow auto-commit   
+                DB_AUTO_COMMIT;     // allow auto-commit
             db = new Db (this->db_env, 0);
             db->open (NULL,             // Txn pointer
                       data.c_str (),    // file name
@@ -301,7 +301,7 @@ string BDBBackend::admin (const string & op, const string & data)
 
         return "done";
     }
-    // TODO delete_bucket, but have to figure out how to close the db 
+    // TODO delete_bucket, but have to figure out how to close the db
     // handles across all of the threads first...
     return "";
 }
@@ -335,7 +335,7 @@ Db * BDBBackend::get_db (const string & bucket)
     Db * db = dbs[bucket];
     if (!db)
     {
-        u_int32_t db_flags = DB_AUTO_COMMIT; // allow auto-commit   
+        u_int32_t db_flags = DB_AUTO_COMMIT; // allow auto-commit
 
         db = new Db (this->db_env, 0);
         try

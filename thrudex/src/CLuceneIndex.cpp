@@ -600,8 +600,9 @@ void CLuceneIndex::sync()
 
         //the order of these things really matters
         disk_searcher = l_disk_searcher;
+        disk_filter.reset( new UpdateFilter(l_disk_reader) );
         disk_reader   = l_disk_reader;
-        disk_filter.reset( new UpdateFilter(disk_reader) );
+
 
 
         //Add any new deletes to the filter
