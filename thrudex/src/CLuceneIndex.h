@@ -89,6 +89,7 @@ class CLuceneIndex : public facebook::thrift::concurrency::Runnable
 
     boost::shared_ptr<lucene::store::CLuceneRAMDirectory>  ram_directory;
     boost::shared_ptr<lucene::store::CLuceneRAMDirectory>  ram_prev_directory;
+    boost::shared_ptr<lucene::store::CLuceneRAMDirectory>  ram_readonly_prev_directory;
     boost::shared_ptr<lucene::store::CLuceneRAMDirectory>  ram_prev_prev_directory;
     boost::shared_ptr<lucene::store::CLuceneRAMDirectory>  ram_readonly_directory;
 

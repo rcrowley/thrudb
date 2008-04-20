@@ -168,7 +168,6 @@ shared_ptr<MultiSearcher> CLuceneIndex::getSearcher()
 
         modifier->flush();
 
-
         ram_searcher.reset();
 
         //make a copy of the ram dir since its not thread safe
@@ -185,7 +184,12 @@ shared_ptr<MultiSearcher> CLuceneIndex::getSearcher()
         searchers[1] = disk_searcher.get();
 
         if(syncing){
-            ram_prev_searcher.reset(new IndexSearcher( ram_prev_directory.get() ));
+            //make a copy of the ram dir since its not thread safe
+            ram_readonly_prev_directory = shared_ptr<CLuceneRAMDirectory>(new CLuceneRAMDirectory( ram_prev_directory.get() ));
+            ram_readonly_prev_directory->__cl_addref(); //trick clucene's lame ref counters
+
+
+            ram_prev_searcher.reset(new IndexSearcher( ram_readonly_prev_directory.get() ));
             searchers[2] = ram_prev_searcher.get();
             searchers[3] = NULL;
         }else{
@@ -308,6 +312,7 @@ void CLuceneIndex::search(const thrudex::SearchQuery &q, thrudex::SearchResponse
 
     shared_ptr<CLuceneRAMDirectory> l_ram_readonly_directory;
     shared_ptr<CLuceneRAMDirectory> l_ram_directory;
+    shared_ptr<CLuceneRAMDirectory> l_ram_readonly_prev_directory;
     shared_ptr<CLuceneRAMDirectory> l_ram_prev_directory;
     shared_ptr<IndexSearcher>       l_ram_searcher;
     shared_ptr<IndexSearcher>       l_ram_prev_searcher;
@@ -323,16 +328,16 @@ void CLuceneIndex::search(const thrudex::SearchQuery &q, thrudex::SearchResponse
 
         //making sure references to underlying objects stay above 0
         //for the duration of this function
-        l_ram_readonly_directory  = ram_readonly_directory;
-        l_ram_directory      = ram_directory;
-        l_ram_prev_directory = ram_prev_directory;
-        l_ram_searcher       = ram_searcher;
-        l_ram_prev_searcher  = ram_prev_searcher;
-        l_disk_searcher      = disk_searcher;
+        l_ram_readonly_directory      = ram_readonly_directory;
+        l_ram_directory               = ram_directory;
+        l_ram_readonly_prev_directory = ram_readonly_prev_directory;
+        l_ram_prev_directory          = ram_prev_directory;
+        l_ram_searcher                = ram_searcher;
+        l_ram_prev_searcher           = ram_prev_searcher;
+        l_disk_searcher               = disk_searcher;
 
         l_disk_filter = disk_filter;
         l_disk_reader = disk_reader;
-
     }
 
     Query *query;
