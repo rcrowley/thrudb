@@ -7,23 +7,24 @@
 #include "CLuceneBackend.h"
 #include "utils.h"
 #include <boost/filesystem.hpp>
+#include <boost/filesystem/fstream.hpp>
 #include <thrift/concurrency/Util.h>
 
-using namespace thrudex;
-
-using namespace log4cxx;
+namespace fs = boost::filesystem;
 using namespace boost;
 using namespace facebook::thrift::concurrency;
+using namespace log4cxx;
+using namespace thrudex;
 
 LoggerPtr CLuceneBackend::logger (Logger::getLogger ("CLuceneBackend"));
 
 CLuceneBackend::CLuceneBackend(const string &idx_root)
     : idx_root(idx_root)
 {
+    LOG4CXX_INFO( logger, "CLuceneBackend: idx_root=" + idx_root );
     //Verify log dir
     if(!directory_exists( idx_root )){
-        LOG4CXX_ERROR(logger,"Invalid index root: "+idx_root);
-        throw runtime_error("Invalid index root: "+idx_root);
+        fs::create_directories( idx_root );
     }
 
     analyzer = boost::shared_ptr<lucene::analysis::Analyzer>(new lucene::analysis::standard::StandardAnalyzer());
@@ -61,6 +62,8 @@ bool CLuceneBackend::isValidIndex(const string &index)
 
 vector<string> CLuceneBackend::getIndices()
 {
+    LOG4CXX_DEBUG( logger, "getIndices:" );
+
     RWGuard g(mutex);
 
     vector<string> indices;
@@ -76,6 +79,8 @@ vector<string> CLuceneBackend::getIndices()
 
 void CLuceneBackend::addIndex(const string &index)
 {
+    LOG4CXX_DEBUG( logger, "addIndex: index=" + index );
+
     //Is index already loaded?
     if(this->isValidIndex(index))
         return;
@@ -87,6 +92,8 @@ void CLuceneBackend::addIndex(const string &index)
 
 void CLuceneBackend::put(const thrudex::Document &d)
 {
+    LOG4CXX_DEBUG( logger, "put: d.index=" + d.index + ", d.key=" + d.key );
+
     if(!this->isValidIndex( d.index )){
         ThrudexException ex;
         ex.what = "Invalid index: "+d.index;
@@ -96,8 +103,6 @@ void CLuceneBackend::put(const thrudex::Document &d)
 
 
     lucene::document::Document *doc = new lucene::document::Document();
-
-    LOG4CXX_DEBUG(logger,"put: "+d.key);
 
     try{
 
@@ -169,19 +174,25 @@ void CLuceneBackend::put(const thrudex::Document &d)
 
 void CLuceneBackend::remove(const thrudex::Element &el)
 {
-   if(!this->isValidIndex( el.index )){
+    LOG4CXX_DEBUG( logger, "remove: el.index=" + el.index + ", el.key=" +
+                   el.key );
+
+    if(!this->isValidIndex( el.index )){
         ThrudexException ex;
         ex.what = "Invalid index: "+el.index;
 
         throw ex;
-   }
+    }
 
-   index_cache[el.index]->remove(el.key);
+    index_cache[el.index]->remove(el.key);
 }
 
 
 void CLuceneBackend::search(const thrudex::SearchQuery &q, thrudex::SearchResponse &r)
 {
+    LOG4CXX_DEBUG( logger, "search: q.index=" + q.index + ", q.query=" +
+                   q.query );
+
     if(!this->isValidIndex( q.index )){
         ThrudexException ex;
         ex.what = "Invalid index: "+q.index;
@@ -195,6 +206,10 @@ void CLuceneBackend::search(const thrudex::SearchQuery &q, thrudex::SearchRespon
 
 string CLuceneBackend::admin(const std::string &op, const std::string &data)
 {
+    LOG4CXX_DEBUG( logger, "admin: op=" + op + ", data=" + data );
+
+    string log_pos_file = idx_root + "/thrudex.state";
+
     if(op == "create_index"){
 
         string name = data;
@@ -222,6 +237,43 @@ string CLuceneBackend::admin(const std::string &op, const std::string &data)
         this->addIndex(name);
 
         return "ok";
+    } else if (op == "put_log_position") {
+        fs::ofstream outfile;
+        outfile.open( log_pos_file.c_str (), 
+                      ios::out | ios::binary | ios::trunc);
+        if (!outfile.is_open ())
+        {
+            ThrudexException e;
+            e.what = "can't open log posotion file=" + log_pos_file;
+            LOG4CXX_ERROR( logger, e.what);
+            throw e;
+        }
+        outfile.write (data.data (), data.size ());
+        outfile.close();
+        return "done";
+    } else if (op == "get_log_position") {
+        fs::ifstream infile;
+        infile.open (log_pos_file.c_str (), ios::in | ios::binary | ios::ate);
+        if (!infile.is_open ())
+        {
+            ThrudexException e;
+            e.what = "can't open log posotion file=" + log_pos_file;
+            LOG4CXX_ERROR( logger, e.what);
+            throw e;
+        }
+        fs::ifstream::pos_type size = infile.tellg ();
+        char * memblock = new char [size];
+
+        infile.seekg (0, ios::beg);
+        infile.read (memblock, size);
+
+        infile.close ();
+
+        string obj (memblock, size);
+
+        delete [] memblock;
+
+        return obj;
     }
 
     return "";
