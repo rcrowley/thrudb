@@ -149,10 +149,12 @@ class Replayer : public EventLogIf
                 }
             }
 
+
             // do these really have to be shared pointers?
             shared_ptr<TTransport> tbuf
                 (new TMemoryBuffer ((uint8_t*)event.message.c_str (), 
-                                    event.message.length ()));
+                                    event.message.length (),
+                                    TMemoryBuffer::COPY));
             shared_ptr<TProtocol> prot = protocol_factory.getProtocol (tbuf);
 
             try 
