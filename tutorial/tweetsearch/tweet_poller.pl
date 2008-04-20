@@ -94,6 +94,7 @@ sub run
     my $j    = $self->{j};
     my $since_id = "";
     my $count   = 0;
+    my $error   = 0;
     my $ua = LWP::UserAgent->new;
     $ua->timeout(10);
 
@@ -120,11 +121,11 @@ sub run
                 $count++;
                 $since_id = $tweet->{id};
             }; if($@){
-                #warn(Dumper($tweet));
+		$error++
             }
         }
 
-        print STDERR "Loaded $count\r";
+        print STDERR "Loaded $count, Exception $error\r";
     }
 }
 
