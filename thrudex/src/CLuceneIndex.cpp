@@ -55,7 +55,6 @@ CLuceneIndex::CLuceneIndex(const string &index_root, const string &index_name, s
         throw runtime_error("Invalid index root: "+index_root);
     }
 
-
     string idx_path = index_root + "/" + index_name;
     bool   new_index;
 
@@ -110,7 +109,7 @@ CLuceneIndex::CLuceneIndex(const string &index_root, const string &index_name, s
         ram_directory->__cl_addref(); //trick clucene's lame ref counters
 
         ram_prev_directory = shared_ptr<CLuceneRAMDirectory> (new CLuceneRAMDirectory());
-        ram_directory->__cl_addref(); //trick clucene's lame ref counters
+        ram_prev_directory->__cl_addref(); //trick clucene's lame ref counters
 
         ram_bloom     = shared_ptr<bloom_filter> (new bloom_filter(filter_space,1.0/(1.0 * filter_space), random_seed));
         ram_searcher  = shared_ptr<IndexSearcher>(new IndexSearcher(ram_directory.get()));
@@ -167,15 +166,16 @@ shared_ptr<MultiSearcher> CLuceneIndex::getSearcher()
 
 
         modifier->flush();
-
+      
         ram_searcher.reset();
 
+	//shared_ptr<CLuceneRAMDirectory> l_ram_readonly_directory = ram_readonly_directory;
+
         //make a copy of the ram dir since its not thread safe
-        ram_readonly_directory = shared_ptr<CLuceneRAMDirectory>(new CLuceneRAMDirectory( ram_directory.get() ));
+        ram_readonly_directory.reset( new CLuceneRAMDirectory( ram_directory.get() ), null_deleter() );
         ram_readonly_directory->__cl_addref(); //trick clucene's lame ref counters
 
         ram_searcher.reset(new IndexSearcher( ram_readonly_directory.get() ));
-
 
         //since clucene doesn't use shared_ptr we need to get the
         //underlying ptr
@@ -185,9 +185,8 @@ shared_ptr<MultiSearcher> CLuceneIndex::getSearcher()
 
         if(syncing){
             //make a copy of the ram dir since its not thread safe
-            ram_readonly_prev_directory = shared_ptr<CLuceneRAMDirectory>(new CLuceneRAMDirectory( ram_prev_directory.get() ));
-            ram_readonly_prev_directory->__cl_addref(); //trick clucene's lame ref counters
-
+	  ram_readonly_prev_directory = shared_ptr<CLuceneRAMDirectory>(new CLuceneRAMDirectory( ram_prev_directory.get() ), null_deleter() );
+	  ram_readonly_prev_directory->__cl_addref(); //trick clucene's lame ref counters
 
             ram_prev_searcher.reset(new IndexSearcher( ram_readonly_prev_directory.get() ));
             searchers[2] = ram_prev_searcher.get();
@@ -503,6 +502,7 @@ void CLuceneIndex::sync()
     shared_ptr<IndexModifier>       l_ram_modifier;
     shared_ptr<bloom_filter>        l_ram_bloom;
     shared_ptr<CLuceneRAMDirectory> l_ram_directory;
+    shared_ptr<CLuceneRAMDirectory> l_ram_ro_dir;
     shared_ptr<set<string> >        l_disk_deletes;
     shared_ptr<bloom_filter>        l_disk_bloom;
     shared_ptr<UpdateFilter>        l_update_filter;
@@ -523,6 +523,9 @@ void CLuceneIndex::sync()
         l_ram_directory= ram_directory;
         l_disk_deletes = disk_deletes;
         l_disk_bloom   = disk_bloom;
+
+        l_ram_ro_dir.reset( new CLuceneRAMDirectory( l_ram_directory.get() ) );
+        l_ram_ro_dir->__cl_addref(); //trick clucene's lame ref counters
 
         //create new handles
         ram_directory.reset(new CLuceneRAMDirectory());
@@ -571,7 +574,7 @@ void CLuceneIndex::sync()
 
         Directory *dirs[2];
 
-        dirs[0] = l_ram_directory.get();
+        dirs[0] = l_ram_ro_dir.get();
         dirs[1] = NULL;
 
         disk_writer->addIndexes(dirs);
