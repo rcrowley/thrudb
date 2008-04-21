@@ -12,10 +12,10 @@ HOW TO RUN
         <Location "/">
                 SetHandler python-program
                 PythonHandler   django.core.handlers.modpython
-                SetEnv  DJANGO_SETTINGS_MODULE tweetsearch.settings
+                SetEnv  DJANGO_SETTINGS_MODULE py.settings
                 SetEnv  PYTHON_EGG_CACHE /tmp
                 PythonDebug On
-                PythonPath      "['/path/to/thrudb/tutorial/py'] + sys.path"
+                PythonPath      "['/path/to/thrudb/tutorial/tweetsearch/py'] + sys.path"
         </Location>
 
 </VirtualHost>

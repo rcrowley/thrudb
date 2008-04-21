@@ -64,10 +64,10 @@ MIDDLEWARE_CLASSES = (
     'django.middleware.doc.XViewMiddleware',
 )
 
-ROOT_URLCONF = 'tweetsearch.urls'
+ROOT_URLCONF = 'py.urls'
 
 TEMPLATE_DIRS = (
-    "/home/thaidn/buildthrudb/thrudb/tutorial/tweetsearch"
+    "/home/thaidn/buildthrudb/thrudb/tutorial/tweetsearch/py"
     # Put strings here, like "/home/html/django_templates" or "C:/www/django/templates".
     # Always use forward slashes, even on Windows.
     # Don't forget to use absolute paths, not relative paths.
@@ -78,5 +78,5 @@ INSTALLED_APPS = (
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.sites',
-    'tweetsearch.search',
+    'py.search',
 )
