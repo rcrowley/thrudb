@@ -34,15 +34,17 @@ class BookmarkManager
       def connect_to_thrudoc
           transport = TFramedTransport.new(TSocket.new('localhost', THRUDOC_PORT))
           protocol  = TBinaryProtocol.new(transport)
-          @thrudoc  = Thrudoc::Client.new(protocol)
+          @thrudoc  = Thrudoc::Thrudoc::Client.new(protocol)
 
           transport.open()
+
+          @thrudoc.admin("create_bucket", THRUDOC_BUCKET);
       end
 
       def connect_to_thrudex
           transport = TFramedTransport.new(TSocket.new('localhost', THRUDEX_PORT))
           protocol  = TBinaryProtocol.new(transport)
-          @thrudex = Thrudex::Client.new(protocol)
+          @thrudex = Thrudex::Thrudex::Client.new(protocol)
 
           transport.open()
 
@@ -207,7 +209,7 @@ class BookmarkManager
         print "Found "+ids.total.to_s+" bookmarks\n"
 
         if ids.elements.length > 0
-           
+
            doc_list = @thrudoc.getList( create_doc_list(ids.elements) )
            bms      = []
            doc_list.each{ |doc|
@@ -229,7 +231,7 @@ class BookmarkManager
         docs = []
 
         ids.each{ |id|
-              doc        = Element.new()
+              doc        = Thrudoc::Element.new()
               doc.bucket = THRUDOC_BUCKET
               doc.key    = id.key
 
