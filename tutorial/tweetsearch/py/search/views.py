@@ -7,11 +7,9 @@ tm = TweetManager()
 
 def search(request):
     query = request.GET.get('q', '').encode('utf-8')
-    offset = request.GET.get('offset', '')
+    offset = request.GET.get('offset', 0)
     if offset:
-        offset = int(offset)
-    else:
-        offset = 0
+        offset = int(offset)  
     tweets = None
     total = None
     next = None

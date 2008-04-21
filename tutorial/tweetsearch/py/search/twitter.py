@@ -12,13 +12,13 @@ from Thrudex import Thrudex, ttypes as ThrudexTypes
 from random import random
 from time import time
 
-import urllib2
-import cjson
-import sys
 import socket
 # timeout in seconds
 TIMEOUT = 10
 socket.setdefaulttimeout(TIMEOUT)
+import urllib2
+import cjson
+import sys
 
 # Config Constants
 THRUDEX_PORT   = 11299;
@@ -80,19 +80,20 @@ class TweetCatcher(object):
                 response = urllib2.urlopen(url)
                 json = response.read()
                 tweets = cjson.decode(json)
-            except:
+            except Exception, e:
+                print e                
                 continue               
             for tweet in tweets:
                 # somehow sometimes tweet is not a dictionary, check to make sure
                 if isinstance(tweet, dict):
+                    # if sth serious wrong happened in thrudb, better to log it and continue
                     try:
                         self.index_tweet(tweet)
                         self.save_tweet(tweet)
                         self.count = self.count + 1
                         self.since_id = tweet["id"]
-                    except:
-                        # sth serious wrong happened in thrudb, better to raise the error and continue
-                        raise                                        
+                    except Exception, e:
+                        print e                                                                
                         continue 
             print "loaded %s tweets, last since_id %s" % (self.count, self.since_id)
 
@@ -120,7 +121,7 @@ class TweetManager(object):
     def search_tweet(self, terms, offset=0, limit=10):
         q = ThrudexTypes.SearchQuery()
         q.index = THRUDEX_INDEX
-        q.query = "+text:(%s)" % terms
+        q.query = '+text:(%s)' % terms
         q.offset = offset
         q.limit = limit
         q.sortby = 'date'
