@@ -1,0 +1,70 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta http-equiv="Content-Language" content="en-us" />
+    <meta http-equiv="imagetoolbar" content="no">
+    <meta name="viewport" content="width=780" />
+  </head>
+<body>
+
+<div style="margin-left:15%;width:650px">
+
+<div style="text-align:center">
+<h2>TweetSearch - Realtime Twitter Search</h2>
+<form action="" method="get">
+    <input type="text" name="q" value="{{ query|escape }}"/>
+    <input type="submit"/ value="search">
+    <br/>
+</form>
+</div>
+<br/>
+
+{% if query %}
+    {{ total }} results for: <b>&quot;{{ query|escape }}&quot;</b> showing ({{ current }} - {{ next }})
+    <br/>
+
+<div style="float:right">
+{% if prev %}
+  <a href="?q={{ query|escape }}&offset={{ prev }}"> &lt;prev </a>
+{% endif %}
+{% ifequal current 10 %}
+  <a href="?q={{ query|escape }}&offset={{ 0 }}"> &lt;prev </a>
+{% endifequal %}
+{% if next %}
+  <a href="?q={{ query|escape }}&offset={{ next }}"> next &gt; </a>
+{% endif %}
+</div>
+
+    {% for tweet in tweets %}
+
+      <br/><img src="{{ tweet.profile_image_url }}"/><a href="http://twitter.com/{{ tweet.user_name }}/statuses/{{ tweet.id }}">{{ tweet.user_name|escape }}</a> : {{ tweet.text|escape|urlize }} <i>{{ tweet.created_at }}</i></li>
+
+    {% endfor %}
+
+{% endif %}
+
+<br/><br/>
+
+<div style="float:right">
+{% if prev %}
+  <a href="?q={{ query|escape }}&offset={{ prev }}"> &lt;prev </a>
+{% endif %}
+{% ifequal current 10 %}
+  <a href="?q={{ query|escape }}&offset={{ 0 }}"> &lt;prev </a>
+{% endifequal %}
+{% if next %}
+  <a href="?q={{ query|escape }}&offset={{ next }}"> next &gt; </a>
+{% endif %}
+</div>
+
+
+{% if took %}
+  took {{ took }}
+{% endif %}
+
+</div>
+
+
+</body>
+</html>
