@@ -3,7 +3,7 @@
 use strict;
 use warnings;
 
-use lib "../gen-perl";
+use lib "../../gen-perl";
 
 use CGI qw/:standard/;
 use HTML::Template;
@@ -27,6 +27,7 @@ use LWP::UserAgent;
 
 package TweetScan;
 use Time::HiRes qw(gettimeofday);
+use HTML::Entities;
 use Data::Dumper;
 
 #Config
@@ -60,6 +61,8 @@ sub connect_to_thrudoc
 
     eval{
        my $socket    = new Thrift::Socket("localhost",THRUDOC_PORT());
+       $socket->setRecvTimeout(5000);
+
        my $transport = new Thrift::FramedTransport($socket);
        my $protocol  = new Thrift::BinaryProtocol($transport);
        $self->{thrudoc}  = new ThrudocClient($protocol);
@@ -78,6 +81,8 @@ sub connect_to_thrudex
 
     eval{
         my $socket    = new Thrift::Socket("localhost",THRUDEX_PORT());
+	$socket->setRecvTimeout(5000);
+
         my $transport = new Thrift::FramedTransport($socket);
         my $protocol  = new Thrift::BinaryProtocol($transport);
         $self->{thrudex}  = new ThrudexClient($protocol);
@@ -179,9 +184,17 @@ sub handle
 	
 	if( defined $terms && $terms ne ""){
 	    
+	    $terms = HTML::Entities::encode($terms);
+	    
+	    #escape this bad boy
+	    my $pterms   = $terms;
+	    $pterms      =~ s/([\+\-\&\|\!\(\)\{\}\[\]\^\"\~\*\?\:\\])/\\$1/g;
+	    $pterms      = "+".join(" +",split(/\s+/,$pterms));
+
+	    
 	    my $t0      = gettimeofday();
 	    
-	    my ($total,$tweets) = $self->search( $terms, $offset );
+	    my ($total,$tweets) = $self->search( $pterms, $offset );
 	    
 	    my $t1      = gettimeofday();
 	    
