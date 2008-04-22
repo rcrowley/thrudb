@@ -27,7 +27,7 @@ THRUDOC_PORT   = 11291;
 THRUDOC_BUCKET = "tweets";
 THRUDEX_INDEX  = "tweets";
 
-class TweetCatcher(object):
+class TweetManager(object):
     def __init__(self, since_id=None):
         self.connect_to_thrudoc()
         self.connect_to_thrudex()
@@ -71,7 +71,7 @@ class TweetCatcher(object):
     def save_tweet(self, tweet):
         self.thrudoc.put(THRUDOC_BUCKET, str(tweet["id"]), cjson.encode(tweet))    
 
-    def run(self):
+    def grab_tweet(self):
         while True:
             # the random paramater used to avoid http caching by upstream provider
             url = "http://twitter.com/statuses/public_timeline.json?since_id=%s&r=%s" % (self.since_id, random())
@@ -96,27 +96,6 @@ class TweetCatcher(object):
                         print e                                                                
                         continue 
             print "loaded %s tweets, last since_id %s" % (self.count, self.since_id)
-
-class TweetManager(object):
-    def __init__(self):
-        self.connect_to_thrudoc()
-        self.connect_to_thrudex()
-
-    def connect_to_thrudoc(self):
-        socket = TSocket('localhost', THRUDOC_PORT)
-        transport = TFramedTransport(socket)
-        protocol = TBinaryProtocol(transport)
-        self.thrudoc = Thrudoc.Client(protocol)
-        transport.open()
-        self.thrudoc.admin("create_bucket", THRUDOC_BUCKET)
-
-    def connect_to_thrudex(self):
-        socket = TSocket('localhost', THRUDEX_PORT)
-        transport = TFramedTransport(socket)
-        protocol = TBinaryProtocol(transport)
-        self.thrudex = Thrudex.Client(protocol)
-        transport.open()
-        self.thrudex.admin("create_index", THRUDEX_INDEX)
     
     def search_tweet(self, terms, offset=0, limit=10):
         q = ThrudexTypes.SearchQuery()
@@ -147,12 +126,10 @@ class TweetManager(object):
             doc.bucket = THRUDOC_BUCKET
             doc.key    = ele.key
             docs.append(doc)
-
-        return docs
-   
+        return docs   
         
 if __name__ == "__main__":
     import daemonize as dm
     dm.daemonize('/dev/null','/tmp/twitter.log','/tmp/twitter.log')
-    tc = TweetCatcher()
-    tc.run()
+    tc = TweetManager()
+    tc.grab_tweet()

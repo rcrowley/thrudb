@@ -7,5 +7,5 @@ urlpatterns = patterns('',
     # Uncomment this for admin:
     # (r'^admin/', include('django.contrib.admin.urls')),
     # catch all
-    (r'^.*$', 'py.search.views.search')  
+    (r'^.*$', 'py.search.views.search'),   
 )

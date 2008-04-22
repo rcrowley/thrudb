@@ -4,7 +4,7 @@ DEBUG = True
 TEMPLATE_DEBUG = DEBUG
 
 ADMINS = (
-    ('Thai Duong', 'thai@meetaa.com'),
+    ('Thai Duong', 'thaidn@gmail.com'),
 )
 
 MANAGERS = ADMINS
@@ -45,7 +45,7 @@ MEDIA_URL = ''
 # URL prefix for admin media -- CSS, JavaScript and images. Make sure to use a
 # trailing slash.
 # Examples: "http://foo.com/media/", "/media/".
-ADMIN_MEDIA_PREFIX = ''
+ADMIN_MEDIA_PREFIX = '/media/'
 
 # Make this unique, and don't share it with anybody.
 SECRET_KEY = '4bfqq(kaufg*un4rb_z8_%f%f094l8)6x)rn0l*4sf!(ur_%gx'

@@ -1,36 +1,38 @@
-HOW TO RUN
+==========================
+= HOW TO RUN
+==========================
 
-1. install django (http://www.djangoproject.com), apache, mod_python, and other necessary components
+0. install django, see http://www.djangoproject.com for details
 
-2. catch the tweet by running ./search/twitter.py, you can see the processs in /tmp/twitter.log
+1. install thrudb, see http://www.thrudb.org for details
 
-3. config apache with mod_python. Here's a sample conf:
+2. install thrudex/thrudoc python libraries:
 
-<VirtualHost *>
-	ServerName tweetsearch.local
-        DocumentRoot /path/to/thrudb/tutorial/tweetsearch/py
-        <Location "/">
-                SetHandler python-program
-                PythonHandler   django.core.handlers.modpython
-                SetEnv  DJANGO_SETTINGS_MODULE py.settings
-                SetEnv  PYTHON_EGG_CACHE /tmp
-                PythonDebug On
-                PythonPath      "['/path/to/thrudb/tutorial/tweetsearch/py'] + sys.path"
-        </Location>
+$ cd thrudb/tutorial
+$ make
+$ sudo cp -pvr gen-py/Thrudex gen-py/Thrudoc /usr/lib/python2.5/site-packages/
 
-</VirtualHost>
+if you use python2.4, the last command should look like:
+$ sudo cp -pvr gen-py/Thrudex gen-py/Thrudoc /usr/lib/python2.4/site-packages/
 
-remember add this line to /etc/hosts:
-127.0.0.1 tweetsearch.local
+3. review thrudex/thrudoc configuration in thrudex.conf and thrudoc.conf respectively. if everything's okie, let's start thrudb:
 
-4. start apache, thrudex and thrudoc
+$ cd thrudb/tutorial
+$ ./thrudbctl start
 
-5. that's it! Contact me if you have any problem.
+4. start grabbing tweets from http://www.twitter.com:
+$ cd thrudb/tutorial/tweetsearch/py
+$ ./search/twitter.py
+
+The application will be running as a daemon. You can see the processs in /tmp/twitter.log, thrudex.log, and thrudoc.log
+
+5. start the django application
+
+$ cd thrudb/tutorial/tweetsearch/py
+$ python manage.py runserver
+
+the application is available at http://localhost:8000/
+
+6. that's it! Contact me if you have any problem.
 
 Thai Duong (thaidn@gmail.com).
-
-
-
-
-
-  
