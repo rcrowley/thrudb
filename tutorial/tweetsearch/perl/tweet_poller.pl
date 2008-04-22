@@ -3,7 +3,7 @@
 use strict;
 use warnings;
 
-use lib '../gen-perl';
+use lib '../../gen-perl';
 
 #Thrift components
 use Thrift;
