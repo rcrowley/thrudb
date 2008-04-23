@@ -19,6 +19,7 @@
 #include "utils.h"
 
 #include <stdexcept>
+#include <sys/time.h>
 
 namespace fs = boost::filesystem;
 using namespace boost;

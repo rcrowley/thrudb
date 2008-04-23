@@ -73,7 +73,7 @@ AC_CHECK_HEADERS([log4cxx/logger.h],,
 
 # misc
 AC_C_CONST
-AC_CHECK_FUNCS([memset mkdir setlocale])
+AC_CHECK_FUNCS([clock_gettime gettimeofday memset poll socket strcasecmp strchr strdup  mkdir setlocale])
 AC_CHECK_HEADERS([stdlib.h])
 AC_C_INLINE
 AC_FUNC_MBRTOWC

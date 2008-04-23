@@ -17,7 +17,7 @@
 
 #include "LogBackend.h"
 #include "utils.h"
-
+#include <sys/time.h>
 #include <stdexcept>
 
 namespace fs = boost::filesystem;
