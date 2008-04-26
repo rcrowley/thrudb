@@ -46,6 +46,7 @@ class CLuceneIndex : public facebook::thrift::concurrency::Runnable
  public:
     CLuceneIndex(const std::string &index_root,
                  const std::string &index_name,
+                 const std::size_t &filter_space,
                  boost::shared_ptr<lucene::analysis::Analyzer> analyzer);
 
     ~CLuceneIndex();
@@ -63,14 +64,13 @@ class CLuceneIndex : public facebook::thrift::concurrency::Runnable
     boost::shared_ptr<facebook::thrift::concurrency::Thread> monitor_thread;
 
     static log4cxx::LoggerPtr                        logger;
-    facebook::thrift::concurrency::Mutex           mutex;
-    //facebook::thrift::concurrency::ReadWriteMutex    mutex;
+    facebook::thrift::concurrency::Mutex             mutex;
 
     const std::string                                index_root;
     const std::string                                index_name;
     boost::shared_ptr<lucene::analysis::Analyzer>    analyzer;
 
-    int filter_space;
+    std::size_t filter_space;
 
     boost::shared_ptr<lucene::index::IndexModifier>  modifier;
     volatile int64_t                                 last_modified;

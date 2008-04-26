@@ -45,8 +45,8 @@ struct reader_deleter
     }
 };
 
-CLuceneIndex::CLuceneIndex(const string &index_root, const string &index_name, shared_ptr<Analyzer> analyzer)
-    : index_root(index_root), index_name(index_name), analyzer(analyzer), filter_space(10000000), last_synched(0), syncing(false)
+CLuceneIndex::CLuceneIndex(const string &index_root, const string &index_name, const size_t &filter_space, shared_ptr<Analyzer> analyzer)
+    : index_root(index_root), index_name(index_name), analyzer(analyzer), filter_space(filter_space), last_synched(0), syncing(false)
 {
 
     //Verify log dir
@@ -166,10 +166,10 @@ shared_ptr<MultiSearcher> CLuceneIndex::getSearcher()
 
 
         modifier->flush();
-      
+
         ram_searcher.reset();
 
-	//shared_ptr<CLuceneRAMDirectory> l_ram_readonly_directory = ram_readonly_directory;
+        //shared_ptr<CLuceneRAMDirectory> l_ram_readonly_directory = ram_readonly_directory;
 
         //make a copy of the ram dir since its not thread safe
         ram_readonly_directory.reset( new CLuceneRAMDirectory( ram_directory.get() ), null_deleter() );
@@ -185,8 +185,8 @@ shared_ptr<MultiSearcher> CLuceneIndex::getSearcher()
 
         if(syncing){
             //make a copy of the ram dir since its not thread safe
-	  ram_readonly_prev_directory = shared_ptr<CLuceneRAMDirectory>(new CLuceneRAMDirectory( ram_prev_directory.get() ), null_deleter() );
-	  ram_readonly_prev_directory->__cl_addref(); //trick clucene's lame ref counters
+          ram_readonly_prev_directory = shared_ptr<CLuceneRAMDirectory>(new CLuceneRAMDirectory( ram_prev_directory.get() ), null_deleter() );
+          ram_readonly_prev_directory->__cl_addref(); //trick clucene's lame ref counters
 
             ram_prev_searcher.reset(new IndexSearcher( ram_readonly_prev_directory.get() ));
             searchers[2] = ram_prev_searcher.get();

@@ -5,6 +5,7 @@
 #undef HAVE_CONFIG_H
 
 #include "CLuceneBackend.h"
+#include "ConfigFile.h"
 #include "utils.h"
 #include <boost/filesystem.hpp>
 #include <boost/filesystem/fstream.hpp>
@@ -85,8 +86,10 @@ void CLuceneBackend::addIndex(const string &index)
     if(this->isValidIndex(index))
         return;
 
+    size_t filter_space = ConfigManager->read<int>("FILTER_SPACE_SIZE",1000000);
+
     index_cache[index] =
-        shared_ptr<CLuceneIndex>(new CLuceneIndex(idx_root,index,analyzer));
+        shared_ptr<CLuceneIndex>(new CLuceneIndex(idx_root,index,filter_space,analyzer));
 }
 
 
@@ -100,7 +103,6 @@ void CLuceneBackend::put(const thrudex::Document &d)
 
         throw ex;
     }
-
 
     lucene::document::Document *doc = new lucene::document::Document();
 
@@ -239,7 +241,7 @@ string CLuceneBackend::admin(const std::string &op, const std::string &data)
         return "ok";
     } else if (op == "put_log_position") {
         fs::ofstream outfile;
-        outfile.open( log_pos_file.c_str (), 
+        outfile.open( log_pos_file.c_str (),
                       ios::out | ios::binary | ios::trunc);
         if (!outfile.is_open ())
         {
