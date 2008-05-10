@@ -23,6 +23,7 @@
 #include <transport/TFileTransport.h>
 #include <stdexcept>
 #include <iostream>
+#include <sstream>
 #include "Thrudex.h"
 #include "utils.h"
 
