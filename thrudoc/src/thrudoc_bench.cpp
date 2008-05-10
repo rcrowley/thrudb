@@ -26,6 +26,7 @@
 #include <transport/TTransportUtils.h>
 #include <transport/TFileTransport.h>
 #include <stdexcept>
+#include <sstream>
 #include <iostream>
 #include "Thrudoc.h"
 
