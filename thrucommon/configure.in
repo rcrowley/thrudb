@@ -17,8 +17,8 @@ AC_PROG_MAKE_SET
 AC_ARG_WITH(tests,
     AC_HELP_STRING([--with-tests],
                    [build test suite support, requires cppunit (default is no]),
-    [with_memcached=$withval],
-    [with_memcached=no])
+    [with_tests=$withval],
+    [with_tests=no])
 if test "x$with_tests" = "xyes"; then
     AM_PATH_CPPUNIT(1.9.6)
     if test "x$no_cppunit" != "xyes" ; then
