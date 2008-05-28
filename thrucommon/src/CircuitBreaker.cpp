@@ -6,6 +6,7 @@
 #undef HAVE_CONFIG_H 
 
 #include "CircuitBreaker.h"
+#include <stdlib.h>
 
 using namespace log4cxx;
 
