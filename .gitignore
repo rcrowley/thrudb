@@ -1,0 +1,31 @@
+# Object files and such
+*.o
+*.lo
+*.la
+
+# Long chain of config tools
+Makefile
+Makefile.in
+configure
+configure.scan
+thru*_config.h
+thru*_config.h.in
+aclocal.m4
+libtool
+config.*
+*/config/*
+gen-*
+autom4te.cache
+
+# Binaries
+.deps
+.libs
+thrucommon/src/thrurecorder
+thrudoc/src/thrudoc
+thrudoc/src/thrudoc_bench
+thrudoc/src/thrudoc_replay
+
+# What?
+*.log
+*.pc
+stamp-h1
