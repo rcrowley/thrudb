@@ -56,7 +56,7 @@ FileLogger::FileLogger (const string & log_directory, const string & log_prefix,
         {
             fs::create_directories (log_directory);
         }
-        catch (exception e)
+        catch (std::exception & e)
         {
             LOG4CXX_ERROR (logger, string ("log error: ") + e.what ());
             throw e;

@@ -146,7 +146,7 @@ DiskBackend::DiskBackend (const string & doc_root)
         {
             fs::create_directories (doc_root);
         }
-        catch (exception e)
+        catch (std::exception & e)
         {
             LOG4CXX_ERROR (logger, string ("disk error: ") + e.what ());
             throw e;
@@ -237,8 +237,8 @@ void DiskBackend::remove (const string & bucket, const string & key)
 
     if (fs::is_regular (file))
     {
-        if (!fs::remove (file.c_str ()))
-        {
+        try { fs::remove(file.c_str()); }
+        catch (...) {
             ThrudocException e;
             e.what = "Can't remove " + bucket + "/" + key;
             throw e;
@@ -432,7 +432,7 @@ string DiskBackend::admin (const string & op, const string & data)
             // exist
             fs::rename (base, deleted);
         }
-        catch (exception & e)
+        catch (std::exception & e)
         {
             LOG4CXX_WARN (logger, string ("admin: delete_bucket: what=") +
                           e.what ());
