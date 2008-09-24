@@ -1,0 +1,8 @@
+88c88
+< #undef malloc
+---
+> //#undef malloc
+94c94
+< #undef realloc
+---
+> //#undef realloc
