@@ -642,6 +642,19 @@ PreparedStatement * Connection::find_delete_statement (const char * bucket)
     return stmt;
 }
 
+PreparedStatement * Connection::find_append_statement(const char * bucket) {
+	string key = string(bucket);
+	PreparedStatement * stmt = this->append_statements[key];
+	if (!stmt) {
+		BindParams * bind_params = new StringParams();
+		char query[256];
+		sprintf(query, "UPDATE %s SET v = v + ? WHERE k = ?", bucket);
+		stmt = new PreparedStatement(this, query, true, bind_params);
+		this->append_statements[key] = stmt;
+	}
+	return stmt;
+}
+
 PreparedStatement * Connection::find_scan_statement (const char * bucket,
                                                      int max_value_size)
 {

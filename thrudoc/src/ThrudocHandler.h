@@ -23,6 +23,8 @@ class ThrudocHandler : virtual public thrudoc::ThrudocIf {
         void get (std::string & _return, const std::string & bucket,
                   const std::string & key);
         void remove (const std::string & bucket, const std::string & key);
+		void append(const std::string & bucket, const std::string & key,
+			const std::string & value);
         void scan (thrudoc::ScanResponse & _return,
                    const std::string & bucket,
                    const std::string & seed, int32_t count);

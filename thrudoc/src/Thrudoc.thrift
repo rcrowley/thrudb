@@ -42,6 +42,10 @@ service Thrudoc
     string       get(1:string bucket, 2:string key)                   throws(ThrudocException e),
     void         remove(1:string bucket, 2:string key)                throws(ThrudocException e),
 
+	# Atomic appends
+    void append(1:string bucket, 2:string key, 3:string value)
+		throws(ThrudocException e),
+
     # if you want thrudoc to generate a doc id for you
     string       putValue(1:string bucket, 2:string value)            throws(ThrudocException e),
 

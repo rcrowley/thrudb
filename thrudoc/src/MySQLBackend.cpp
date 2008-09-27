@@ -287,6 +287,29 @@ void MySQLBackend::remove (const string & bucket, const string & key )
     delete_statement->execute ();
 }
 
+void MySQLBackend::append(
+	const string & bucket,
+	const string & key,
+	const string & value
+) {
+	FindReturn find_return = this->find_and_checkout(bucket, key);
+	PreparedStatement * append_statement =
+		find_return.connection->find_append_statement(
+		find_return.datatable.c_str());
+	StringStringParams * kvp =
+		(StringStringParams *)append_statement->get_bind_params();
+	kvp->set_str1(key.c_str());
+	kvp->set_str2(value.c_str());
+	append_statement->execute();
+
+/*
+	ThrudocException e;
+	e.what = "append only available to MySQL backend";
+	throw e;
+*/
+
+}
+
 string MySQLBackend::scan_helper (ScanResponse & scan_response,
                                   FindReturn & find_return,
                                   const string & seed,

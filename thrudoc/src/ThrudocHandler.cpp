@@ -73,6 +73,17 @@ void ThrudocHandler::remove (const string & bucket, const string & key)
     this->backend->remove (bucket, key);
 }
 
+void ThrudocHandler::append(
+	const string & bucket,
+	const string & key,
+	const string & value
+) {
+	LOG4CXX_DEBUG (logger, "append: bucket=" + bucket + ", key=" + key +
+		", value=" + value);
+	this->backend->validate(bucket, &key, &value);
+	this->backend->put(bucket, key, value);
+}
+
 void ThrudocHandler::scan (ScanResponse & _return, const string & bucket,
                            const string & seed, int32_t count)
 {

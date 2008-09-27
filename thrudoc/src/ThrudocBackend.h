@@ -25,6 +25,8 @@ class ThrudocBackend
                           const std::string & value) = 0;
         virtual void remove (const std::string & bucket,
                              const std::string & key) = 0;
+		virtual void append(const std::string & bucket,
+			const std::string & key, const std::string & value) = 0;
         virtual thrudoc::ScanResponse scan (const std::string & bucket,
                                             const std::string & seed,
                                             int32_t count) = 0;

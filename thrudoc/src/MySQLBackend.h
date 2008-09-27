@@ -44,6 +44,8 @@ class MySQLBackend : public ThrudocBackend
         void put (const std::string & bucket, const std::string & key,
                   const std::string & value);
         void remove (const std::string & bucket, const std::string & key);
+		void append(const std::string & bucket, const std::string & key,
+			const std::string & value);
         thrudoc::ScanResponse scan (const std::string & bucket,
                                     const std::string & seed, int32_t count);
         std::string admin (const std::string & op, const std::string & data);

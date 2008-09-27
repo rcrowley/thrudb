@@ -507,6 +507,7 @@ namespace mysql {
                                                 int max_value_size);
         PreparedStatement * find_put_statement (const char * bucket);
         PreparedStatement * find_delete_statement (const char * bucket);
+		PreparedStatement * find_append_statement(const char * bucket);
         PreparedStatement * find_scan_statement (const char * bucket,
                                                  int max_value_size);
 
@@ -553,6 +554,7 @@ namespace mysql {
         std::map<std::string, PreparedStatement *> get_statements;
         std::map<std::string, PreparedStatement *> put_statements;
         std::map<std::string, PreparedStatement *> delete_statements;
+        std::map<std::string, PreparedStatement *> append_statements;
         std::map<std::string, PreparedStatement *> scan_statements;
     };
 
