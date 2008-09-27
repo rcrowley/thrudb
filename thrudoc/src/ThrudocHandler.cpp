@@ -81,7 +81,7 @@ void ThrudocHandler::append(
 	LOG4CXX_DEBUG (logger, "append: bucket=" + bucket + ", key=" + key +
 		", value=" + value);
 	this->backend->validate(bucket, &key, &value);
-	this->backend->put(bucket, key, value);
+	this->backend->append(bucket, key, value);
 }
 
 void ThrudocHandler::scan (ScanResponse & _return, const string & bucket,
