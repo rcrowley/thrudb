@@ -646,9 +646,9 @@ PreparedStatement * Connection::find_append_statement(const char * bucket) {
 	string key = string(bucket);
 	PreparedStatement * stmt = this->append_statements[key];
 	if (!stmt) {
-		BindParams * bind_params = new StringParams();
+		BindParams * bind_params = new StringStringParams();
 		char query[256];
-		sprintf(query, "UPDATE %s SET v = v + ? WHERE k = ?", bucket);
+		sprintf(query, "INSERT INTO %s (k, v, created_at) VALUES (?, ?, NOW()) ON DUPLICATE KEY UPDATE v = CONCAT(v, VALUES(v))", bucket);
 		stmt = new PreparedStatement(this, query, true, bind_params);
 		this->append_statements[key] = stmt;
 	}
