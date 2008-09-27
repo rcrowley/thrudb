@@ -188,6 +188,16 @@ void BDBBackend::remove (const string & bucket, const string & key)
     }
 }
 
+void BDBBackend::append(
+	const string & bucket,
+	const string & key,
+	const string & value
+) {
+	ThrudocException e;
+	e.what = "append only available to MySQL backend";
+	throw e;
+}
+
 ScanResponse BDBBackend::scan (const string & bucket, const string & seed,
                                int32_t count)
 {

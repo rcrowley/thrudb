@@ -41,6 +41,14 @@ class ThrudocPassthruBackend : public ThrudocBackend
             this->get_backend ()->remove (bucket, key);
         }
 
+		virtual void append(
+			const std::string & bucket,
+			const std::string & key,
+			const std::string & value
+		) {
+			this->get_backend()->append(bucket, key, value);
+		}
+
         virtual thrudoc::ScanResponse scan (const std::string & bucket,
                                             const std::string & seed,
                                             int32_t count)

@@ -250,6 +250,16 @@ void DiskBackend::remove (const string & bucket, const string & key)
     }
 }
 
+void DiskBackend::append(
+	const string & bucket,
+	const string & key,
+	const string & value
+) {
+	ThrudocException e;
+	e.what = "append only available to MySQL backend";
+	throw e;
+}
+
 ScanResponse DiskBackend::scan (const string & bucket, const string & seed,
                                 int32_t count)
 {

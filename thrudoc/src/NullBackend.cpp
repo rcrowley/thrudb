@@ -43,6 +43,8 @@ void NullBackend::remove (const string & /* bucket */, const string & /* key */)
 {
 }
 
+void NullBackend::append(const string &, const string &, const string &) {}
+
 ScanResponse NullBackend::scan (const string & /* bucket */,
                                 const string & /* seed */, int32_t /* count */)
 {

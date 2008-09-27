@@ -125,6 +125,16 @@ void S3Backend::remove (const string & bucket, const string & key)
     }
 }
 
+void S3Backend::append(
+	const string & bucket,
+	const string & key,
+	const string & value
+) {
+	ThrudocException e;
+	e.what = "append only available to MySQL backend";
+	throw e;
+}
+
 ScanResponse S3Backend::scan (const string & bucket, const string & seed,
                               int32_t count)
 {
