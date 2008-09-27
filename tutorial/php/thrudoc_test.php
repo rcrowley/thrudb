@@ -24,7 +24,7 @@ require_once "$GEN_DIR/Thrudoc_types.php";
 error_reporting(E_ALL);
 
 $THRUDOC_PORT = 11291;
-$THRUDOC_BUCKET = 'test';
+$THRUDOC_BUCKET = 'foo';
 
 # Connect
 try {
@@ -39,7 +39,7 @@ try {
 
 # Get (and fail)
 try { echo $thrudoc->get($THRUDOC_BUCKET, 'foo'), "\n"; }
-catch (Thrudoc_ThrudocException $e) { echo "Get 1 failed:\n$e\n"; }
+catch (Thrudoc_ThrudocException $e) { echo "Get 1 failed (expected):\n$e\n"; }
 
 # Put
 try { echo $thrudoc->put($THRUDOC_BUCKET, 'foo', 'bar'), "\n"; }
@@ -48,3 +48,15 @@ catch (Thrudoc_ThrudocException $e) { echo "Put failed:\n$e\n"; }
 # Get (and succeed)
 try { echo $thrudoc->get($THRUDOC_BUCKET, 'foo'), "\n"; }
 catch (Thrudoc_ThrudocException $e) { echo "Get 2 failed:\n$e\n"; }
+
+# Append
+try { echo $thrudoc->append($THRUDOC_BUCKET, 'foo', ' baz'), "\n"; }
+catch (Thrudoc_ThrudocException $e) { echo "Append failed:\n$e\n"; }
+
+# Get (and succeed)
+try { echo $thrudoc->get($THRUDOC_BUCKET, 'foo'), "\n"; }
+catch (Thrudoc_ThrudocException $e) { echo "Get 3 failed:\n$e\n"; }
+
+# Remove
+try { echo $thrudoc->remove($THRUDOC_BUCKET, 'foo'), "\n"; }
+catch (Thrudoc_ThrudocException $e) { echo "Remove failed:\n$e\n"; }
