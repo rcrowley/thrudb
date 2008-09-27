@@ -301,13 +301,6 @@ void MySQLBackend::append(
 	kvp->set_str1(key.c_str());
 	kvp->set_str2(value.c_str());
 	append_statement->execute();
-
-/*
-	ThrudocException e;
-	e.what = "append only available to MySQL backend";
-	throw e;
-*/
-
 }
 
 string MySQLBackend::scan_helper (ScanResponse & scan_response,
